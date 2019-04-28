@@ -1,0 +1,10 @@
+enabled: true
+
+handlers:
+  - com.xlongwei.light4j.handler.ServiceHandler@service
+
+paths:
+  - path: '/service/*'
+    method: 'POST'
+    exec:
+      - service

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration scan="false" scanPeriod="60 seconds" debug="false">
+    <contextName>light4j</contextName>
+    
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{0}:%L %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- 
+	<appender name="SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
+		<RemoteHost>logserver</RemoteHost>
+		<Port>6000</Port>
+		<ReconnectionDelay>10000</ReconnectionDelay>
+		<IncludeCallerData>false</IncludeCallerData>
+	</appender>
+	 -->
+    
+    <root level="info">
+    	<appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
