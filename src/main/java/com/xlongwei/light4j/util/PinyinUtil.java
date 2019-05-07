@@ -226,7 +226,7 @@ public class PinyinUtil {
 		format.setVCharType(HanyuPinyinVCharType.WITH_V);
 		
 		try {
-			TextReader reader = new TextReader(Resources.getResource("duoyinzi.txt"), CharEncoding.UTF_8);
+			TextReader reader = new TextReader(ConfigUtil.stream("duoyinzi.txt"), CharEncoding.UTF_8);
 			String line = null;
 			while(StringUtils.isNotBlank(line=reader.read())) {
 				String[] split = line.split("#");

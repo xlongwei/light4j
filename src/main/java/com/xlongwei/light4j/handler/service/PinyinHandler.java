@@ -8,6 +8,7 @@ import org.jose4j.json.internal.json_simple.JSONObject;
 
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
+import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.PinyinUtil;
 import com.xlongwei.light4j.util.StringUtil;
@@ -18,11 +19,11 @@ public class PinyinHandler extends AbstractHandler {
 
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
-		String text = getParam(exchange, "text");
+		String text = HandlerUtil.getParam(exchange, "text");
 		if(StringUtils.isNotBlank(text)) {
-			int caseType = NumberUtil.parseInt(getParam(exchange, "caseType"), 0);
-			int toneType = NumberUtil.parseInt(getParam(exchange, "toneType"), 0);
-			int vcharType = NumberUtil.parseInt(getParam(exchange, "vcharType"), 0);
+			int caseType = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "caseType"), 0);
+			int toneType = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "toneType"), 0);
+			int vcharType = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "vcharType"), 0);
 			
 			boolean isWord = text.length()==1;
 			String[] pinyin = isWord ? PinyinUtil.getPinyin(text.charAt(0), caseType, toneType, vcharType) : PinyinUtil.getPinyin(text, caseType, toneType, vcharType);

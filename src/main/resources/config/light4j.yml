@@ -1,0 +1,13 @@
+light4j:
+  directory: http://t.xlongwei.com/softwares/library/
+
+redis:
+  # host:port:db:password:timeout
+  configDb: 127.0.0.1:6379:1
+  # host:port:dbs:password:timeout:weight
+  cacheDbs: 127.0.0.1:6379:3-7
+
+weixin:
+  appSecret: 07735561e5ea7ce0567963293023172e
+  token: MyushAydimubIlliaheimGofsidWein3
+  encodingAesKey: PbFKRNMv0MQKhyyadsIJ7KQDu0ydgATT4KXut9cHkNc

@@ -39,18 +39,18 @@ import com.xlongwei.light4j.util.ADTUtils.PairList;
 
 /** ansj_seg分词封装 */
 public class FenciUtil {
-	private static final InputStream stopwordsStream = Resources.getResource("stopwords.txt");
+	private static final InputStream stopwordsStream = ConfigUtil.stream("stopwords.txt");
 	public static final List<String> EMPTY_STRING_LIST = Collections.emptyList();
 	public static final List<String> stopwordsList = stopwordsStream!=null ? FileUtil.readLines(stopwordsStream, FileUtil.CharsetNames.UTF_8) : EMPTY_STRING_LIST;
 	static {
 		MyStaticValue.isRealName = Boolean.TRUE;
-		MyStaticValue.ENV.putIfAbsent(AmbiguityLibrary.DEFAULT, Resources.directory + "ambiguity.dic");
-		MyStaticValue.ENV.putIfAbsent(StopLibrary.DEFAULT, Resources.directory + "stop.dic");
-		if(!StringUtil.isUrl(Resources.directory)) {
+		MyStaticValue.ENV.putIfAbsent(AmbiguityLibrary.DEFAULT, ConfigUtil.directory + "ambiguity.dic");
+		MyStaticValue.ENV.putIfAbsent(StopLibrary.DEFAULT, ConfigUtil.directory + "stop.dic");
+		if(!StringUtil.isUrl(ConfigUtil.directory)) {
 			//文件较大，不从网络加载，仅支持从文件加载（crf.model文件已损坏）
-			//MyStaticValue.ENV.putIfAbsent(CrfLibrary.DEFAULT, Resources.directory + "crf.model");
-			MyStaticValue.ENV.putIfAbsent(DicLibrary.DEFAULT, Resources.directory + "default.dic");
-			MyStaticValue.ENV.putIfAbsent(SynonymsLibrary.DEFAULT, Resources.directory + "synonyms.dic");
+			//MyStaticValue.ENV.putIfAbsent(CrfLibrary.DEFAULT, ConfigUtil.directory + "crf.model");
+			MyStaticValue.ENV.putIfAbsent(DicLibrary.DEFAULT, ConfigUtil.directory + "default.dic");
+			MyStaticValue.ENV.putIfAbsent(SynonymsLibrary.DEFAULT, ConfigUtil.directory + "synonyms.dic");
 		}
 	}
 	public static enum Method {
