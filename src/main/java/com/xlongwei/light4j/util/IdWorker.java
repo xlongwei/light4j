@@ -193,22 +193,22 @@ public class IdWorker {
 	     */
 	    public synchronized long nextId() {
 	        long timestamp = timeGen();
-	        if (timestamp < lastTimestamp) {//闰秒
-	            long offset = lastTimestamp - timestamp;
-	            if (offset <= 5) {
-	                try {
-	                    wait(offset << 1);
-	                    timestamp = timeGen();
-	                    if (timestamp < lastTimestamp) {
-	                        throw new RuntimeException(String.format("Clock moved backwards.  Refusing to generate id for %d milliseconds", offset));
-	                    }
-	                } catch (Exception e) {
-	                    throw new RuntimeException(e);
-	                }
-	            } else {
-	                throw new RuntimeException(String.format("Clock moved backwards.  Refusing to generate id for %d milliseconds", offset));
-	            }
-	        }
+//	        if (timestamp < lastTimestamp) {//闰秒
+//	            long offset = lastTimestamp - timestamp;
+//	            if (offset <= 5) {
+//	                try {
+//	                    wait(offset << 1);
+//	                    timestamp = timeGen();
+//	                    if (timestamp < lastTimestamp) {
+//	                        throw new RuntimeException(String.format("Clock moved backwards.  Refusing to generate id for %d milliseconds", offset));
+//	                    }
+//	                } catch (Exception e) {
+//	                    throw new RuntimeException(e);
+//	                }
+//	            } else {
+//	                throw new RuntimeException(String.format("Clock moved backwards.  Refusing to generate id for %d milliseconds", offset));
+//	            }
+//	        }
 	
 	        if (lastTimestamp == timestamp) {
 	            // 相同毫秒内，序列号自增

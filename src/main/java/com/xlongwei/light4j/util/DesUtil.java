@@ -15,7 +15,6 @@ import java.util.Map;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SealedObject;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -40,42 +39,25 @@ public final class DesUtil {
 	private static Map<String, Cipher>	dciphers		= new HashMap<String, Cipher>();
 	private static byte[]				salt			= { (byte) 0xF1, (byte) 0x9B, (byte) 0xC8, (byte) 0x50, (byte) 0xD2, (byte) 0x64, (byte) 0xE3, (byte) 0xA7 };
 	private static int					iterationCount	= 19;
-	private static DesUtil				desUtil			= null;
-	
-	static {
-		try {
-			SecretKey key = KeyGenerator.getInstance("DES").generateKey();
-			
-			desUtil = new DesUtil();
-			desUtil.ecipher = Cipher.getInstance("DES");
-			desUtil.ecipher.init(Cipher.ENCRYPT_MODE, key);
-			eciphers.put("", desUtil.ecipher);
-			
-			desUtil.dcipher = Cipher.getInstance("DES");
-			desUtil.dcipher.init(Cipher.DECRYPT_MODE, key);
-			dciphers.put("", desUtil.dcipher);
-		}catch (Exception e) {
-			logger.warn("fail to initialize DesUtil", e);
-		}
-	}
+	private static DesUtil				desUtil			= getInstance(null);
 	
 	public static DesUtil getInstance(String password) {
 		try {
 			DesUtil desUtil = new DesUtil();
-			if (!eciphers.containsKey(password)) {
-				KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, iterationCount);
+			String pwdkey = password==null ? "" : password;
+			desUtil.ecipher = eciphers.get(pwdkey);
+			desUtil.dcipher = dciphers.get(pwdkey);
+			if(desUtil.ecipher==null || desUtil.dcipher==null) {
+				KeySpec keySpec = new PBEKeySpec(pwdkey.toCharArray(), salt, iterationCount);
 				SecretKey key = SecretKeyFactory.getInstance("PBEWithMD5AndDES").generateSecret(keySpec);
 				AlgorithmParameterSpec paramSpec = new PBEParameterSpec(salt, iterationCount);
-				desUtil.ecipher = Cipher.getInstance(key.getAlgorithm());
+				desUtil.ecipher = Cipher.getInstance("PBEWithMD5AndDES/CBC/PKCS5Padding");
 				desUtil.ecipher.init(Cipher.ENCRYPT_MODE, key, paramSpec);
-				eciphers.put(password, desUtil.ecipher);
+				eciphers.put(pwdkey, desUtil.ecipher);
 				
-				desUtil.dcipher = Cipher.getInstance(key.getAlgorithm());
+				desUtil.dcipher = Cipher.getInstance("PBEWithMD5AndDES/CBC/PKCS5Padding");
 				desUtil.dcipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
-				dciphers.put(password, desUtil.dcipher);
-			} else {
-				desUtil.ecipher = eciphers.get(password);
-				desUtil.dcipher = dciphers.get(password);
+				dciphers.put(pwdkey, desUtil.dcipher);
 			}
 			return desUtil;
 		}catch (Exception e) {
@@ -91,7 +73,7 @@ public final class DesUtil {
 		try{
 			return desUtil.ecipher.doFinal(bytes);
 		}catch(Exception e) {
-			logger.warn("fail to encrypt bytes: "+bytes, e);
+			logger.warn("fail to encrypt bytes: "+bytes.length, e);
 			return null;
 		}
 	}
@@ -103,7 +85,7 @@ public final class DesUtil {
 		try{
 			return desUtil.dcipher.doFinal(bytes);
 		}catch(Exception e) {
-			logger.warn("fail to decrypt bytes: "+bytes, e);
+			logger.warn("fail to decrypt bytes: "+bytes.length, e);
 			return null;
 		}
 	}

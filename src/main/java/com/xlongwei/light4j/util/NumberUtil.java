@@ -102,9 +102,9 @@ public class NumberUtil {
 	public static <E extends Enum> E parseEnum(String value, E defValue) {
     	try{
     		if(StringUtils.isBlank(value)) return defValue;
-    		return (E)Enum.valueOf(defValue.getClass(), value);
+    		return (E)Enum.valueOf(defValue.getDeclaringClass(), value);
     	}catch(Exception e) {
-    		logger.warn("fail to parse enum {} : {}", defValue.getClass().getSimpleName(), value);
+    		logger.warn("fail to parse enum {} : {}", defValue, value);
     		return defValue;
     	}
     }

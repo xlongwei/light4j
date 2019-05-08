@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 public class ExpireTimeMap<K, V> extends AbstractMap<K, V> {
 	private static Log log = LogFactory.getLog(ExpireTimeMap.class);
 	
-	private Map<K, V> map;
+	private final Map<K, V> map;
 	private long expireTime;
 	private boolean afterLastAccess;
 	private KeyExpireTimeHandler<K, V> keyExpireTimeHandler;

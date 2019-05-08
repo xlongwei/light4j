@@ -138,7 +138,7 @@ public class WeixinHandler implements LightHttpHandler {
 
 			public abstract String handle(String content);
 			public boolean textTooLong(String text) {
-				return text!=null && text.getBytes().length>weixinLimit();
+				return text!=null && text.getBytes(Charsets.UTF_8).length>weixinLimit();
 			}
 			public String textLimited(String text) {
 				return StringUtil.limited(text, Charsets.UTF_8, weixinLimit());
@@ -153,6 +153,7 @@ public class WeixinHandler implements LightHttpHandler {
 		public E getEvent() { return message.get(); }
 		
 		public static abstract class ClickHandler extends EventHandler<ClickEvent> {
+			@Override
 			public Message handle(ClickEvent event) {
 				String key = event.getEventKey();
 				if(StringUtil.isBlank(key)) return null;

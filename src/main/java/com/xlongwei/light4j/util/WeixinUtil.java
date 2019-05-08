@@ -98,10 +98,10 @@ public class WeixinUtil {
 			String eventPattern = WeixinUtil.class.getName()+"\\$Event\\$\\w+Event";
 			for(ClassInfo classInfo : ClassPath.from(Message.class.getClassLoader()).getAllClasses()) {
 				if(classInfo.getName().matches(messagePattern)) {
-					Message message = (Message)classInfo.load().newInstance();
+					Message message = (Message)classInfo.load().getConstructor().newInstance();
 					classCache.put(message.getMsgType(), message.getClass());
 				}else if(classInfo.getName().matches(eventPattern)) {
-					Event event = (Event)classInfo.load().newInstance();
+					Event event = (Event)classInfo.load().getConstructor().newInstance();
 					classCache.put(event.getMsgType()+"."+event.getEvent(), event.getClass());
 				}
 			}
@@ -172,7 +172,7 @@ public class WeixinUtil {
 			}
 			if(clazz != null) {
 				try {
-					Message msg = clazz.newInstance();
+					Message msg = clazz.getConstructor().newInstance();
 					Field[] fields = Message.getFields(msg.getClass());
 					for(Field field : fields) {
 						if(isEvent && "MsgId".equals(field.getName())) continue; //event没有MsgId字段

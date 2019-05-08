@@ -15,16 +15,16 @@ import io.undertow.server.HttpServerExchange;
 public class DesHandler extends AbstractHandler {
 
 	public void encrypt(HttpServerExchange exchange) throws Exception {
-		String password = HandlerUtil.getParam(exchange, "password");
+		String password = HandlerUtil.getParam(exchange, "password", "passwordCacheKey");
 		String data = HandlerUtil.getParam(exchange, "data");
-		String encrypt = DesUtil.getInstance(StringUtils.trimToEmpty(password)).doEncrypt(data);
+		String encrypt = DesUtil.getInstance(StringUtils.trimToEmpty(password)).doEncrypt(data==null ? "" : data);
 		exchange.putAttachment(AbstractHandler.RESP, JSONObject.toString("data", encrypt));
 	}
 	
 	public void decrypt(HttpServerExchange exchange) throws Exception {
-		String password = HandlerUtil.getParam(exchange, "password");
+		String password = HandlerUtil.getParam(exchange, "password", "passwordCacheKey");
 		String data = HandlerUtil.getParam(exchange, "data");
-		String encrypt = DesUtil.getInstance(StringUtils.trimToEmpty(password)).doDecrypt(data);
+		String encrypt = DesUtil.getInstance(StringUtils.trimToEmpty(password)).doDecrypt(data==null ? "" : data);
 		exchange.putAttachment(AbstractHandler.RESP, JSONObject.toString("data", encrypt));
 	}
 	

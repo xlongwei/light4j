@@ -41,7 +41,7 @@ public class HandlerUtil {
 			try {
 				Class<?> clz = Class.forName(className);
 				if(clazz.isAssignableFrom(clz)) {
-					T handler = (T)clz.newInstance();
+					T handler = (T)newInstance(clz);
 					handlers.add(handler);
 				}
 			}catch(Exception e) {
@@ -49,6 +49,15 @@ public class HandlerUtil {
 			}
 		}
 		return handlers;
+	}
+	
+	public static <T> T newInstance(Class<T> clazz) {
+		try {
+			return clazz.getConstructor().newInstance();
+		}catch(Exception e) {
+			log.info("fail to instance:{}, ex:{}", clazz, e.getMessage());
+			return null;
+		}
 	}
 	
 	/**
@@ -127,6 +136,17 @@ public class HandlerUtil {
 	
 	public static FileItem getFile(HttpServerExchange exchange, String name) {
 		return getObject(exchange, name, FileItem.class);
+	}
+	
+	public static String getParam(HttpServerExchange exchange, String name, String cacheKey) {
+		String param = getParam(exchange, name);
+		if(StringUtils.isBlank(param)) {
+			param = getParam(exchange, cacheKey);
+			if(StringUtils.isNotBlank(param)) {
+				param = RedisConfig.get(param);
+			}
+		}
+		return param;
 	}
 	
 	/**

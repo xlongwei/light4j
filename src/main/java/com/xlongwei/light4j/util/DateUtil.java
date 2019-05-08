@@ -35,10 +35,11 @@ public class DateUtil {
 		if(StringUtils.isNotBlank(format)) {
 			try {
 				FastDateFormat fastDateFormat = FastDateFormat.getInstance(format);
-				Set<String> set = formats.get(format);
+				Integer length = Integer.valueOf(format.length());
+				Set<String> set = formats.get(length);
 				if(set==null) {
 					set = new HashSet<>();
-					formats.put(format.length(), set);
+					formats.put(length, set);
 				}
 				if(!set.contains(format)) {
 					set.add(format);

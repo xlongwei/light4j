@@ -44,7 +44,7 @@ public class PinyinUtil {
 	 */
 	public static String getPinyin(char zhCh) {
 		String zhChStr = Character.toString(zhCh);
-		if (isChineseCharacter(zhCh)) {
+		if (StringUtil.isChinese(zhCh)) {
 			try {
 				return PinyinHelper.toHanyuPinyinStringArray(zhCh, format)[0];
 			} catch (Exception e) {
@@ -65,23 +65,6 @@ public class PinyinUtil {
 				pinyin.append(str.charAt(0));
 		}
 		return pinyin.toString();
-	}
-
-	/**
-	 * return true if Char c is chinese character.
-	 */
-	public static boolean isChineseCharacter(char c) {
-		// return String.valueOf(c).matches("[\\u4E00-\\u9FA5]+");
-		Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
-		if (ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS
-				|| ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
-				|| ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A
-				|| ub == Character.UnicodeBlock.GENERAL_PUNCTUATION
-				|| ub == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION
-				|| ub == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS) {
-			return true;
-		}
-		return false;
 	}
 	
 	/** 处理单子拼音，多音字有多个 */
@@ -173,11 +156,11 @@ public class PinyinUtil {
 					int min = Math.min(o1.length(), o2.length());// 比较前min个字符
 					for (int i = 0; i < min; i++) {
 						char c1 = o1.charAt(i), c2 = o2.charAt(i);
-						if (isChineseCharacter(c1)) {
-							if (!isChineseCharacter(c2)) return 1; // 中文 > 英文
+						if (StringUtil.isChinese(c1)) {
+							if (!StringUtil.isChinese(c2)) return 1; // 中文 > 英文
 							else if (c1 != c2) return getPinyin(c1).compareTo(getPinyin(c2)); // 两个中文比较
 						} else {
-							if (isChineseCharacter(c2)) return -1; // 英文 < 中文
+							if (StringUtil.isChinese(c2)) return -1; // 英文 < 中文
 							else if (c1 != c2) return String.valueOf(c1).compareToIgnoreCase(String.valueOf(false)); // 两个英文比较
 						}
 					}

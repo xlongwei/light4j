@@ -66,14 +66,14 @@ public final class FileUtil {
 		try {
 	        SSLContext sc = SSLContext.getInstance("SSL");  
 	        sc.init(null, new TrustManager[] { new X509TrustManager() {
-						public void checkClientTrusted(X509Certificate[] arg0,String arg1) throws CertificateException {}
-						public void checkServerTrusted(X509Certificate[] arg0,String arg1) throws CertificateException {}
-						public X509Certificate[] getAcceptedIssuers() { return null; }
+						@Override public void checkClientTrusted(X509Certificate[] arg0,String arg1) throws CertificateException {}
+						@Override public void checkServerTrusted(X509Certificate[] arg0,String arg1) throws CertificateException {}
+						@Override public X509Certificate[] getAcceptedIssuers() { return null; }
 					}
 	        }, null);  
 	        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 	        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {  
-				public boolean verify(String urlHostName, SSLSession session) { return true; }  
+	        	@Override public boolean verify(String urlHostName, SSLSession session) { return true; }  
 			});
 	        sslContext = sc;
 		}catch(Exception e) {
@@ -937,6 +937,7 @@ public final class FileUtil {
 		public static final ExtFileFilter files = new ExtFileFilter("").acceptDirectory(false);
 		public FilenameFilter filenameFilter() {
 			return new FilenameFilter() {
+				@Override
 				public boolean accept(File dir, String name) {
 					return ExtFileFilter.this.accept(dir, name);
 				}
@@ -944,6 +945,7 @@ public final class FileUtil {
 		}
 	}
 	public static Comparator<File> fileComparator = new Comparator<File>() {
+		@Override
 		public int compare(File o1, File o2) {
 			if(o1==null) return o2==null ? 0 : -1;
 			else if(o2==null) return 1;
@@ -951,6 +953,7 @@ public final class FileUtil {
 		}
 	};
 	public static Comparator<String> fileNameComparator = new Comparator<String>() {
+		@Override
 		public int compare(String o1, String o2) {
 			if(o1==null) return o2==null ? 0 : -1;
 			else if(o2==null) return 1;

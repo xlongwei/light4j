@@ -35,7 +35,7 @@ public class TaskUtil {
 	static {
 		cachedExecutor = Executors.newCachedThreadPool(new TaskUtilThreadFactory("cached"));
 		scheduledExecutor = Executors.newScheduledThreadPool(1, new TaskUtilThreadFactory("scheduled"));
-		Runtime.getRuntime().addShutdownHook(new Thread() { public void run() { TaskUtil.shutdown(); } });
+		Runtime.getRuntime().addShutdownHook(new Thread() { @Override public void run() { TaskUtil.shutdown(); } });
 	}
 	
 	/**
@@ -227,6 +227,7 @@ public class TaskUtil {
 	 * 监视需要保持运行的任务
 	 */
 	private static class CachedTasksMonitor implements Runnable {
+		@Override
 		public void run() {
 			if(keepRunningTasks.size() > 0) {
 				synchronized (keepRunningTasks) {
@@ -253,7 +254,7 @@ public class TaskUtil {
 							try{
 								final Object result = future.get(5, TimeUnit.SECONDS);
 								submit(new Runnable() {
-									public void run() {
+									@Override public void run() {
 										callback.handle(result);
 									}
 								});
@@ -284,7 +285,7 @@ public class TaskUtil {
 		TaskUtilThreadFactory(String threadNamePrefix){
 			this.threadNamePrefix = threadNamePrefix;
 		}
-		
+		@Override
 		public Thread newThread(Runnable r) {
 			Thread t = new Thread(r, String.format("TaskUtil-%d-%s", taskutilThreadNumber.getAndIncrement(), this.threadNamePrefix));
 		    t.setDaemon(true);

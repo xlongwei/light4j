@@ -105,6 +105,7 @@ public class XMLObject implements Cloneable {
 		return objs;
 	}
 	
+	@Override
 	public String toString() {
 		StringBuilder xml = new StringBuilder();
 		toString(xml, "");
@@ -182,6 +183,8 @@ public class XMLObject implements Cloneable {
 		for(FieldValue attr : objs) attrs.remove(attr);
 		return !objs.isEmpty();
 	}
+	
+	@Override
 	protected XMLObject clone() {
 		XMLObject xml = new XMLObject(name);
 		xml.nodes = new LinkedList<>();

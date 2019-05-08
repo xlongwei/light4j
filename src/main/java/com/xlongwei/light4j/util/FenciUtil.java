@@ -39,8 +39,9 @@ import com.xlongwei.light4j.util.ADTUtils.PairList;
 
 /** ansj_seg分词封装 */
 public class FenciUtil {
-	private static final InputStream stopwordsStream = ConfigUtil.stream("stopwords.txt");
 	public static final List<String> EMPTY_STRING_LIST = Collections.emptyList();
+	private static final InputStream stopwordsStream = ConfigUtil.stream("stopwords.txt");
+	private static final Map<String, Analysis> methods = new HashMap<>();
 	public static final List<String> stopwordsList = stopwordsStream!=null ? FileUtil.readLines(stopwordsStream, FileUtil.CharsetNames.UTF_8) : EMPTY_STRING_LIST;
 	static {
 		MyStaticValue.isRealName = Boolean.TRUE;
@@ -55,19 +56,6 @@ public class FenciUtil {
 	}
 	public static enum Method {
 		BASE, DIC, INDEX, NLP, TO;
-		private Analysis a;
-		public Analysis a() {
-			if(a != null) return a;
-			switch(this) {
-			case TO: a = new ToAnalysis(); break;
-			case NLP: a = new NlpAnalysis(); break;
-			case DIC: a = new DicAnalysis(); break;
-			case INDEX: a = new IndexAnalysis(); break;
-			case BASE: a = new BaseAnalysis(); break;
-			}
-			if(a == null) a = new ToAnalysis();
-			return a;
-		}
 		public static Method of(String method, Method defVal) {
 			if(!StringUtil.isBlank(method))
 			for(Method m : Method.values()) {
@@ -76,6 +64,22 @@ public class FenciUtil {
 			return defVal;
 		}
 	};
+	
+	public static Analysis getAnalysis(Method method) {
+		if(method == null) method = Method.TO;
+		Analysis a = methods.get(method.name());
+		if(a == null) {
+			switch(method) {
+			case TO: a = new ToAnalysis(); break;
+			case NLP: a = new NlpAnalysis(); break;
+			case DIC: a = new DicAnalysis(); break;
+			case INDEX: a = new IndexAnalysis(); break;
+			case BASE: a = new BaseAnalysis(); break;
+			}
+			methods.put(method.name(), a);
+		}
+		return a;
+	}
 	
 	/** 标准分词
 	 * @param stopword true 去掉停止词
@@ -110,7 +114,7 @@ public class FenciUtil {
 	public static List<String> keywords(String title, String content, int num, Method method){
 		if(StringUtil.isBlank(title) && StringUtil.isBlank(content)) return EMPTY_STRING_LIST;
 		if(method==null) method = Method.TO;
-		KeyWordComputer<?> kwc = new KeyWordComputer<Analysis>(num, method.a());
+		KeyWordComputer<?> kwc = new KeyWordComputer<Analysis>(num, getAnalysis(method));
 		Collection<Keyword> keywords = kwc.computeArticleTfidf(title, content);
 		if(keywords==null || keywords.size()==0) return EMPTY_STRING_LIST;
 		List<String> keys = new LinkedList<>();
@@ -122,7 +126,7 @@ public class FenciUtil {
 	public static List<String> fenci(String content, Method method) {
 		if(StringUtil.isBlank(content)) return EMPTY_STRING_LIST;
 		if(method == null) method = Method.TO;
-		Result result = method.a().parseStr(content);
+		Result result = getAnalysis(method).parseStr(content);
 		List<Term> terms = result==null?null:result.getTerms();
 		if(terms==null || terms.size()==0) return EMPTY_STRING_LIST;
 		List<String> list = new ArrayList<>();

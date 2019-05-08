@@ -29,7 +29,7 @@ public class TokenCounter {
 	protected static Logger log = LoggerFactory.getLogger(TokenCounter.class);
 	private BlockingQueue<String> removeTokens = new LinkedBlockingQueue<String>();
 	private BlockingQueue<TokenType> tokenTypes = new LinkedBlockingQueue<TokenType>();
-	private Map<String, TokenCount> tokenCounts = new HashMap<String, TokenCount>();
+	private final Map<String, TokenCount> tokenCounts = new HashMap<String, TokenCount>();
 	private Map<String, Integer> idCaches = new ExpireTimeMap<String, Integer>(new HashMap<String, Integer>(), TimeUnit.MINUTES.toMillis(3));
 	
 	public void init(){
@@ -92,6 +92,7 @@ public class TokenCounter {
 				count.value += 1;
 			}
 		}
+		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder(DateFormatUtils.format(time, "yyyy-MM-dd HH:mm:ss")).append(" ").append(token).append(" (");
 			for(Entry<String, IntHolder> count : counts.entrySet()) {
