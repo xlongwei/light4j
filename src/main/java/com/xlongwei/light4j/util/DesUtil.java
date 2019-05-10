@@ -30,6 +30,7 @@ import org.xnio.IoUtils;
 
 /**
  * DES对称加密工具
+ * @author xlongwei
  */
 public final class DesUtil {
 	private static Logger 				logger			= LoggerFactory.getLogger(DesUtil.class);
@@ -157,7 +158,8 @@ public final class DesUtil {
 	 */
 	public static boolean decrypt(InputStream in, OutputStream out) {
 		try(CipherInputStream cin = new CipherInputStream(in, desUtil.dcipher)) {
-			int bufRead = 1032;//1024字节加密后得1032字节
+			//1024字节加密后得1032字节
+			int bufRead = 1032;
 			byte[] buf = new byte[bufRead];
 			while ((bufRead = cin.read(buf)) >= 0) {
 				out.write(buf, 0, bufRead);
@@ -216,7 +218,8 @@ public final class DesUtil {
 		try{
 			fis = new FileInputStream(src);
 			fos = new FileOutputStream(dst);
-			int bufRead = 1032;//1024字节加密后得1032字节
+			//1024字节加密后得1032字节
+			int bufRead = 1032;
 			byte[] buf = new byte[bufRead];
 			while ((bufRead = fis.read(buf)) >= 0) {
 				byte[] doFinal = desUtil.dcipher.doFinal(buf, 0, bufRead);
@@ -284,7 +287,7 @@ public final class DesUtil {
 		try {
 			byte[] utf8 = StringUtils.getBytesUtf8(str);
 			byte[] enc = ecipher.doFinal(utf8);
-			return Base64.encodeBase64String(enc);
+			return Base64.encodeBase64URLSafeString(enc);
 		}catch (Exception e) {
 			logger.warn("fail to encrypt str: "+str, e);
 			return null;

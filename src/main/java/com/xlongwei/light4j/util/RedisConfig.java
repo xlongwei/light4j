@@ -1,21 +1,26 @@
 package com.xlongwei.light4j.util;
 
+/**
+ * config using redis
+ * @author xlongwei
+ *
+ */
 public class RedisConfig {
-	public static final String cache = "property";
+	public static final String CACHE = "property";
 	
 	public static String get(String key) {
-		return RedisUtil.get(cache, key);
+		return RedisUtil.get(CACHE, key);
 	}
 	
 	public static void set(String key, String value) {
-		RedisUtil.set(cache, key, value);
+		RedisUtil.set(CACHE, key, value);
 	}
 	
 	public static void delete(String key) {
-		RedisUtil.delete(cache, key);
+		RedisUtil.delete(CACHE, key);
 	}
 	
 	public static void persist(String key, String value) {
-		RedisUtil.persist(cache, key, value);
+		RedisUtil.persist(CACHE, key, value);
 	}
 }

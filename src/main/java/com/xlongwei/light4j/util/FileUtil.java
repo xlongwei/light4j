@@ -27,8 +27,6 @@ import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -48,11 +46,17 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.networknt.server.DummyTrustManager;
 
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * file util
+ * @author xlongwei
+ *
+ */
+@Slf4j
 public final class FileUtil {
 	public static String	unixLineSeparator		= "\n";
 	public static String	dosLineSeparator		= "\r\n";
@@ -60,24 +64,18 @@ public final class FileUtil {
 	public static String	lineSeparator		= defaultlineSeparator;
 	public static String	defaultCharsetName	= Charset.defaultCharset().name();
 	public static SSLContext sslContext = null;
-	private static Logger logger = LoggerFactory.getLogger(FileUtil.class);
 	
 	static {
 		try {
 	        SSLContext sc = SSLContext.getInstance("SSL");  
-	        sc.init(null, new TrustManager[] { new X509TrustManager() {
-						@Override public void checkClientTrusted(X509Certificate[] arg0,String arg1) throws CertificateException {}
-						@Override public void checkServerTrusted(X509Certificate[] arg0,String arg1) throws CertificateException {}
-						@Override public X509Certificate[] getAcceptedIssuers() { return null; }
-					}
-	        }, null);  
+	        sc.init(null, new TrustManager[] { new DummyTrustManager() }, null);  
 	        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 	        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {  
 	        	@Override public boolean verify(String urlHostName, SSLSession session) { return true; }  
 			});
 	        sslContext = sc;
 		}catch(Exception e) {
-			logger.warn("fail to init https ssl context, ex: {}", e.getMessage());
+			log.warn("fail to init https ssl context, ex: {}", e.getMessage());
 		}
 	}
 
@@ -85,7 +83,9 @@ public final class FileUtil {
 	 * @param file 删除文件，或清空并删除目录
 	 */
 	public static void clear(File file) {
-		if(file == null || !file.exists()) return;
+		if(file == null || !file.exists()) {
+			return;
+		}
 		if(file.isFile()) {
 			tryDeleteFile(file, 3);
 		}else {
@@ -104,11 +104,13 @@ public final class FileUtil {
 	 * close a closeable ignoring exceptions
 	 */
 	public static void close(Closeable closeable) {
-		if(closeable == null) return;
+		if(closeable == null) {
+			return;
+		}
 		try {
 			closeable.close();
 		} catch (IOException e) {
-			logger.warn("fail to close {}, ex: {}", closeable, e.getMessage());
+			log.warn("fail to close {}, ex: {}", closeable, e.getMessage());
 		}
 	}
 	
@@ -129,8 +131,9 @@ public final class FileUtil {
 		InputStream in = null; OutputStream out = null;
 		try {
 			in = stream(url);
-			if(!target.getParentFile().exists())
+			if(!target.getParentFile().exists()) {
 				target.getParentFile().mkdirs();
+			}
 			out = new FileOutputStream(target);
 			copyStream(in, out);
 			return true;
@@ -146,7 +149,9 @@ public final class FileUtil {
 		InputStream in = stream(url);
 		if(in != null) {
 			ByteArrayOutputStream baos = readStream(in);
-			if(baos != null) return baos.toByteArray();
+			if(baos != null) {
+				return baos.toByteArray();
+			}
 		}
 		return null;
 	}
@@ -155,10 +160,13 @@ public final class FileUtil {
 	public static InputStream stream(String url) {
 		try {
 			HttpURLConnection con = (HttpURLConnection)new URL(url).openConnection();
-			if(con.getResponseCode()==301) return stream(con.getHeaderField("Location"));
+			int httpRedirect = 301;
+			if(con.getResponseCode()==httpRedirect) {
+				return stream(con.getHeaderField("Location"));
+			}
 			return con.getInputStream();
 		}catch(Exception e) {
-			logger.warn("fail to get stream of url: {}, ex: {}", url, e.getMessage());
+			log.warn("fail to get stream of url: {}, ex: {}", url, e.getMessage());
 		}
 		return null;
 	}
@@ -168,12 +176,16 @@ public final class FileUtil {
 	 */
 	public static boolean copyFile(File in, File out) {
 		boolean state = false;
-		long mbs = in.length() / 1024 / 1024;
-		if(mbs <= 3) {
+		int i = 1024;
+		long mbs = in.length() / i / i;
+		int three = 3;
+		if(mbs <= three) {
 			state = copySmallFile(in, out);
-		}else if(mbs <= 1024) {
+		}else if(mbs <= i) {
 			state = copyChannelFile(in, out);
-			if(!state) state = copyBigFile(in, out);
+			if(!state) {
+				state = copyBigFile(in, out);
+			}
 		}else {
 			state = copyBigFile(in, out);
 		}
@@ -184,8 +196,12 @@ public final class FileUtil {
 	 * 复制3M以下的小文件
 	 */
 	public static boolean copySmallFile(File in, File out) {
-		if(!in.exists() || !in.isFile()) return false;
-		if(out.exists()) out.delete();
+		if(!in.exists() || !in.isFile()) {
+			return false;
+		}
+		if(out.exists()) {
+			out.delete();
+		}
 		FileInputStream fis = null;
 		FileOutputStream fos = null;
 		try {
@@ -194,7 +210,7 @@ public final class FileUtil {
 			copyStream(fis, fos);
 			return true;
 		}catch(IOException e) {
-			logger.warn("fail to copy small file: {} to: {}, ex: {}", in, out, e.getMessage());
+			log.warn("fail to copy small file: {} to: {}, ex: {}", in, out, e.getMessage());
 			return false;
 		}finally {
 			close(fis);
@@ -215,7 +231,7 @@ public final class FileUtil {
 			dstChannel.transferFrom(srcChannel, 0, srcChannel.size());
 			return true;
 		} catch (Exception e) {
-			logger.warn("fail to copy channel file: {} to: {}, ex: {}", srcFile, dstFile, e.getMessage());
+			log.warn("fail to copy channel file: {} to: {}, ex: {}", srcFile, dstFile, e.getMessage());
 			return false;
 		}
 	}
@@ -224,8 +240,12 @@ public final class FileUtil {
 	 * 复制1G以上的大文件
 	 */
 	public static boolean copyBigFile(File in, File out) {
-		if(!in.exists() || !in.isFile()) return false;
-		if(out.exists()) out.delete();
+		if(!in.exists() || !in.isFile()) {
+			return false;
+		}
+		if(out.exists()) {
+			out.delete();
+		}
 		FileInputStream fis = null;
 		FileOutputStream fos = null;
 		try {
@@ -238,7 +258,7 @@ public final class FileUtil {
 			}
 			return true;
 		}catch(IOException e) {
-			logger.warn("fail to copy big file: {} to: {}, ex: {}", in, out, e.getMessage());
+			log.warn("fail to copy big file: {} to: {}, ex: {}", in, out, e.getMessage());
 			return false;
 		}finally {
 			close(fis);
@@ -251,8 +271,12 @@ public final class FileUtil {
 	 * @param out target directory to push file to
 	 */
 	public static void copyDir(File in, File out) {
-		if(!in.exists() || !in.isDirectory()) return;
-		if(!out.exists()) out.mkdirs();
+		if(!in.exists() || !in.isDirectory()) {
+			return;
+		}
+		if(!out.exists()) {
+			out.mkdirs();
+		}
 		for(File file : in.listFiles()) {
 			File target = new File(out, file.getName());
 			if(file.isFile()) {
@@ -267,7 +291,9 @@ public final class FileUtil {
 	 * @return true only if file exist and deleted.
 	 */
 	public static boolean tryDeleteFile(File file, int tryCount) {
-		if(!file.exists()) return false;
+		if(!file.exists()) {
+			return false;
+		}
 		boolean deleteSucceed = false;
 		while(!deleteSucceed && tryCount-- > 0) {
 			deleteSucceed = file.delete();
@@ -278,7 +304,9 @@ public final class FileUtil {
 			}
 		}
 		
-		if(deleteSucceed==false) logger.info("fail to delete file: {}, try count: {}", file, tryCount);
+		if(deleteSucceed==false) {
+			log.info("fail to delete file: {}, try count: {}", file, tryCount);
+		}
 		return deleteSucceed;
 	}
 	
@@ -292,7 +320,9 @@ public final class FileUtil {
 		}
 		if(newFile.exists()) {
 			boolean deleteSucceed = tryDeleteFile(newFile, tryCount);
-			if(deleteSucceed == false) return false;
+			if(deleteSucceed == false) {
+				return false;
+			}
 		}
 		boolean renameSucceed = false;
 		while(!renameSucceed && tryCount-- > 0) {
@@ -303,7 +333,9 @@ public final class FileUtil {
 				nap(100);
 			}
 		}
-		if(renameSucceed==false) logger.info("fail to rename file: {} to: {}, try count: {}", oldFile, newFile, tryCount);
+		if(renameSucceed==false) {
+			log.info("fail to rename file: {} to: {}, try count: {}", oldFile, newFile, tryCount);
+		}
 		return renameSucceed;
 	}
 	
@@ -329,7 +361,9 @@ public final class FileUtil {
 			}
 		}
 		
-		if(copySucceed==false) logger.info("fail to copy file: {} to: {}, try count: {}", source, target, tryCount);
+		if(copySucceed==false) {
+			log.info("fail to copy file: {} to: {}, try count: {}", source, target, tryCount);
+		}
 		return copySucceed;
 	}
 	
@@ -340,7 +374,7 @@ public final class FileUtil {
 		try {
 			Thread.sleep(milliseconds);
 		}catch(Exception e) {
-			logger.warn("fail to nap millis: {}, ex: {}", milliseconds, e.getMessage());
+			log.warn("fail to nap millis: {}, ex: {}", milliseconds, e.getMessage());
 		}
 	}
 	
@@ -356,7 +390,9 @@ public final class FileUtil {
 			StringTokenizer tokens = new StringTokenizer(content, "\r\n");
 			while(tokens.hasMoreTokens()) {
 				String token = tokens.nextToken();
-				if(token.length() > 0) lines.add(token);
+				if(token.length() > 0) {
+					lines.add(token);
+				}
 			}
 		}
 		return lines;
@@ -369,7 +405,9 @@ public final class FileUtil {
 			StringTokenizer tokens = new StringTokenizer(content, "\r\n");
 			while(tokens.hasMoreTokens()) {
 				String token = tokens.nextToken();
-				if(token.length() > 0) lines.add(token);
+				if(token.length() > 0) {
+					lines.add(token);
+				}
 			}
 		}
 		return lines;
@@ -380,11 +418,13 @@ public final class FileUtil {
 		List<Object> objs = new ArrayList<>();
 		try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))){
 			Object obj = null;
-			while((obj=in.readObject())!=null) objs.add(obj);
+			while((obj=in.readObject())!=null) {
+				objs.add(obj);
+			}
 		}catch(EOFException e) {
 			//正常
 		}catch(Exception e) {
-			logger.warn("fail to read object file: {}", e.getMessage());
+			log.warn("fail to read object file: {}", e.getMessage());
 		}
 		return objs.toArray();
 	}
@@ -400,7 +440,7 @@ public final class FileUtil {
 			copyStream(fis, baos);
 		}
 		catch (IOException e) {
-			logger.warn("fail to read stream from file: {}, ex: {}", file, e.getMessage());
+			log.warn("fail to read stream from file: {}, ex: {}", file, e.getMessage());
 		}finally {
 			close(fis);
 		}
@@ -415,7 +455,7 @@ public final class FileUtil {
 		try {
 			copyStream(in, baos);
 		}catch(Exception e) {
-			logger.warn("fail to read stream from inputstream: {}, ex: {}", in, e.getMessage());
+			log.warn("fail to read stream from inputstream: {}, ex: {}", in, e.getMessage());
 		}finally {
 			close(in);
 		}
@@ -431,7 +471,7 @@ public final class FileUtil {
 		try {
 			content = new String(baos.toByteArray(), charsetName);
 		} catch (IOException e) {
-			logger.warn("fail to read string from file: {}, charset: {}, ex: {}", textfile, charsetName, e.getMessage());
+			log.warn("fail to read string from file: {}, charset: {}, ex: {}", textfile, charsetName, e.getMessage());
 		}
 		return content;
 	}
@@ -445,7 +485,7 @@ public final class FileUtil {
 		try {
 			content = new String(baos.toByteArray(), charsetName);
 		} catch (IOException e) {
-			logger.warn("fail to read string from inputstream: {}, charset: {}, ex: {}", inputStream, charsetName, e.getMessage());
+			log.warn("fail to read string from inputstream: {}, charset: {}, ex: {}", inputStream, charsetName, e.getMessage());
 		}
 		return content;
 	}
@@ -468,7 +508,7 @@ public final class FileUtil {
 				}
 				digest = md.digest();
 			} catch (Exception e) {
-				logger.warn("fail to digest file: {}, algo: {}, ex: {}", file, algorithm, e.getMessage());
+				log.warn("fail to digest file: {}, algo: {}, ex: {}", file, algorithm, e.getMessage());
 			}finally {
 				close(fis);
 			}
@@ -479,19 +519,23 @@ public final class FileUtil {
 	/** 写对象到二进制文件 */
 	public static void writeObject(File file, Object ... objs) {
 		try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file))){
-			for(Object obj : objs ) out.writeObject(obj);
+			for(Object obj : objs ) {
+				out.writeObject(obj);
+			}
 		}catch(Exception e) {
-			logger.warn("fail to write object to file, ex: {}", e.getMessage());
+			log.warn("fail to write object to file, ex: {}", e.getMessage());
 		}
 	}
 	
 	public static OutputStream writeStream(File file) {
 		try {
 			File parentFile = file.getParentFile();
-			if(!parentFile.exists()) parentFile.mkdirs();
+			if(!parentFile.exists()) {
+				parentFile.mkdirs();
+			}
 			return new FileOutputStream(file);
 		}catch (Exception e) {
-			logger.info("fail to open write stream to file: {}, ex: {}", file, e.getMessage());
+			log.info("fail to open write stream to file: {}, ex: {}", file, e.getMessage());
 		}
 		return null;
 	}
@@ -506,7 +550,7 @@ public final class FileUtil {
 			fos = new FileOutputStream(file, file.exists());
 			copyStream(new ByteArrayInputStream(content.getBytes(charsetName)), fos);
 		} catch (IOException e) {
-			logger.warn("fail to write string to file: {}, charset: {}, ex: {}", file, charsetName, e.getMessage());
+			log.warn("fail to write string to file: {}, charset: {}, ex: {}", file, charsetName, e.getMessage());
 		}finally {
 			close(fos);
 		}
@@ -516,9 +560,11 @@ public final class FileUtil {
 		OutputStream fos = null;
 		try {
 			fos = writeStream(file);
-			if(fos!=null) copyStream(in, fos);
+			if(fos!=null) {
+				copyStream(in, fos);
+			}
 		} catch (IOException e) {
-			logger.warn("fail to write stream to file: {}, ex: {}", file, e.getMessage());
+			log.warn("fail to write stream to file: {}, ex: {}", file, e.getMessage());
 		}finally {
 			close(fos);
 		}
@@ -528,9 +574,11 @@ public final class FileUtil {
 		OutputStream fos = null;
 		try {
 			fos = writeStream(file);
-			if(fos!=null) fos.write(bytes);
+			if(fos!=null) {
+				fos.write(bytes);
+			}
 		} catch (IOException e) {
-			logger.warn("fail to write bytes to file: {}, ex: {}", file, e.getMessage());
+			log.warn("fail to write bytes to file: {}, ex: {}", file, e.getMessage());
 		}finally {
 			close(fos);
 		}
@@ -540,7 +588,9 @@ public final class FileUtil {
 	 * unzip file zip to parent directory
 	 */
 	public static void unZip(File zip, File parent) {
-		if(!zip.exists() || !zip.isFile()) return;
+		if(!zip.exists() || !zip.isFile()) {
+			return;
+		}
 		ZipInputStream zis = null;
 		ZipEntry ze = null;
 		try {
@@ -555,14 +605,14 @@ public final class FileUtil {
 						fos = new FileOutputStream(target);
 						copyStream(zis, fos);
 					}catch(IOException e) {
-						logger.warn("fail to unzip file: {}, entry: {}, ex: {}", zip, ze.getName(), e.getMessage());
+						log.warn("fail to unzip file: {}, entry: {}, ex: {}", zip, ze.getName(), e.getMessage());
 					}finally {
 						close(fos);
 					}
 				}
 			}
 		} catch (IOException e) {
-			logger.warn("fail to unzip file: {}, ex: {}", zip, e.getMessage());
+			log.warn("fail to unzip file: {}, ex: {}", zip, e.getMessage());
 		}finally {
 			close(zis);
 		}
@@ -572,7 +622,9 @@ public final class FileUtil {
 	 * zip file to zip
 	 */
 	public static void zip(File file, File zip) {
-		if(!file.exists()) return;
+		if(!file.exists()) {
+			return;
+		}
 		ZipOutputStream zos = null;
 		File current = null;
 		try {
@@ -596,7 +648,7 @@ public final class FileUtil {
 				}
 			}
 		}catch(IOException e) {
-			logger.warn("fail to zip file: {} to: {}, ex: {}", file, zip, e.getMessage());
+			log.warn("fail to zip file: {} to: {}, ex: {}", file, zip, e.getMessage());
 		}finally {
 			close(zos);
 		}
@@ -630,7 +682,9 @@ public final class FileUtil {
 	/** get file names in dir that matches filter */
 	public static List<String> getFileNames(File dir, ExtFileFilter filter) {
 		List<String> fileNames = new ArrayList<>();
-		if(!dir.exists() || !dir.isDirectory()) return fileNames;
+		if(!dir.exists() || !dir.isDirectory()) {
+			return fileNames;
+		}
 		File[] files = dir.listFiles(filter);
 		for(File file : files) {
 			fileNames.add(file.getName());
@@ -642,7 +696,7 @@ public final class FileUtil {
 	 * get string key-value map from text file.
 	 */
 	public static Map<String, String> getStringMap(File file, String charsetName){
-		Map<String, String> stringMap = new HashMap<String, String>();
+		Map<String, String> stringMap = new HashMap<String, String>(8);
 		TextReader textReader = new TextReader();
 		textReader.open(file, charsetName);
 		String key = null, value = null;
@@ -654,12 +708,30 @@ public final class FileUtil {
 	}
 	
 	public static class CharsetNames {
-		public static String UTF_8 = "UTF-8";	//变长字节通用性强的国际编码
-		public static String US_ASCII = "US-ASCII";	//7 bytes for alphabets, numbers and punctuations
-		public static String ISO_88591 = "ISO-8859-1";	//http响应内容编码
-		public static String GB2312 = "GB2312";	//区位码，可推算出汉字拼音
-		public static String GBK = "GBK";		//兼容区位码，添加了CJK汉字等
-		public static String GB18030 = "GB18030";//unicode 3.1，包括少数民族字符等
+		/**
+		 * 变长字节通用性强的国际编码
+		 */
+		public static String UTF_8 = "UTF-8";
+		/**
+		 * 7 bytes for alphabets, numbers and punctuations
+		 */
+		public static String US_ASCII = "US-ASCII";
+		/**
+		 * http响应内容编码
+		 */
+		public static String ISO_88591 = "ISO-8859-1";
+		/**
+		 * 区位码，可推算出汉字拼音
+		 */
+		public static String GB2312 = "GB2312";
+		/**
+		 * 兼容区位码，添加了CJK汉字等
+		 */
+		public static String GBK = "GBK";
+		/**
+		 * unicode 3.1，包括少数民族字符等
+		 */
+		public static String GB18030 = "GB18030";
 	}
 	public static class Charsets {
 		public static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -671,7 +743,9 @@ public final class FileUtil {
 	    public static Charset forName(String charset, Charset defVal) {
 	    	try {
 	    		Charset cs = charset!=null ? Charset.forName(charset) : null;
-	    		if(cs != null) return cs;
+	    		if(cs != null) {
+					return cs;
+				}
 	    	}catch(Exception e) {}
 	    	return defVal;
 	    }
@@ -693,7 +767,7 @@ public final class FileUtil {
 				close();
 				in = new Scanner(file, charsetName);
 			} catch (FileNotFoundException e) {
-				logger.warn("fail to open file: {}, charset: {}, ex: {}", file, charsetName, e.getMessage());
+				log.warn("fail to open file: {}, charset: {}, ex: {}", file, charsetName, e.getMessage());
 			}
 		}
 		public void open(InputStream is) { open(is, defaultCharsetName); }
@@ -779,7 +853,7 @@ public final class FileUtil {
 			try {
 				out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, append), charsetName)), autoFlush);
 			} catch (IOException e) {
-				logger.warn("fail to open write file: {}, charset: {}, append: {}, ex: {}", file, charsetName, append, e.getMessage());
+				log.warn("fail to open write file: {}, charset: {}, append: {}, ex: {}", file, charsetName, append, e.getMessage());
 			}
 		}
 		public void open(OutputStream os, String charsetName, boolean autoFlush) {
@@ -787,7 +861,7 @@ public final class FileUtil {
 			try {
 				out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(os, charsetName)), autoFlush);
 			} catch (IOException e) {
-				logger.warn("fail to open write stream: {}, charset: {}, flush: {}, ex: {}", file, charsetName, autoFlush, e.getMessage());
+				log.warn("fail to open write stream: {}, charset: {}, flush: {}, ex: {}", file, charsetName, autoFlush, e.getMessage());
 			}
 		}
 		
@@ -863,7 +937,9 @@ public final class FileUtil {
 		}
 		
 		public ExtFileFilter addExtension(String extension) {
-			if(StringUtil.isBankCardNumber(extension)) return this;
+			if(StringUtil.isBankCardNumber(extension)) {
+				return this;
+			}
 			String[] exts = extension.split("[,;]");
 			for (String ext : exts) {
 				if ((ext == null) || (ext.trim().length() == 0)) {
@@ -930,11 +1006,11 @@ public final class FileUtil {
 		private String description = null;
 		private List<String> extensions = new LinkedList<String>();
 		
-		public static final ExtFileFilter images = new ExtFileFilter("jpg,jpeg,png,gif").acceptDirectory(false);
-		public static final ExtFileFilter audios = new ExtFileFilter("mp3,wav,ogg").acceptDirectory(false);
-		public static final ExtFileFilter videos = new ExtFileFilter("mp4,ogv,webm").acceptDirectory(false);
-		public static final ExtFileFilter folders = new ExtFileFilter("none").acceptDirectory(true);
-		public static final ExtFileFilter files = new ExtFileFilter("").acceptDirectory(false);
+		public static final ExtFileFilter IMAGES = new ExtFileFilter("jpg,jpeg,png,gif").acceptDirectory(false);
+		public static final ExtFileFilter AUDIOS = new ExtFileFilter("mp3,wav,ogg").acceptDirectory(false);
+		public static final ExtFileFilter VIDEOS = new ExtFileFilter("mp4,ogv,webm").acceptDirectory(false);
+		public static final ExtFileFilter FOLDERS = new ExtFileFilter("none").acceptDirectory(true);
+		public static final ExtFileFilter FILES = new ExtFileFilter("").acceptDirectory(false);
 		public FilenameFilter filenameFilter() {
 			return new FilenameFilter() {
 				@Override
@@ -947,33 +1023,51 @@ public final class FileUtil {
 	public static Comparator<File> fileComparator = new Comparator<File>() {
 		@Override
 		public int compare(File o1, File o2) {
-			if(o1==null) return o2==null ? 0 : -1;
-			else if(o2==null) return 1;
+			if(o1==null) {
+				return o2==null ? 0 : -1;
+			} else if(o2==null) {
+				return 1;
+			}
 			return fileNameComparator.compare(o1.getName(), o2.getName());
 		}
 	};
 	public static Comparator<String> fileNameComparator = new Comparator<String>() {
 		@Override
 		public int compare(String o1, String o2) {
-			if(o1==null) return o2==null ? 0 : -1;
-			else if(o2==null) return 1;
+			if(o1==null) {
+				return o2==null ? 0 : -1;
+			} else if(o2==null) {
+				return 1;
+			}
 			int len1=o1.length(), len2 = o2.length(), len = Math.min(len1, len2);
 			for(int i=0; i<len; i++) {
 				char c1 = o1.charAt(i), c2 = o2.charAt(i);
-				if(c1 == c2) continue;
+				if(c1 == c2) {
+					continue;
+				}
 				if(StringUtil.isDigit(c1) && StringUtil.isDigit(c2)) {
 					StringBuilder num1 = new StringBuilder().append(c1), num2 = new StringBuilder().append(c2);
 					int j = i+1; char c;
-					while(j<len1 && StringUtil.isDigit(c=o1.charAt(j++))) num1.append(c);
+					while(j<len1 && StringUtil.isDigit(c=o1.charAt(j++))) {
+						num1.append(c);
+					}
 					j = i+1;
-					while(j<len2 && StringUtil.isDigit(c=o2.charAt(j++))) num2.append(c);
+					while(j<len2 && StringUtil.isDigit(c=o2.charAt(j++))) {
+						num2.append(c);
+					}
 					int n1 = Integer.parseInt(num1.toString()), n2 = Integer.parseInt(num2.toString());
-					if(n1 != n2) return n1 > n2 ? 1 : -1;
+					if(n1 != n2) {
+						return n1 > n2 ? 1 : -1;
+					}
 					i += Math.min(num1.length(), num2.length()) - 1;
 				}else if(StringUtil.isChinese(c1) || StringUtil.isChinese(c2)) {
 					String p1 = PinyinUtil.getPinyin(c1), p2 = PinyinUtil.getPinyin(c2);
-					if(p1!=null && !p1.equals(p2)) return p1.compareTo(p2);
-				}else return c1 > c2 ? 1 : -1;
+					if(p1!=null && !p1.equals(p2)) {
+						return p1.compareTo(p2);
+					}
+				} else {
+					return c1 > c2 ? 1 : -1;
+				}
 			}
 			return 0;
 		}

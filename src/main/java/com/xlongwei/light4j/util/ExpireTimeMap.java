@@ -68,7 +68,8 @@ public class ExpireTimeMap<K, V> extends AbstractMap<K, V> {
 	
 	@Override
 	public V get(Object key) {
-		synchronized (map) {//试图获取值时锁定map，保证其它get(key)获得正确的值
+		//试图获取值时锁定map，保证其它get(key)获得正确的值
+		synchronized (map) {
 			V value = map.get(key);
 			
 			if(value != null) {
@@ -110,7 +111,9 @@ public class ExpireTimeMap<K, V> extends AbstractMap<K, V> {
 	private class ExpireTimeChecker implements Runnable {
 		@Override
 		public void run() {
-			if(map.size() == 0) return;
+			if(map.size() == 0) {
+				return;
+			}
 			
 			List<K> removeKeys = new LinkedList<K>();
 			long currentTimeMillis = System.currentTimeMillis();
@@ -121,7 +124,9 @@ public class ExpireTimeMap<K, V> extends AbstractMap<K, V> {
 					
 					boolean expire = (afterLastAccess && access != null && currentTimeMillis - access >= expireTime) || 
 							(!afterLastAccess && access != null && access >= write && currentTimeMillis - write >= expireTime);
-					if(expire) removeKeys.add(key);
+					if(expire) {
+						removeKeys.add(key);
+					}
 					
 					if(log.isDebugEnabled()) {
 						log.debug("("+key+") expire:"+expire+", access:"+access+", write:"+write+", minus:"+(access == null ? -1 : (afterLastAccess ? currentTimeMillis-access : access-write)));
@@ -130,9 +135,12 @@ public class ExpireTimeMap<K, V> extends AbstractMap<K, V> {
 				log.info("checked: " + map.keySet().toString());
 			}
 			
-			if(removeKeys.size() == 0) return;
+			if(removeKeys.size() == 0) {
+				return;
+			}
 			for(K key : removeKeys) {
-				synchronized (map) {//试图恢复值时锁定map让其他get(key)等待以获取正确的值
+				//试图恢复值时锁定map让其他get(key)等待以获取正确的值
+				synchronized (map) {
 					V value = map.remove(key);
 					
 					//key=value已经过期了，试图恢复值
@@ -161,14 +169,25 @@ public class ExpireTimeMap<K, V> extends AbstractMap<K, V> {
 	/**
 	 * 键值对过期时可使用此接口恢复新值，返回value恢复原值，返回null清除键key，返回其它值更新键值key
 	 */
-	public static interface KeyExpireTimeHandler<K, V>{
+	public static interface KeyExpireTimeHandler<K, V> {
+		/**
+		 * 键超时处理
+		 * @param key
+		 * @param value
+		 * @return
+		 */
 		V keyExpireTime(K key, V value);
 	}
 	
 	/**
 	 * 找不到键值对时可使用此接口提供值
 	 */
-	public static interface KeyNotFoundHandler<K, V>{
+	public static interface KeyNotFoundHandler<K, V> {
+		/**
+		 * 键未见时处理
+		 * @param key
+		 * @return
+		 */
 		V keyNotFound(K key);
 	}
 }

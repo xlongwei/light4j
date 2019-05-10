@@ -31,14 +31,20 @@ import io.undertow.util.Headers;
 import io.undertow.util.MimeMappings;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * service handler
+ * @author xlongwei
+ *
+ */
 @Slf4j
 public class ServiceHandler implements LightHttpHandler {
-	public static final String badRequest = "{\"status\":\"200\", \"error\":\"bad request\"}";
+	public static final String BAD_REQUEST = "{\"status\":\"200\", \"error\":\"bad request\"}";
 	private Map<String, AbstractHandler> handlers = new HashMap<>();
 	private static ServiceCounter serviceCounter = new ServiceCounter(64, TimeUnit.SECONDS.toMillis(18));
 	
 	public ServiceHandler() {
-		List<AbstractHandler> list = HandlerUtil.scanHandlers(AbstractHandler.class, getClass().getPackage().getName()+".service");
+		String service = getClass().getPackage().getName()+".service";
+		List<AbstractHandler> list = HandlerUtil.scanHandlers(AbstractHandler.class, service);
 		for(AbstractHandler handler : list) {
 			String name = handler.name();
 			handlers.put(name, handler);
@@ -59,20 +65,22 @@ public class ServiceHandler implements LightHttpHandler {
 		int dot = service.indexOf('.');
 		String[] split = StringUtils.split(dot>0 ? service.substring(0, dot) : service, "/");
 		if(split.length > 0) {
-			AbstractHandler handler = handlers.get(split[0]);
+			String name = split[0];
+			AbstractHandler handler = handlers.get(name);
 			if(handler != null) {
 				String path = split.length>1 ? split[1] : "";
 				exchange.putAttachment(AbstractHandler.PATH, path);
 				HandlerUtil.parseBody(exchange);
 				handler.handleRequest(exchange);
-				serviceCounter.count("service", handler.name());
+				serviceCounter.count("service", name);
 			}
 		}
 		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, MimeMappings.DEFAULT.getMimeType("json"));
 		exchange.setStatusCode(200);
-		String response = badRequest;
+		String response = BAD_REQUEST;
 		Object resp = exchange.getAttachment(AbstractHandler.RESP);
 		if(resp != null) {
+			//支持String、JSONObject、JSONArray、Map、Collection等
 			if(resp instanceof String) {
 				response = (String)resp;
 			}else if(resp instanceof JSONAware) {
@@ -88,23 +96,34 @@ public class ServiceHandler implements LightHttpHandler {
 		log.info("result: {}", response);
 		exchange.getResponseSender().send(response);
 	}
-	
+	/** 支持子服务名反射调用同名方法，子服务存入RESP对象即可 */
 	public static abstract class AbstractHandler implements LightHttpHandler {
-		public static final AttachmentKey<String> PATH = AttachmentKey.create(String.class);//子服务路径，存在时反射调用子服务方法，否则子类覆盖handleRequest方法
-		public static final AttachmentKey<Object> RESP = AttachmentKey.create(Object.class);//响应对象，不存在时响应bad request，支持String、JSONObject、JSONArray、Map、Collection等
+		/**
+		 * 子服务路径，存在时反射调用子服务方法，否则子类覆盖handleRequest方法
+		 */
+		public static final AttachmentKey<String> PATH = AttachmentKey.create(String.class);
+		/**
+		 * 响应对象，不存在时响应bad request，支持String、JSONObject、JSONArray、Map、Collection等
+		 */
+		public static final AttachmentKey<Object> RESP = AttachmentKey.create(Object.class);
 		protected Logger log = LoggerFactory.getLogger(getClass());
 		private Map<String, Method> methods = new HashMap<>();
 		public AbstractHandler() {
 			Method[] declaredMethods = getClass().getDeclaredMethods();
 			for(Method method : declaredMethods) {
-				if("name".equals(method.getName())) continue;
+				if("name".equals(method.getName())) {
+					continue;
+				}
 				if(Modifier.isPublic(method.getModifiers())) {
 					// 暂未检查returnType和parameterTypes
 					methods.put(method.getName(), method);
 				}
 			}
 		}
-		//ValidateHandler => validate
+		/**
+		 * ValidateHandler => validate
+		 * @return 服务名
+		 */
 		public String name() {
 			String simpleName = getClass().getSimpleName();
 			int handler = simpleName.indexOf("Handler");
@@ -123,10 +142,9 @@ public class ServiceHandler implements LightHttpHandler {
 					log.warn("service handle failed, path: {}, ex: {}", path, e.getMessage());
 				}
 			}
-			exchange.getResponseSender().send(badRequest);
 		}
 	}
-	
+	/** 统计service调用次数，定时保存到redis */
 	private static class ServiceCounter extends TokenCounter {
 		public ServiceCounter(int expireCount, long expireTime) {
 			this.expireCount = expireCount;

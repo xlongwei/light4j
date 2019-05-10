@@ -1,0 +1,99 @@
+{
+    "version": 1,
+    "collections": [{
+        "id": "715be48a-3a8a-9494-7a27-921178135295",
+        "name": "light4j",
+        "timestamp": 1557330375276,
+        "order": ["7e17eed5-ae7a-c219-b5e1-4ea022458cf0", "786c1852-6505-3bae-da6a-729adc4014be", "9d693769-413e-581c-8a4a-7f06264c03f6", "442ca0be-af0a-6fae-e763-80012fb4db1f", "8277fa8a-0cc5-e13f-47b7-1091ae22895f"],
+        "requests": [{
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "442ca0be-af0a-6fae-e763-80012fb4db1f",
+            "name": "pinyin",
+            "description": "",
+            "url": "http://{{host}}/service/pinyin",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "text",
+                "value": "浣犲ソ",
+                "type": "text"
+            }],
+            "dataMode": "urlencoded",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1557408590933
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "786c1852-6505-3bae-da6a-729adc4014be",
+            "name": "datetime",
+            "description": "",
+            "url": "http://{{host}}/service/datetime",
+            "method": "POST",
+            "headers": "",
+            "data": [],
+            "dataMode": "params",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1557408600814
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "7e17eed5-ae7a-c219-b5e1-4ea022458cf0",
+            "name": "ansj",
+            "description": "",
+            "url": "http://{{host}}/service/ansj/jianfan?fan=true&text=姹夎",
+            "method": "POST",
+            "headers": "",
+            "data": [],
+            "dataMode": "params",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1557411094534
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "8277fa8a-0cc5-e13f-47b7-1091ae22895f",
+            "name": "weixin",
+            "description": "",
+            "url": "http://localhost:8080/callback/weixin.xml?timestamp=timestamp&nonce=nonce",
+            "method": "POST",
+            "headers": "",
+            "data": "<xml><ToUserName><![CDATA[gh_8a53061dc477]]></ToUserName>\n<FromUserName><![CDATA[oZ4I0uFLpp16B6V_FDTgn7Q3hQzA]]></FromUserName>\n<CreateTime>1557332369</CreateTime>\n<MsgType><![CDATA[text]]></MsgType>\n<Content><![CDATA[缁熻]]></Content>\n<MsgId>22295637874647106</MsgId>\n</xml>",
+            "dataMode": "raw",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1557412128904
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "9d693769-413e-581c-8a4a-7f06264c03f6",
+            "name": "des",
+            "description": "",
+            "url": "http://{{host}}/service/des/encrypt",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "password",
+                "value": "1",
+                "type": "text"
+            }, {
+                "key": "data",
+                "value": "1",
+                "type": "text"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "version": 2,
+            "time": 1557411947824
+        }]
+    }],
+    "environments": [{
+        "id": "5b8ae82f-4652-ab71-5be1-c237d53d325b",
+        "name": "light4j",
+        "values": [{
+            "key": "host",
+            "value": "127.0.0.1:8080",
+            "type": "text"
+        }],
+        "timestamp": 1557408416621
+    }],
+    "headerPresets": [],
+    "globals": []
+}

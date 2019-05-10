@@ -17,6 +17,7 @@ import com.networknt.utility.StringUtils;
 
 /**
  * 常见日期类型处理：字符串、日期Date、长整数new Date(long)，parse(time).getTime()
+ * @author xlongwei
  */
 public class DateUtil {
 	private static Logger log = LoggerFactory.getLogger(DateUtil.class);
@@ -59,7 +60,9 @@ public class DateUtil {
 	 * <li>1406166160，mysql: unix_timestamp(now())</li>
 	 */
 	public static Date parse(String time) {
-		if(StringUtils.isBlank(time)) return null;
+		if(StringUtils.isBlank(time)) {
+			return null;
+		}
 		Set<String> set = formats.get(time.length());
 		if(!CollectionUtil.isEmpty(set)) {
 			for(String format : set) {
@@ -72,10 +75,12 @@ public class DateUtil {
 			}
 		}
 		int length = time.length();
-		if((length==10 || length==13) && time.matches("\\d+")) {
+		boolean isLongTime = (length==10 || length==13) && time.matches("\\d+");
+		if(isLongTime) {
 			return new Date(length==13?Long.parseLong(time):Long.parseLong(time)*1000);
 		}
-		if(length == 29) {
+		int httpHeaderLength = 29;
+		if(length == httpHeaderLength) {
 			try {
 				return httpHeader.parse(time);
 			}catch(Exception e) {
@@ -87,7 +92,9 @@ public class DateUtil {
 	}
 	
 	public static String format(Date date, String format) {
-		if(date==null || StringUtils.isBlank(format)) return null;
+		if(date==null || StringUtils.isBlank(format)) {
+			return null;
+		}
 		FastDateFormat fastDateFormat = fastDateFormats.get(format);
 		return fastDateFormat==null ? null : fastDateFormat.format(date);
 	}

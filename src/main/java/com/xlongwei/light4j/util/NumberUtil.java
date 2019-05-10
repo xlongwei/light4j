@@ -13,6 +13,7 @@ import com.networknt.utility.StringUtils;
 
 /**
  * 解析字符串值为基本类型：整数，长整数，浮点数，布尔值
+ * @author xlongwei
  */
 public class NumberUtil {
 	private static Logger logger = LoggerFactory.getLogger(NumberUtil.class);
@@ -89,10 +90,16 @@ public class NumberUtil {
     public static Boolean parseBoolean(String value, Boolean defValue) {
 		if(StringUtils.isNotBlank(value)) {
 	        String stringValue = value.toString().toLowerCase();
-	        for(int i=0; i<trueStrings.length; ++i) 
-	            if (trueStrings[i].equals(stringValue)) return Boolean.TRUE;
-	        for(int i=0; i<falseStrings.length; ++i) 
-	            if (falseStrings[i].equals(stringValue)) return Boolean.FALSE;
+	        for(int i=0; i<trueStrings.length; ++i) {
+				if (trueStrings[i].equals(stringValue)) {
+					return Boolean.TRUE;
+				}
+			}
+	        for(int i=0; i<falseStrings.length; ++i) {
+				if (falseStrings[i].equals(stringValue)) {
+					return Boolean.FALSE;
+				}
+			}
 		}
 		return defValue;
     }
@@ -101,7 +108,9 @@ public class NumberUtil {
     @SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <E extends Enum> E parseEnum(String value, E defValue) {
     	try{
-    		if(StringUtils.isBlank(value)) return defValue;
+    		if(StringUtils.isBlank(value)) {
+				return defValue;
+			}
     		return (E)Enum.valueOf(defValue.getDeclaringClass(), value);
     	}catch(Exception e) {
     		logger.warn("fail to parse enum {} : {}", defValue, value);
@@ -129,16 +138,21 @@ public class NumberUtil {
     
     /** 判断是否有效数字金额 */
     public static boolean isMoney(String money) {
-    	return money!=null && moneyPattern.matcher(money).matches();
+    	return money!=null && MONEY_PATTERN.matcher(money).matches();
     }
     
     /** 转换数字金额为大写汉字 */
 	public static String daxie(String string) {
-		if(!isMoney(string)) return null;
+		if(!isMoney(string)) {
+			return null;
+		}
 		BigDecimal money = new BigDecimal(string);
 	    StringBuffer sb = new StringBuffer();
-	    int signum = money.signum(); // -1 0 1
-	    if (signum == 0) return CN_ZEOR_FULL;
+	    // -1 0 1
+	    int signum = money.signum();
+	    if (signum == 0) {
+			return CN_ZEOR_FULL;
+		}
 	    //这里会进行金额的四舍五入
 	    long number = money.movePointRight(MONEY_PRECISION).setScale(0, 4).abs().longValue();
 	    // 得到小数点后两位值
@@ -147,14 +161,15 @@ public class NumberUtil {
 	    int numIndex = 0;
 	    boolean getZero = false;
 	    // 判断最后两位数，一共有四中情况：00 = 0, 01 = 1, 10, 11
-	    if (!(scale > 0)) {
+	    if (scale <= 0) {
 	        numIndex = 2;
 	        number = number / 100;
 	        getZero = true;
 	    }
-	    if ((scale > 0) && (!(scale % 10 > 0))) {
+	    int ten = 10;
+		if (scale > 0 && (scale % ten) <= 0) {
 	        numIndex = 1;
-	        number = number / 10;
+	        number = number / ten;
 	        getZero = true;
 	    }
 	    int zeroSize = 0;
@@ -163,13 +178,13 @@ public class NumberUtil {
 	            break;
 	        }
 	        // 每次获取到最后一个数
-	        numUnit = (int) (number % 10);
+	        numUnit = (int) (number % ten);
 	        if (numUnit > 0) {
 	            if ((numIndex == 9) && (zeroSize >= 3)) {
 	                sb.insert(0, CN_UPPER_MONETRAY_UNIT[6]);
 	            }
 	            if ((numIndex == 13) && (zeroSize >= 3)) {
-	                sb.insert(0, CN_UPPER_MONETRAY_UNIT[10]);
+	                sb.insert(0, CN_UPPER_MONETRAY_UNIT[ten]);
 	            }
 	            sb.insert(0, CN_UPPER_MONETRAY_UNIT[numIndex]);
 	            sb.insert(0, CN_UPPER_NUMBER[numUnit]);
@@ -190,7 +205,7 @@ public class NumberUtil {
 	            getZero = true;
 	        }
 	        // 让number每次都去掉最后一个数
-	        number = number / 10;
+	        number = number / ten;
 	        ++numIndex;
 	    }
 	    // 如果signum == -1，则说明输入的数字为负数，就在最前面追加特殊字符：负
@@ -198,7 +213,7 @@ public class NumberUtil {
 	        sb.insert(0, CN_NEGATIVE);
 	    }
 	    // 输入的数字小数点后两位为"00"的情况，则要在最后追加特殊字符：整
-	    if (!(scale > 0)) {
+	    if (scale <= 0) {
 	        sb.append(CN_FULL);
 	    }
 	    return sb.toString();
@@ -218,5 +233,5 @@ public class NumberUtil {
 	private static final String[] CN_UPPER_MONETRAY_UNIT = { "分", "角", "元", "拾", "佰", "仟", "万", "拾", "佰", "仟", "亿", "拾", "佰", "仟", "兆", "拾", "佰", "仟" };
 	private static final String CN_FULL = "整", CN_NEGATIVE = "负", CN_ZEOR_FULL = "零元整";
 	private static final int MONEY_PRECISION = 2;
-	private static final Pattern moneyPattern = Pattern.compile("[+-]?\\d{1,16}(\\.\\d{1,2})?");
+	private static final Pattern MONEY_PATTERN = Pattern.compile("[+-]?\\d{1,16}(\\.\\d{1,2})?");
 }

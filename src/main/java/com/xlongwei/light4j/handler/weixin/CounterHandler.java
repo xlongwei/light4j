@@ -10,27 +10,39 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.DateUtils;
 
-import com.xlongwei.light4j.handler.WeixinHandler.MessageHandler.TextHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
+import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
 
-public class CounterHandler extends TextHandler {
+/**
+ * echo counter info
+ * @author xlongwei
+ *
+ */
+public class CounterHandler extends AbstractTextHandler {
+
+	private static final String TAG = "统计";
 
 	@Override
 	public String handle(String content) {
-		if(StringUtil.isBlank(content)) return null;
+		if(StringUtil.isBlank(content)) {
+			return null;
+		}
 		
-		if(content.startsWith("统计")) {
-			if(ServiceCounter.refresh()==false) return null;
+		if(content.startsWith(TAG)) {
+			if(ServiceCounter.refresh()==false) {
+				return null;
+			}
 			
 			String cmd = content.substring(2).trim();
 			Date date = DateUtil.parse(cmd);
 			String day = DateUtil.format(date!=null?date:SystemClock.date(), "yyyy-MM-dd");
-			if(StringUtil.isBlank(cmd) || date!=null) {//支持：统计，返回当天信息
+			//支持：统计，返回当天信息
+			if(StringUtil.isBlank(cmd) || date!=null) {
 				Map<String, Integer> count = ServiceCounter.counts.get(day);
 				if(count!=null) {
 					StringBuilder sb = new StringBuilder(day).append("\n");
@@ -48,58 +60,66 @@ public class CounterHandler extends TextHandler {
 					return sb.toString();
 				}
 			}else {
-				boolean isNumbers = StringUtil.isNumbers(cmd);
-				StringBuilder sb = new StringBuilder(cmd).append("\n");
-				date = SystemClock.date();
-				int days = isNumbers ? Integer.parseInt(cmd) : 30, total = 0;
-				Map<String, Integer> totalCount = new HashMap<>();
-				do {
-					day = DateUtil.format(date, "yyyy-MM-dd");
-					Map<String, Integer> count = ServiceCounter.counts.get(day);
-					if(count!=null) {
-						if(isNumbers) {
-							for(String key : count.keySet()) {
-								Integer times = count.get(key);
-								if(times!=null) {
-									Integer totalTimes = totalCount.get(key);
-									if(totalTimes==null) {
-										totalCount.put(key, times);
-									}else {
-										totalCount.put(key, totalTimes+times);
-									}
-								}
-							}
-						}else {
-							Integer times = count.get(cmd);
-							if(times!=null) {
-								sb.append(day).append("=").append(times).append("\n");
-								total += times;
-							}
-						}
-						if(--days > 0) {
-							date = DateUtils.addDays(date, -1);
-							continue;
-						}
-					}
-					sb.insert(0, (SystemClock.date().getTime()-date.getTime())/TimeUnit.DAYS.toMillis(1)+"/");
-					break;
-				}while(true);
-				if(isNumbers) {
-					for(String key : totalCount.keySet()) {
-						Integer times = totalCount.get(key);
-						sb.append(key).append("=").append(times).append("\n");
-						total += times;
-					}
-				}
-				sb.append("total: ").append(total);
-				return sb.toString();
+				return countDays(cmd);
 			} 
 		}
 		return null;
 	}
 
-	public static class ServiceCounter {
-		//保留所有redis访问统计信息property:service{day}
+	private String countDays(String cmd) {
+		Date date;
+		String day;
+		boolean isNumbers = StringUtil.isNumbers(cmd);
+		StringBuilder sb = new StringBuilder(cmd).append("\n");
+		date = SystemClock.date();
+		int days = isNumbers ? Integer.parseInt(cmd) : 30, total = 0;
+		Map<String, Integer> totalCount = new HashMap<>(8);
+		do {
+			day = DateUtil.format(date, "yyyy-MM-dd");
+			Map<String, Integer> count = ServiceCounter.counts.get(day);
+			if(count!=null) {
+				if(isNumbers) {
+					for(String key : count.keySet()) {
+						Integer times = count.get(key);
+						if(times!=null) {
+							Integer totalTimes = totalCount.get(key);
+							if(totalTimes==null) {
+								totalCount.put(key, times);
+							}else {
+								totalCount.put(key, totalTimes+times);
+							}
+						}
+					}
+				}else {
+					Integer times = count.get(cmd);
+					if(times!=null) {
+						sb.append(day).append("=").append(times).append("\n");
+						total += times;
+					}
+				}
+				if(--days > 0) {
+					date = DateUtils.addDays(date, -1);
+					continue;
+				}
+			}
+			sb.insert(0, (SystemClock.date().getTime()-date.getTime())/TimeUnit.DAYS.toMillis(1)+"/");
+			break;
+		}while(true);
+		if(isNumbers) {
+			for(String key : totalCount.keySet()) {
+				Integer times = totalCount.get(key);
+				sb.append(key).append("=").append(times).append("\n");
+				total += times;
+			}
+		}
+		sb.append("total: ").append(total);
+		return sb.toString();
+	}
+
+	private static class ServiceCounter {
+		/**
+		 * 保留所有redis访问统计信息property:service{day}
+		 */
 		public static Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
 		static {
 			Date date = SystemClock.date();

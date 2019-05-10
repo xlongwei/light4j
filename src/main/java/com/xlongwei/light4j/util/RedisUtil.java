@@ -13,9 +13,14 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
+/**
+ * 
+ * @author xlongwei
+ *
+ */
 @Slf4j
 public class RedisUtil {
-	public static final JedisPool jedisPool;
+	public static final JedisPool JEDIS_POOL;
 	
 	static {
 		Map<String, String> config = ConfigUtil.redis();
@@ -31,26 +36,31 @@ public class RedisUtil {
 		int db = NumberUtil.parseInt(hostPort.length>2 ? hostPort[2] : null, 0);
 		String password = hostPort.length>3?hostPort[3]:null;
 		int timeout = NumberUtil.parseInt(hostPort.length>4 ? hostPort[4] : null, 0);
-		jedisPool = new JedisPool(poolConfig, host, port, timeout, password, db);
+		JEDIS_POOL = new JedisPool(poolConfig, host, port, timeout, password, db);
 		
 		TaskUtil.addShutdownHook(new Runnable() {
 			@Override
 			public void run() {
-				jedisPool.destroy();
+				JEDIS_POOL.destroy();
 			}
 		});
 	}
 	
 	public interface JedisCallback<T> {
+		/**
+		 * 操作Jedis，必要时返回对象
+		 * @param jedis
+		 * @return
+		 */
 		T doInJedis(Jedis jedis);
 	}
 	
 	public static <T> T execute(JedisCallback<T> callback) {
-		Jedis jedis = jedisPool.getResource();
+		Jedis jedis = JEDIS_POOL.getResource();
 		try {
 			return callback.doInJedis(jedis);
 		}finally {
-			jedisPool.returnResource(jedis);
+			JEDIS_POOL.returnResource(jedis);
 		}
 	}
 	
@@ -125,7 +135,9 @@ public class RedisUtil {
 	
 	/** 默认使用jdk序列化对象 */
 	public static byte[] byteValue(String value) {
-		if(value == null) return new byte[0];
+		if(value == null) {
+			return new byte[0];
+		}
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream(256);
 			ObjectOutputStream oos = new ObjectOutputStream(baos);

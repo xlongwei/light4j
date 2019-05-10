@@ -12,6 +12,11 @@ import com.xlongwei.light4j.util.HandlerUtil;
 import de.rrze.jpwgen.utils.PwHelper;
 import io.undertow.server.HttpServerExchange;
 
+/**
+ * des handler
+ * @author xlongwei
+ *
+ */
 public class DesHandler extends AbstractHandler {
 
 	public void encrypt(HttpServerExchange exchange) throws Exception {

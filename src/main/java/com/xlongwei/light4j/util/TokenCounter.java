@@ -53,7 +53,9 @@ public class TokenCounter {
 		Integer cacheId = idCaches.get(cacheKey);
 		if(cacheId == null) {
 			cacheId = getId(tokenCount);
-			if(cacheId != null) idCaches.put(cacheKey, cacheId);
+			if(cacheId != null) {
+				idCaches.put(cacheKey, cacheId);
+			}
 		}
 		
 		if(cacheId != null) {

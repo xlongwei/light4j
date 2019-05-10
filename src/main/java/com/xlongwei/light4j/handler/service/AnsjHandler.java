@@ -13,14 +13,23 @@ import com.xlongwei.light4j.util.StringUtil;
 
 import io.undertow.server.HttpServerExchange;
 
+/**
+ * ansj handler
+ * @author xlongwei
+ *
+ */
 public class AnsjHandler extends AbstractHandler {
 
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		String path = exchange.getAttachment(AbstractHandler.PATH);
-		if(StringUtils.isBlank(path)) return;
+		if(StringUtils.isBlank(path)) {
+			return;
+		}
 		String text = HandlerUtil.getParam(exchange, "text");
-		if(StringUtils.isBlank(text)) return;
+		if(StringUtils.isBlank(text)) {
+			return;
+		}
 		List<String> list = null; String string = null;
 		switch(path) {
 		case "fenci":
@@ -44,11 +53,20 @@ public class AnsjHandler extends AbstractHandler {
 			int vcharType = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "vcharType"), 0);
 			list = FenciUtil.pinyin(text, caseType, toneType, vcharType);
 			ListIterator<String> listIterator = list.listIterator();
-			while(listIterator.hasNext()) if(listIterator.next()==null) listIterator.set("　");
+			while(listIterator.hasNext()) {
+				if(listIterator.next()==null) {
+					listIterator.set("　");
+				}
+			}
+			break;
+		default:
 			break;
 		}
-		if(list!=null) exchange.putAttachment(AbstractHandler.RESP, StringUtil.params("result", StringUtil.join(list, null, null, " ")));
-		if(string!=null) exchange.putAttachment(AbstractHandler.RESP, StringUtil.params("result", string));
+		if(list!=null) {
+			exchange.putAttachment(AbstractHandler.RESP, StringUtil.params("result", StringUtil.join(list, null, null, " ")));
+		}else if(string!=null) {
+			exchange.putAttachment(AbstractHandler.RESP, StringUtil.params("result", string));
+		}
 	}
 
 }

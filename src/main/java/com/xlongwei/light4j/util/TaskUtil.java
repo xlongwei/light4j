@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,8 +35,8 @@ public class TaskUtil {
 	private static Map<Future<?>, Callback> callbackdTasks = null;
 	private static List<Object> shutdownHooks = new LinkedList<>();
 	static {
-		cachedExecutor = Executors.newCachedThreadPool(new TaskUtilThreadFactory("cached"));
-		scheduledExecutor = Executors.newScheduledThreadPool(1, new TaskUtilThreadFactory("scheduled"));
+		cachedExecutor = new ThreadPoolExecutor(3, 36, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new TaskUtilThreadFactory("cached"));
+		scheduledExecutor = new ScheduledThreadPoolExecutor(3, new TaskUtilThreadFactory("scheduled"));
 		Runtime.getRuntime().addShutdownHook(new Thread() { @Override public void run() { TaskUtil.shutdown(); } });
 	}
 	
@@ -70,8 +72,12 @@ public class TaskUtil {
 		scheduledExecutor.shutdown();
 		cachedExecutor.shutdown();
 		logger.info("TaskUtil executors shutdown.");
-		if(!scheduledExecutor.isTerminated()) scheduledExecutor.shutdownNow();
-		if(!cachedExecutor.isTerminated()) scheduledExecutor.shutdownNow();
+		if(!scheduledExecutor.isTerminated()) {
+			scheduledExecutor.shutdownNow();
+		}
+		if(!cachedExecutor.isTerminated()) {
+			scheduledExecutor.shutdownNow();
+		}
 	}
 	
 	/**
@@ -84,10 +90,19 @@ public class TaskUtil {
 	public static boolean addShutdownHook(Object shutdownHook) {
 		Class<? extends Object> clazz = shutdownHook.getClass();
 		boolean validShutdownHook = false;
-		if(Closeable.class.isAssignableFrom(clazz)) validShutdownHook = true;
-		if(!validShutdownHook && (Runnable.class.isAssignableFrom(clazz) || Callable.class.isAssignableFrom(clazz))) validShutdownHook = true;
-		if(!validShutdownHook && Thread.class.isAssignableFrom(clazz)) validShutdownHook = true;
-		if(validShutdownHook) shutdownHooks.add(shutdownHook);
+		if(Closeable.class.isAssignableFrom(clazz)) {
+			validShutdownHook = true;
+		}
+		boolean isRunnableOrCallable = !validShutdownHook && (Runnable.class.isAssignableFrom(clazz) || Callable.class.isAssignableFrom(clazz));
+		if(isRunnableOrCallable) {
+			validShutdownHook = true;
+		}
+		if(!validShutdownHook && Thread.class.isAssignableFrom(clazz)) {
+			validShutdownHook = true;
+		}
+		if(validShutdownHook) {
+			shutdownHooks.add(shutdownHook);
+		}
 		return validShutdownHook;
 	}
 
@@ -125,8 +140,11 @@ public class TaskUtil {
 	 */
 	public static ScheduledFuture<?> scheduleAt(Runnable task, Date time) {
 		long mills = time.getTime() - System.currentTimeMillis();
-		if(mills > 0) return schedule(task, mills, TimeUnit.MILLISECONDS);
-		else logger.info("scheduleAt "+time+" not executed cause of passed "+new Date());
+		if(mills > 0) {
+			return schedule(task, mills, TimeUnit.MILLISECONDS);
+		} else {
+			logger.info("scheduleAt "+time+" not executed cause of passed "+new Date());
+		}
 		return null;
 	}
 	
@@ -147,7 +165,11 @@ public class TaskUtil {
 			long span = unit.toMillis(delay);
 			long at = time.getTime();
 			long current = System.currentTimeMillis();
-			while(at <= current) at += span; //寻找下次合适执行时机，按天执行的保留小时准确，按小时执行的保留分钟准确
+			while(at <= current)
+			 {
+				//寻找下次合适执行时机，按天执行的保留小时准确，按小时执行的保留分钟准确
+				at += span; 
+			}
 			mills = at - current;
 		}
 		scheduleAtFixedRate(task, mills, unit.toMillis(delay), TimeUnit.MILLISECONDS);
@@ -155,19 +177,26 @@ public class TaskUtil {
 	
 	public static void cancel(Runnable task) {
 		boolean cancel = cancel(cancelTrackingTasks.get(task.toString()));
-		if(cancel) cancelTrackingTasks.remove(task.toString()); 
+		if(cancel) {
+			cancelTrackingTasks.remove(task.toString());
+		} 
 		keepRunningTasks.remove(task);
 	}
 	
 	public static void cancel(Callable<?> task) {
 		boolean cancel = cancel(cancelTrackingTasks.get(task.toString()));
-		if(cancel) cancelTrackingTasks.remove(task.toString());
+		if(cancel) {
+			cancelTrackingTasks.remove(task.toString());
+		}
 	}
 	
 	public static boolean cancel(Future<?> future) {
-		if(future==null) return false;
-		if(!future.isDone() && !future.isCancelled())
+		if(future==null) {
+			return false;
+		}
+		if(!future.isDone() && !future.isCancelled()) {
 			return future.cancel(true);
+		}
 		return true;
 	}
 	
@@ -216,10 +245,11 @@ public class TaskUtil {
 	}
 	
 	private static void checkInitCachedTasks() {
-		if(keepRunningTasks != null) return;
-		
-		keepRunningTasks = new HashMap<Runnable, Future<?>>();
-		callbackdTasks = new HashMap<Future<?>, Callback>();
+		if(keepRunningTasks != null) {
+			return;
+		}
+		keepRunningTasks = new HashMap<Runnable, Future<?>>(16);
+		callbackdTasks = new HashMap<Future<?>, Callback>(16);
 		scheduleAtFixedRate(new CachedTasksMonitor(), 1, 1, TimeUnit.MINUTES);
 	}
 	
@@ -235,13 +265,18 @@ public class TaskUtil {
 					for(Runnable task : keepRunningTasks.keySet()) {
 						Future<?> future = keepRunningTasks.get(task);
 						if(future.isDone()) {
-							future = submit(task);//恢复运行结束任务
-							if(tempTasks == null) tempTasks = new HashMap<Runnable, Future<?>>();
+							//恢复运行结束任务
+							future = submit(task);
+							if(tempTasks == null) {
+								tempTasks = new HashMap<Runnable, Future<?>>(4);
+							}
 							tempTasks.put(task, future);
 							cancelTrackingTasks.put(task.toString(), future);
 						}
 					}
-					if(tempTasks != null && tempTasks.size() > 0) keepRunningTasks.putAll(tempTasks);
+					if(tempTasks != null && tempTasks.size() > 0) {
+						keepRunningTasks.putAll(tempTasks);
+					}
 				}
 			}
 			
@@ -258,7 +293,9 @@ public class TaskUtil {
 										callback.handle(result);
 									}
 								});
-								if(callbackedFutures == null) callbackedFutures = new LinkedList<Future<?>>();
+								if(callbackedFutures == null) {
+									callbackedFutures = new LinkedList<Future<?>>();
+								}
 								callbackedFutures.add(future);
 							}catch (Exception e) {
 								logger.warn("TaskUtil callbackedTasks warn: ", e);
@@ -280,7 +317,7 @@ public class TaskUtil {
 	 * 自定义线程名称Task-idx-name-idx2
 	 */
 	private static class TaskUtilThreadFactory implements ThreadFactory {
-		private final static AtomicInteger taskutilThreadNumber = new AtomicInteger(1);
+		private static AtomicInteger taskutilThreadNumber = new AtomicInteger(1);
 		private final String threadNamePrefix;
 		TaskUtilThreadFactory(String threadNamePrefix){
 			this.threadNamePrefix = threadNamePrefix;
@@ -314,6 +351,10 @@ public class TaskUtil {
 	 * 等待结果回调接口
 	 */
 	public static interface Callback {
+		/**
+		 * 回调处理结果对象
+		 * @param result
+		 */
 		void handle(Object result);
 	}
 }

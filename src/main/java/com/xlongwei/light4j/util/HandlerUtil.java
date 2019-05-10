@@ -25,10 +25,23 @@ import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author xlongwei
+ *
+ */
 @Slf4j
 public class HandlerUtil {
-	public static final AttachmentKey<Map<String, Object>> BODY = AttachmentKey.create(Map.class);//请求参数和正文
-	public static final String BODYSTRING = "BODYSTRING";//请求正文字符串
+	private static final String TEXT = "text";
+	private static final String XML = "xml";
+	private static final String JSON = "json";
+	/**
+	 * 请求参数和正文
+	 */
+	public static final AttachmentKey<Map<String, Object>> BODY = AttachmentKey.create(Map.class);
+	/**
+	 * 请求正文字符串
+	 */
+	public static final String BODYSTRING = "BODYSTRING";
 
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> scanHandlers(Class<T> clazz, String scanSpec) {
@@ -37,7 +50,9 @@ public class HandlerUtil {
 		List<String> list = scanResult.getNamesOfAllClasses();
 		List<T> handlers = new ArrayList<>();
 		for(String className : list) {
-			if(!className.startsWith(scanSpec)) continue;
+			if(!className.startsWith(scanSpec)) {
+				continue;
+			}
 			try {
 				Class<?> clz = Class.forName(className);
 				if(clazz.isAssignableFrom(clz)) {
@@ -66,7 +81,7 @@ public class HandlerUtil {
 	 * @param exchange
 	 */
 	public static void parseBody(HttpServerExchange exchange) {
-		Map<String, Object> body = new HashMap<>();
+		Map<String, Object> body = new HashMap<>(4);
 		Map<String, Deque<String>> params = exchange.getQueryParameters();
 		for(String param : params.keySet()) {
 			Deque<String> deque = params.get(param);
@@ -79,7 +94,8 @@ public class HandlerUtil {
 		String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
 		try {
 			exchange.startBlocking();//参考BodyHandler
-			if(StringUtils.isNotBlank(contentType) && (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded"))) {
+			boolean isForm = StringUtils.isNotBlank(contentType) && (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded"));
+			if(isForm) {
 				Builder builder = FormParserFactory.builder();
 				builder.setDefaultCharset(CharEncoding.UTF_8);
 				FormParserFactory formParserFactory = builder.build();
@@ -104,12 +120,13 @@ public class HandlerUtil {
 		            	}
 		            }
 		        }
-			}else if(StringUtils.isBlank(contentType) || StringUtil.containsOneOfIgnoreCase(contentType, "text", "json", "xml")) {
+			}else if(StringUtils.isBlank(contentType) || StringUtil.containsOneOfIgnoreCase(contentType, TEXT, JSON, XML)) {
 				InputStream inputStream = exchange.getInputStream();
 				String string = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
 				if (string != null) {
 					string = string.trim();
-					if (string.startsWith("{")) {
+					String lp = "{";
+					if (string.startsWith(lp)) {
 						Map<String, Object> readValue = ConfigUtil.stringMapObject(string);
 						if(readValue!=null && readValue.size()>0) {
 							body.putAll(readValue);

@@ -35,39 +35,51 @@ import org.nlpcn.commons.lang.pinyin.PinyinFormatter;
 import org.nlpcn.commons.lang.pinyin.ToneType;
 import org.nlpcn.commons.lang.pinyin.YuCharType;
 
-import com.xlongwei.light4j.util.ADTUtils.PairList;
+import com.xlongwei.light4j.util.AdtUtil.PairList;
 
-/** ansj_seg分词封装 */
+/**
+ * ansj_seg分词封装
+ * @author xlongwei
+ *
+ */
 public class FenciUtil {
 	public static final List<String> EMPTY_STRING_LIST = Collections.emptyList();
-	private static final InputStream stopwordsStream = ConfigUtil.stream("stopwords.txt");
-	private static final Map<String, Analysis> methods = new HashMap<>();
-	public static final List<String> stopwordsList = stopwordsStream!=null ? FileUtil.readLines(stopwordsStream, FileUtil.CharsetNames.UTF_8) : EMPTY_STRING_LIST;
+	private static final InputStream STOPWORDS_STREAM = ConfigUtil.stream("stopwords.txt");
+	private static final Map<String, Analysis> METHODS = new HashMap<>();
+	public static final List<String> STOPWORDS_LIST = STOPWORDS_STREAM!=null ? FileUtil.readLines(STOPWORDS_STREAM, FileUtil.CharsetNames.UTF_8) : EMPTY_STRING_LIST;
 	static {
 		MyStaticValue.isRealName = Boolean.TRUE;
-		MyStaticValue.ENV.putIfAbsent(AmbiguityLibrary.DEFAULT, ConfigUtil.directory + "ambiguity.dic");
-		MyStaticValue.ENV.putIfAbsent(StopLibrary.DEFAULT, ConfigUtil.directory + "stop.dic");
-		if(!StringUtil.isUrl(ConfigUtil.directory)) {
+		MyStaticValue.ENV.putIfAbsent(AmbiguityLibrary.DEFAULT, ConfigUtil.DIRECTORY + "ambiguity.dic");
+		MyStaticValue.ENV.putIfAbsent(StopLibrary.DEFAULT, ConfigUtil.DIRECTORY + "stop.dic");
+		if(!StringUtil.isUrl(ConfigUtil.DIRECTORY)) {
 			//文件较大，不从网络加载，仅支持从文件加载（crf.model文件已损坏）
 			//MyStaticValue.ENV.putIfAbsent(CrfLibrary.DEFAULT, ConfigUtil.directory + "crf.model");
-			MyStaticValue.ENV.putIfAbsent(DicLibrary.DEFAULT, ConfigUtil.directory + "default.dic");
-			MyStaticValue.ENV.putIfAbsent(SynonymsLibrary.DEFAULT, ConfigUtil.directory + "synonyms.dic");
+			MyStaticValue.ENV.putIfAbsent(DicLibrary.DEFAULT, ConfigUtil.DIRECTORY + "default.dic");
+			MyStaticValue.ENV.putIfAbsent(SynonymsLibrary.DEFAULT, ConfigUtil.DIRECTORY + "synonyms.dic");
 		}
 	}
 	public static enum Method {
+		/**
+		 * 分词方式
+		 */
 		BASE, DIC, INDEX, NLP, TO;
 		public static Method of(String method, Method defVal) {
-			if(!StringUtil.isBlank(method))
-			for(Method m : Method.values()) {
-				if(m.name().equalsIgnoreCase(method)) return m;
+			if(!StringUtil.isBlank(method)) {
+				for(Method m : Method.values()) {
+					if(m.name().equalsIgnoreCase(method)) {
+						return m;
+					}
+				}
 			}
 			return defVal;
 		}
 	};
 	
 	public static Analysis getAnalysis(Method method) {
-		if(method == null) method = Method.TO;
-		Analysis a = methods.get(method.name());
+		if(method == null) {
+			method = Method.TO;
+		}
+		Analysis a = METHODS.get(method.name());
 		if(a == null) {
 			switch(method) {
 			case TO: a = new ToAnalysis(); break;
@@ -75,8 +87,9 @@ public class FenciUtil {
 			case DIC: a = new DicAnalysis(); break;
 			case INDEX: a = new IndexAnalysis(); break;
 			case BASE: a = new BaseAnalysis(); break;
+			default: a= new ToAnalysis(); break;
 			}
-			methods.put(method.name(), a);
+			METHODS.put(method.name(), a);
 		}
 		return a;
 	}
@@ -85,54 +98,87 @@ public class FenciUtil {
 	 * @param stopword true 去掉停止词
 	 */
 	public static List<String> segments(String text, boolean stopword) {
-		if(StringUtil.isBlank(text)) return EMPTY_STRING_LIST;
+		if(StringUtil.isBlank(text)) {
+			return EMPTY_STRING_LIST;
+		}
 		List<String> list = fenci(text, Method.TO);
-		if(!stopword || list.isEmpty()) return list;
+		if(!stopword || list.isEmpty()) {
+			return list;
+		}
 		List<String> result = new ArrayList<>();
-		for(String name : list) if(!stopwordsList.contains(name)) result.add(name);
+		for(String name : list) {
+			if(!STOPWORDS_LIST.contains(name)) {
+				result.add(name);
+			}
+		}
 		return result;
 	}
 
 	/** frequent 分词频次倒排 */
 	public static List<String> frequency(String content, int num) {
 		List<String> parse = segments(content, false);
-		Map<String, Integer> counts = new HashMap<>();
+		Map<String, Integer> counts = new HashMap<>(8);
 		for(String word : parse) {
-			if(StringUtil.isBlank(word) || word.length()<2) continue;
+			if(StringUtil.isBlank(word) || word.length()<2) {
+				continue;
+			}
 			Integer count = counts.get(word);
-			if(count==null) counts.put(word, 1);
-			else counts.put(word, count+1);
+			if(count==null) {
+				counts.put(word, 1);
+			} else {
+				counts.put(word, count+1);
+			}
 		}
 		PairList<String, Integer> pairs = new PairList.PriorityPairList<>();
-		for(String keyword : counts.keySet()) pairs.put(keyword, counts.get(keyword));
+		for(String keyword : counts.keySet()) {
+			pairs.put(keyword, counts.get(keyword));
+		}
 		List<String> keywords = new LinkedList<>();
-		while(pairs.moveNext()) keywords.add(pairs.getData());
+		while(pairs.moveNext()) {
+			keywords.add(pairs.getData());
+		}
 		return num>0 ? keywords.subList(0, num) : keywords;
 	}
 	
 	/** ansj 提取关键字 */
 	public static List<String> keywords(String title, String content, int num, Method method){
-		if(StringUtil.isBlank(title) && StringUtil.isBlank(content)) return EMPTY_STRING_LIST;
-		if(method==null) method = Method.TO;
+		if(StringUtil.isBlank(title) && StringUtil.isBlank(content)) {
+			return EMPTY_STRING_LIST;
+		}
+		if(method==null) {
+			method = Method.TO;
+		}
 		KeyWordComputer<?> kwc = new KeyWordComputer<Analysis>(num, getAnalysis(method));
 		Collection<Keyword> keywords = kwc.computeArticleTfidf(title, content);
-		if(keywords==null || keywords.size()==0) return EMPTY_STRING_LIST;
+		if(keywords==null || keywords.size()==0) {
+			return EMPTY_STRING_LIST;
+		}
 		List<String> keys = new LinkedList<>();
-		for(Keyword keyword : keywords) keys.add(keyword.getName());
+		for(Keyword keyword : keywords) {
+			keys.add(keyword.getName());
+		}
 		return keys;
 	}
 	
 	/** ansj 各种分词 */
 	public static List<String> fenci(String content, Method method) {
-		if(StringUtil.isBlank(content)) return EMPTY_STRING_LIST;
-		if(method == null) method = Method.TO;
+		if(StringUtil.isBlank(content)) {
+			return EMPTY_STRING_LIST;
+		}
+		if(method == null) {
+			method = Method.TO;
+		}
 		Result result = getAnalysis(method).parseStr(content);
 		List<Term> terms = result==null?null:result.getTerms();
-		if(terms==null || terms.size()==0) return EMPTY_STRING_LIST;
+		if(terms==null || terms.size()==0) {
+			return EMPTY_STRING_LIST;
+		}
 		List<String> list = new ArrayList<>();
 		for(Term term : terms) {
 			String name = term.getName();
-			if(StringUtil.isBlank(name)) continue;
+			if(StringUtil.isBlank(name)) {
+				continue;
+			}
 			list.add(name);
 		}
 		return list;
@@ -162,15 +208,24 @@ public class FenciUtil {
 	 * @param vcharType 0-ü 1-v 2-u: （toneType=0时强制为0）
 	 */
 	public static List<String> pinyin(String content, int caseType, int toneType, int vcharType) {
-		if(StringUtil.isBlank(content)) return EMPTY_STRING_LIST;
-		if(toneType!=1 && toneType!=2) vcharType=0;
+		if(StringUtil.isBlank(content)) {
+			return EMPTY_STRING_LIST;
+		}
+		int two = 2;
+		if(toneType!=1 && toneType!=two) {
+			vcharType=0;
+		}
 		List<String> pinyin = Pinyin.tonePinyin(content);
-		if(caseType==0&&toneType==2&&vcharType==2) return pinyin;
-		PinyinFormat format = new PinyinFormat(vcharType==1?YuCharType.WITH_V:(vcharType==2?YuCharType.WITH_U_AND_COLON:YuCharType.WITH_U_UNICODE)
-				, toneType==1?ToneType.WITHOUT_TONE:(toneType==2?ToneType.WITH_TONE_NUMBER:(toneType==3?ToneType.WITH_ABBR:ToneType.WITH_TONE_MARK))
-				, caseType==1?CaseType.CAPITALIZE:(caseType==2?CaseType.UPPERCASE:CaseType.LOWERCASE));
+		if(caseType==0&&toneType==two&&vcharType==two) {
+			return pinyin;
+		}
+		PinyinFormat format = new PinyinFormat(vcharType==1?YuCharType.WITH_V:(vcharType==two?YuCharType.WITH_U_AND_COLON:YuCharType.WITH_U_UNICODE)
+				, toneType==1?ToneType.WITHOUT_TONE:(toneType==two?ToneType.WITH_TONE_NUMBER:(toneType==3?ToneType.WITH_ABBR:ToneType.WITH_TONE_MARK))
+				, caseType==1?CaseType.CAPITALIZE:(caseType==two?CaseType.UPPERCASE:CaseType.LOWERCASE));
 		List<String> list = new ArrayList<>();
-		for(String py : pinyin) list.add(py==null?py:PinyinFormatter.formatPinyin(py, format));
+		for(String py : pinyin) {
+			list.add(py==null?py:PinyinFormatter.formatPinyin(py, format));
+		}
 		return list;
 	}
 }

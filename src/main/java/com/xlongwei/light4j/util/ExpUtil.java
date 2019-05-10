@@ -11,6 +11,10 @@ import java.util.Stack;
  * @date 2009-10-14
  */
 public class ExpUtil {
+	private static final String MISS_FUNCTION_PARAMS = "Miss function params";
+	private static final String NO_EXPRESSION = "No Expression";
+	private static final String MISS_OPERANDS = "Miss operands";
+
 	/**
 	 * 静态初始化，仅执行一次
 	 */
@@ -66,12 +70,12 @@ public class ExpUtil {
 	 * 执行初始化
 	 */
 	private static void init() {
-		priorities = new HashMap<String, Integer>();
-		operatorTypes = new HashMap<String, OperatorTypes>();
-		functionTypes = new HashMap<String, FunctionTypes>();
-		functionParams = new HashMap<String, Integer>();
-		constants = new HashMap<String, Double>();
-		radix = new HashMap<Carriage, Integer>();
+		priorities = new HashMap<String, Integer>(8);
+		operatorTypes = new HashMap<String, OperatorTypes>(8);
+		functionTypes = new HashMap<String, FunctionTypes>(16);
+		functionParams = new HashMap<String, Integer>(16);
+		constants = new HashMap<String, Double>(4);
+		radix = new HashMap<Carriage, Integer>(4);
 		
 		// 添加运算符，(符号，优先级，类型)
 		addOperator("+", 1, OperatorTypes.ADD);
@@ -80,7 +84,7 @@ public class ExpUtil {
 		addOperator("/", 2, OperatorTypes.DIVIDE);
 		addOperator("%", 2, OperatorTypes.MOD);
 		addOperator("^", 3, OperatorTypes.POWER);
-		addOperator("N", 4, OperatorTypes.NEGATIVE);// 负号
+		addOperator("N", 4, OperatorTypes.NEGATIVE);
 		
 		// 添加函数，(函数名，参数个数，类型)
 		addFunction("sin", 1, FunctionTypes.SIN);
@@ -152,7 +156,7 @@ public class ExpUtil {
 	 */
 	private static Map<String, Integer>			priorities;
 	
-	private static Map<Carriage, Integer>		radix;			// 各进制基数
+	private static Map<Carriage, Integer>		radix;
 																
 	public ExpUtil() {
 	}
@@ -195,168 +199,103 @@ public class ExpUtil {
 	 *             表达式错误异常
 	 */
 	public ExpUtil parse() throws ExpException {
-		if (exp == null) { throw new ExpException("No Expression"); }
-		operators.clear();
-		operands.clear();
+		if (exp == null) { throw new ExpException(NO_EXPRESSION); }
+		operators.clear(); operands.clear();
 		TokenTypes lastTokenType = null;
 		for (int i = 0; i < exp.length(); i++) {
-			if (exp.charAt(i) == '(') {// 左括号
-				if ((lastTokenType != null)// (1+1)
-						&& (lastTokenType != TokenTypes.OPERATOR)// 3-(1+1)
-						&& (lastTokenType != TokenTypes.LEFTP)// ((1+1)*2)
-						&& (lastTokenType != TokenTypes.FUNCTION)) {// sin(1)
-					throw new ExpException(
-							"Left parenthese should follow an operator");
-				} else {
-					operators.push(String.valueOf('('));
-					lastTokenType = TokenTypes.LEFTP;
-				}
-			} else if (exp.charAt(i) == ')') {// 右括号
-				if (!operators.contains("(")) {// 没有左括号则异常
-					throw new ExpException("Miss left parenthese");
-				} else {
-					if (lastTokenType == TokenTypes.LEFTP) {// ()
-						throw new ExpException("Empty parentheses");
-					} else {
-						while ((operators.size() > 0)// [(,+] <=> (1+1)
-								&& (operators.peek().charAt(0) != '(')) {
-							computeOperator();// compute '+'
-						}
-						operators.pop();// pop '('
-						lastTokenType = TokenTypes.RIGHTP;
-					}
-				}
-			} else if (Character.isDigit(exp.charAt(i))// 数字
-					|| (exp.charAt(i) == '.')) {
+			char c = exp.charAt(i);
+			if (c == '(') {
+				lastTokenType = leftP(lastTokenType);
+			} else if (c == ')') {
+				lastTokenType = rightP(lastTokenType);
+			} else if (Character.isDigit(c) || (c == '.')) {
 				StringBuilder sb = new StringBuilder();
 				boolean isDouble = false;
 				do {
-					if (exp.charAt(i) == '.') {
+					if (c == '.') {
 						if (isDouble == false) {
 							isDouble = true;
 						} else {
-							throw new ExpException("Invalid Dot");// 小数点太多
+							throw new ExpException("Invalid Dot");
 						}
 					}
-					sb.append(exp.charAt(i));
-					i++;
-				} while ((i < exp.length())
-						&& ((exp.charAt(i) == '.')
-								|| Character.isDigit(exp.charAt(i)) || ("abcdef"
-								.indexOf(exp.charAt(i)) > -1)));
-				if (isDouble == true) {// 小数
-					try {
-						operands.push(Double.parseDouble(sb.toString()));
-					} catch (NumberFormatException e) {
-						throw new ExpException(
-								"a dot is not allowed in radix: "
-										+ radix.get(carriage));
-					}
-				} else {// 整数
-					try {
-						operands.push(Integer.parseInt(sb.toString(), radix
-								.get(carriage)));
-					} catch (NumberFormatException e) {
-						throw new ExpException("illegal character for radix: "
-								+ radix.get(carriage));
-					}
-				}
-				i--;
-				lastTokenType = TokenTypes.NUMBER;
-			} else if (operatorTypes.keySet().contains(// 运算符
-				String.valueOf(exp.charAt(i)))) {
-				String operator = String.valueOf(exp.charAt(i));
-				if (operator.equals("-")
-						&& ((lastTokenType == null) || (lastTokenType == TokenTypes.LEFTP))) {
-					operators.push("N");// 处理负号
-				} else if (operator.equals("+")
-						&& ((lastTokenType == null) || (lastTokenType == TokenTypes.LEFTP))) {
-					continue;// 正号跳过
-				} else {
-					if ((lastTokenType != TokenTypes.NUMBER)// 2+1
-							&& (lastTokenType != TokenTypes.RIGHTP)) {// (2)+1
-						throw new ExpException("Miss operands");
-					} else {
-						if ((operators.size() > 0)
-								&& !operators.peek().equals("(")
-								&& (priority(operator, operators.peek()) <= 0)) {// [*]
-							// <=>
-							// +
-							computeOperator();// compute '*'
-						}
-						operators.push(operator);// push '+'
-						lastTokenType = TokenTypes.OPERATOR;
-					}
-				}
-			} else if (Character.isLetter(exp.charAt(i))) {// 函数或常量
+					i++; sb.append(c);
+				} while ((i < exp.length()) && ((c == '.') || Character.isDigit(c) || ("abcdef".indexOf(c) > -1)));
+				i--; lastTokenType = operand(sb, isDouble);
+			} else if (operatorTypes.keySet().contains(String.valueOf(c))) {
+				lastTokenType = operator(lastTokenType, c);
+			} else if (Character.isLetter(c)) {
 				StringBuilder operator = new StringBuilder();
-				while ((i < exp.length())
-						&& ((Character.isLetter(exp.charAt(i))) || (Character
-								.isDigit(exp.charAt(i))))) {
-					operator.append(exp.charAt(i));
-					i++;
+				while ((i < exp.length()) && ((Character.isLetter(c)) || (Character.isDigit(c)))) {
+					i++; operator.append(c);
 				}
 				String function = operator.toString();
-				if (functionParams.containsKey(operator.toString())) {// 函数
-					if ((lastTokenType != null)// sin(1)
-							&& (lastTokenType != TokenTypes.OPERATOR)// 1+sin(1)
-							&& (lastTokenType != TokenTypes.LEFTP)) {// 1+(sin(1))
-						throw new ExpException(
-								"Function should follow an operator");
-					} else {
-						operators.push(function);
-						lastTokenType = TokenTypes.FUNCTION;
-						if (exp.charAt(i) != '(') {// sin(1)
-							throw new ExpException(
-									"function should followed by a (");
-						} else {
-							i++;
-							int params = functionParams.get(function);// 参数个数
-							for (int j = 1; j < params; j++) {// 用表达式递归提取params-1个参数
-								int paramIdx = findParam(exp, ',', i);// 处理括号层次查找参数界限
-								if (paramIdx != -1) {
-									operands
-											.push(new ExpUtil().parse(
-												exp.substring(i, paramIdx))
-													.getResult());// 每个参数都是表达式，其中仍然可以嵌套函数
-									i = paramIdx + 1;
-								} else if("log".equals(function) && j==1){ //支持log(10)等价于log(e,10)
-									operands.push(Math.E);
-								}else {// 缺少参数
-									throw new ExpException(
-											"Miss function params");
-								}
-							}
-							int rpIdx = findParam(exp, ')', i);// 以右括号结束函数式
-							if (rpIdx != -1) {// 最后一个参数
-								operands.push(new ExpUtil().parse(
-									exp.substring(i, rpIdx)).getResult());
-								i = rpIdx;
-							} else {
-								throw new ExpException("Miss function params");
-							}
-							computeFunction();// 计算函数
-							lastTokenType = TokenTypes.RIGHTP;
+				if (functionParams.containsKey(operator.toString())) {
+					lastTokenType = checkFunction(lastTokenType, c);
+					i++; operators.push(function);
+					int params = functionParams.get(function);
+					// 用表达式递归提取params-1个参数
+					for (int j = 1; j < params; j++) {
+						int paramIdx = findParam(exp, ',', i);
+						if (paramIdx != -1) {
+							// 每个参数都是表达式，其中仍然可以嵌套函数
+							operands.push(new ExpUtil().parse(exp.substring(i, paramIdx)).getResult());
+							i = paramIdx + 1;
+						//支持log(10)等价于log(e,10)
+						} else if("log".equals(function) && j==1){ 
+							operands.push(Math.E);
+						}else {
+							throw new ExpException(MISS_FUNCTION_PARAMS);
 						}
 					}
-				} else if (constants.containsKey(function)
-						&& (!function.equals("e") ? true
-								: carriage != Carriage.HEX)) {// 常量，非十六进制的e
-					i--;
+					// 以右括号结束函数式
+					int rpIdx = findParam(exp, ')', i);
+					// 最后一个参数
+					if (rpIdx != -1) {
+						operands.push(new ExpUtil().parse(exp.substring(i, rpIdx)).getResult());
+						i = rpIdx;
+					} else {
+						throw new ExpException(MISS_FUNCTION_PARAMS);
+					}
+					// 计算函数
+					computeFunction();
+					lastTokenType = TokenTypes.RIGHTP;
+				} else if (constants.containsKey(function) && (!"e".equals(function) ? true : carriage != Carriage.HEX)) {
 					operands.push(constants.get(function));
-					lastTokenType = TokenTypes.NUMBER;
-				} else if ((carriage == Carriage.HEX) && isHexNumber(function)) {// 十六进制数
-					i--;
-					operands.push(Integer.parseInt(function, radix
-							.get(carriage)));
-					lastTokenType = TokenTypes.NUMBER;
-				} else {// 不支持函数或常量
+					i--; lastTokenType = TokenTypes.NUMBER;
+				} else if ((carriage == Carriage.HEX) && isHexNumber(function)) {
+					operands.push(Integer.parseInt(function, radix.get(carriage)));
+					i--; lastTokenType = TokenTypes.NUMBER;
+				} else {
 					throw new ExpException("Unsupported function:" + function);
 				}
-			} else {// 非法字符
-				throw new ExpException("Unknown Character:" + exp.charAt(i));
+			} else {
+				throw new ExpException("Unknown Character:" + c);
 			}
 		}
+		return lastCompute();
+	}
+
+	private TokenTypes checkFunction(TokenTypes lastTokenType, char c) throws ExpException {
+		// sin(1)
+		if ((lastTokenType != null)
+				// 1+sin(1)
+				&& (lastTokenType != TokenTypes.OPERATOR)
+				// 1+(sin(1))
+				&& (lastTokenType != TokenTypes.LEFTP)) {
+			throw new ExpException(
+					"Function should follow an operator");
+		}
+		// sin(1)
+		char leftP = '(';
+		if (c != leftP) {
+			throw new ExpException(
+					"function should followed by a (");
+		} 
+		return TokenTypes.FUNCTION;
+	}
+
+	private ExpUtil lastCompute() throws ExpException {
 		while (operators.size() > 0) {
 			if (operators.peek().charAt(0) != '(') {
 				computeOperator();
@@ -370,6 +309,96 @@ public class ExpUtil {
 			result = operands.pop();
 		}
 		return this;
+	}
+
+	private TokenTypes operator(TokenTypes lastTokenType, char c) throws ExpException {
+		String operator = String.valueOf(c);
+		boolean isMinus = "-".equals(operator) && ((lastTokenType == null) || (lastTokenType == TokenTypes.LEFTP));
+		boolean isPlus = "+".equals(operator) && ((lastTokenType == null) || (lastTokenType == TokenTypes.LEFTP));
+		if (isMinus) {
+			// 处理负号
+			operators.push("N");
+		} else if(isPlus == false) {
+			// 2+1
+			if ((lastTokenType != TokenTypes.NUMBER)
+					// (2)+1
+					&& (lastTokenType != TokenTypes.RIGHTP)) {
+				throw new ExpException(MISS_OPERANDS);
+			} else {
+				if ((operators.size() > 0)
+						&& !"(".equals(operators.peek())
+						// [*] <=> +
+						&& (priority(operator, operators.peek()) <= 0)) {
+					// compute '*'
+					computeOperator();
+				}
+				// push '+'
+				operators.push(operator);
+				lastTokenType = TokenTypes.OPERATOR;
+			}
+		}
+		return lastTokenType;
+	}
+
+	private TokenTypes operand(StringBuilder sb, boolean isDouble) throws ExpException {
+		// 小数
+		if (isDouble == true) {
+			try {
+				operands.push(Double.parseDouble(sb.toString()));
+			} catch (NumberFormatException e) {
+				throw new ExpException("a dot is not allowed in radix: " + radix.get(carriage));
+			}
+		// 整数
+		} else {
+			try {
+				operands.push(Integer.parseInt(sb.toString(), radix.get(carriage)));
+			} catch (NumberFormatException e) {
+				throw new ExpException("illegal character for radix: "+ radix.get(carriage));
+			}
+		}
+		return TokenTypes.NUMBER;
+	}
+
+	private TokenTypes rightP(TokenTypes lastTokenType) throws ExpException {
+		// 没有左括号则异常
+		String leftP = "(";
+		if (!operators.contains(leftP)) {
+			throw new ExpException("Miss left parenthese");
+		} else {
+			// ()
+			if (lastTokenType == TokenTypes.LEFTP) {
+				throw new ExpException("Empty parentheses");
+			} else {
+				// [(,+] <=> (1+1)
+				while ((operators.size() > 0)
+						&& (operators.peek().charAt(0) != '(')) {
+					// compute '+'
+					computeOperator();
+				}
+				// pop '('
+				operators.pop();
+				lastTokenType = TokenTypes.RIGHTP;
+			}
+		}
+		return lastTokenType;
+	}
+
+	private TokenTypes leftP(TokenTypes lastTokenType) throws ExpException {
+		// (1+1)
+		if ((lastTokenType != null)
+				// 3-(1+1)
+				&& (lastTokenType != TokenTypes.OPERATOR)
+				// ((1+1)*2)
+				&& (lastTokenType != TokenTypes.LEFTP)
+				// sin(1)
+				&& (lastTokenType != TokenTypes.FUNCTION)) {
+			throw new ExpException(
+					"Left parenthese should follow an operator");
+		} else {
+			operators.push(String.valueOf('('));
+			lastTokenType = TokenTypes.LEFTP;
+		}
+		return lastTokenType;
 	}
 	
 	/**
@@ -413,155 +442,96 @@ public class ExpUtil {
 	}
 	
 	/**
-	 * 计算函数
+	 * 计算函数，函数运算前已检查参数个数
 	 * 
 	 * @throws ExpException
 	 */
 	private void computeFunction() throws ExpException {
-		// 函数运算前已检查参数个数
 		String function = operators.pop();
 		FunctionTypes functionType = functionTypes.get(function);
-		double p1, p2, p3;
 		switch (functionType) {
-			case SIN:
-				operands.push(Math.sin(operands.pop().doubleValue()));
-				break;
-			case COS:
-				operands.push(Math.cos(operands.pop().doubleValue()));
-				break;
-			case TAN:
-				operands.push(Math.tan(operands.pop().doubleValue()));
-				break;
-			case SINH:
-				operands.push(Math.sinh(operands.pop().doubleValue()));
-				break;
-			case COSH:
-				operands.push(Math.cosh(operands.pop().doubleValue()));
-				break;
-			case TANH:
-				operands.push(Math.tanh(operands.pop().doubleValue()));
-				break;
-			case ASIN:
-				operands.push(Math.asin(operands.pop().doubleValue()));
-				break;
-			case ACOS:
-				operands.push(Math.acos(operands.pop().doubleValue()));
-				break;
-			case ATAN:
-				operands.push(Math.atan(operands.pop().doubleValue()));
-				break;
-			case SQRT:
-				operands.push(Math.sqrt(operands.pop().doubleValue()));
-				break;
-			case CBRT:
-				operands.push(Math.cbrt(operands.pop().doubleValue()));
-				break;
-			case CEIL:
-				operands.push(Math.ceil(operands.pop().doubleValue()));
-				break;
-			case FLOOR:
-				operands.push(Math.floor(operands.pop().doubleValue()));
-				break;
-			case ABS:
-				operands.push(Math.abs(operands.pop().doubleValue()));
-				break;
-			case ROUND:
-				operands.push(Math.round(operands.pop().doubleValue()));
-				break;
-			case LN:
-				operands.push(Math.log(operands.pop().doubleValue()));
-				break;
-			case LOG:
-				operands.push(Math.log(operands.pop().doubleValue())/Math.log(operands.pop().doubleValue()));
-				break;
-			case LOG2:
-				operands.push(Math.log(operands.pop().doubleValue())/Math.log(2.0));
-				break;
-			case LOG10:
-				operands.push(Math.log10(operands.pop().doubleValue()));
-				break;
-			case EXP:
-				operands.push(Math.exp(operands.pop().doubleValue()));
-				break;
-			case POW:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				operands.push(Math.pow(p1, p2));
-				break;
-			case ATAN2:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				operands.push(Math.atan2(p1, p2));
-				break;
-			case FLZZ:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				operands.push(Math.pow(1+p1, p2));
-				break;
-			case FLXZ:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				operands.push(1.0/Math.pow(1+p1, p2));
-				break;
-			case NJZZ:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				operands.push((Math.pow(1+p1, p2)-1)/p1);
-				break;
-			case NJXZ:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				operands.push((1-Math.pow(1+p1, -p2))/p1);
-				break;
-			case JFZZ:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();//对应年金终值，期数+1，系数-1
-				operands.push((Math.pow(1+p1, 1+p2)-1)/p1-1);
-				break;
-			case JFXZ:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();//对应年金现值，期数-1，系数+1
-				operands.push((1-Math.pow(1+p1, -p2+1))/p1+1);
-				break;
-			case DYZZ:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				operands.push((Math.pow(1+p1, 1+p2)-1)/p1-1);
-				break;
-			case DYXZ:
-				p3 = operands.pop().doubleValue();//方法一：p2+p3期的年金现值-p3期的年金现值
-				p2 = operands.pop().doubleValue();//方法二：先计算p2期的年金现值，再计算对应p3期的复利现值
-				p1 = operands.pop().doubleValue();//方法三：先计算p2期的年金终值，再计算对应p2+p3期的复利现值
-				operands.push(((1-Math.pow(1+p1, -p2))/p1)*(1.0/Math.pow(1+p1, p3)));
-				break;
-			case FLLX:
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				operands.push(Math.pow(p1, 1.0/p2)-1);
-				break;
-			case NJZZLX:
-			case NJXZLX:
-			case DEBXLX: //等额本息利息（本金，月供，期数）=年金现值利息（现值/月供，期数）
-				p2 = operands.pop().doubleValue();
-				p1 = operands.pop().doubleValue();
-				if(FunctionTypes.DEBXLX==functionType) {
-					p1 = operands.pop().doubleValue()/p1;
-					functionType = FunctionTypes.NJXZLX;
-				}
-				double BL = 0.000001, BH = 0.999999, BT = 0.0, XI = 0.0, XT = 36.0;
-				do {
-					BT = (BL+BH)/2.0;
-					XI = FunctionTypes.NJZZLX==functionType ? (Math.pow(1+BT, p2)-1)/BT : (1-Math.pow(1+BT, -p2))/BT;
-					if(Math.abs(XI-p1)<0.0001) break;
-					if((XI>p1&&FunctionTypes.NJZZLX==functionType) || (XI<p1&&FunctionTypes.NJXZLX==functionType)) BH = BT;
-					else BL = BT;
-					XT -= 1.0; //限制循环次数，避免死循环
-				}while(XT > 0.0);
-				operands.push(BT);
-				break;
+			case SIN: operands.push(Math.sin(operands.pop().doubleValue())); break;
+			case COS: operands.push(Math.cos(operands.pop().doubleValue())); break;
+			case TAN: operands.push(Math.tan(operands.pop().doubleValue())); break;
+			case SINH: operands.push(Math.sinh(operands.pop().doubleValue())); break;
+			case COSH: operands.push(Math.cosh(operands.pop().doubleValue())); break;
+			case TANH: operands.push(Math.tanh(operands.pop().doubleValue())); break;
+			case ASIN: operands.push(Math.asin(operands.pop().doubleValue())); break;
+			case ACOS: operands.push(Math.acos(operands.pop().doubleValue())); break;
+			case ATAN: operands.push(Math.atan(operands.pop().doubleValue())); break;
+			case SQRT: operands.push(Math.sqrt(operands.pop().doubleValue())); break;
+			case CBRT: operands.push(Math.cbrt(operands.pop().doubleValue())); break;
+			case CEIL: operands.push(Math.ceil(operands.pop().doubleValue())); break;
+			case FLOOR: operands.push(Math.floor(operands.pop().doubleValue())); break;
+			case ABS: operands.push(Math.abs(operands.pop().doubleValue())); break;
+			case ROUND: operands.push(Math.round(operands.pop().doubleValue())); break;
+			case LN: operands.push(Math.log(operands.pop().doubleValue())); break;
+			case LOG2: operands.push(Math.log(operands.pop().doubleValue())/Math.log(2.0)); break;
+			case LOG10: operands.push(Math.log10(operands.pop().doubleValue())); break;
+			case EXP: operands.push(Math.exp(operands.pop().doubleValue())); break;
+			case LOG: case POW: case ATAN2: case FLZZ: case FLXZ: case NJZZ: case NJXZ: case JFZZ: case JFXZ: case DYZZ: case FLLX:
+				binaryOp(functionType); break;
+			case DYXZ: dyxz(); break;
+			case NJZZLX: case NJXZLX: case DEBXLX: lxCalc(functionType); break;
 			default:
 				throw new ExpException("Unsupport function:" + function);
 		}
+	}
+
+	private void dyxz() {
+		//方法一：p2+p3期的年金现值-p3期的年金现值
+		//方法二：先计算p2期的年金现值，再计算对应p3期的复利现值
+		//方法三：先计算p2期的年金终值，再计算对应p2+p3期的复利现值
+		double p3 = operands.pop().doubleValue();
+		double p2 = operands.pop().doubleValue();
+		double p1 = operands.pop().doubleValue();
+		operands.push(((1-Math.pow(1+p1, -p2))/p1)*(1.0/Math.pow(1+p1, p3)));
+	}
+
+	private void binaryOp(FunctionTypes functionType) {
+		double p2 = operands.pop().doubleValue();
+		double p1 = operands.pop().doubleValue();
+		switch(functionType) {
+			case LOG: operands.push(Math.log(p2)/Math.log(p1)); break;
+			case POW: operands.push(Math.pow(p1, p2)); break;
+			case ATAN2: operands.push(Math.atan2(p1, p2)); break;
+			case FLZZ: operands.push(Math.pow(1+p1, p2)); break;
+			case FLXZ: operands.push(1.0/Math.pow(1+p1, p2)); break;
+			case NJZZ: operands.push((Math.pow(1+p1, p2)-1)/p1); break;
+			case NJXZ: operands.push((1-Math.pow(1+p1, -p2))/p1); break;
+			case JFZZ: operands.push((Math.pow(1+p1, 1+p2)-1)/p1-1); break;
+			case JFXZ: operands.push((1-Math.pow(1+p1, -p2+1))/p1+1); break;
+			case DYZZ: operands.push((Math.pow(1+p1, 1+p2)-1)/p1-1); break;
+			case FLLX: operands.push(Math.pow(p1, 1.0/p2)-1); break;
+			default: break;
+		}
+	}
+
+	private void lxCalc(FunctionTypes functionType) {
+		//等额本息利息（本金，月供，期数）=年金现值利息（现值/月供，期数）
+		double p2 = operands.pop().doubleValue();
+		double p1 = operands.pop().doubleValue();
+		if(FunctionTypes.DEBXLX==functionType) {
+			p1 = operands.pop().doubleValue()/p1;
+			functionType = FunctionTypes.NJXZLX;
+		}
+		double bLow = 0.000001, bHigh = 0.999999, bTemp = 0.0, xValue = 0.0, xTimes = 36.0, delta = 0.0001;
+		do {
+			bTemp = (bLow+bHigh)/2.0;
+			xValue = FunctionTypes.NJZZLX==functionType ? (Math.pow(1+bTemp, p2)-1)/bTemp : (1-Math.pow(1+bTemp, -p2))/bTemp;
+			if(Math.abs(xValue-p1)<delta) {
+				break;
+			}
+			boolean isHigh = (xValue>p1&&FunctionTypes.NJZZLX==functionType) || (xValue<p1&&FunctionTypes.NJXZLX==functionType);
+			if(isHigh) {
+				bHigh = bTemp;
+			} else {
+				bLow = bTemp;
+			}
+			//限制循环次数，避免死循环
+			xTimes -= 1.0; 
+		}while(xTimes > 0.0);
+		operands.push(bTemp);
 	}
 	
 	/**
@@ -570,26 +540,27 @@ public class ExpUtil {
 	 * @throws ExpException
 	 */
 	private void computeOperator() throws ExpException {
-		if (operands.size() == 0) { throw new ExpException("Miss operands"); }
+		if (operands.size() == 0) { throw new ExpException(MISS_OPERANDS); }
 		String operator = operators.pop();
 		Number operand2 = operands.pop();
-		if (operator.equals("N")) {// 一元负号
+		String negative = "N";
+		if (operator.equals(negative)) {
 			if (operand2 instanceof Integer) {
 				operands.push(0 - (Integer) operand2);
 			} else {
 				operands.push(0.0 - (Double) operand2);
 			}
 			return;
-		} else if (operands.size() == 0) {// 二元算符少操作数
-			throw new ExpException("Miss operands");
+		} else if (operands.size() == 0) {
+			throw new ExpException(MISS_OPERANDS);
 		} else {
 			Number operand1 = operands.pop();
 			OperatorTypes operatorType = operatorTypes.get(operator);
 			boolean isBothInteger = false;
 			if ((operand1 instanceof Integer) && (operand2 instanceof Integer)) {
-				isBothInteger = true;// 整数运算
+				isBothInteger = true;
 			} else {
-				isBothInteger = false;// 小数运算
+				isBothInteger = false;
 			}
 			switch (operatorType) {
 				case ADD:
@@ -617,12 +588,6 @@ public class ExpUtil {
 					}
 					break;
 				case DIVIDE:
-					if (((operand2 instanceof Integer) && operand2
-							.equals(Integer.valueOf(0)))
-							|| ((operand2 instanceof Double) && (operand2
-									.equals(Double.valueOf(0.0))))) {
-						throw new ExpException("Divide By Zero");
-					} else {
 						if (isBothInteger) {
 							operands.push((Integer) operand1
 									/ (Integer) operand2);
@@ -630,15 +595,8 @@ public class ExpUtil {
 							operands.push(operand1.doubleValue()
 									/ operand2.doubleValue());
 						}
-					}
 					break;
 				case MOD:
-					if (((operand2 instanceof Integer) && operand2
-							.equals(Integer.valueOf(0)))
-							|| ((operand2 instanceof Double) && (operand2
-									.equals(Double.valueOf(0.0))))) {
-						throw new ExpException("Mod By Zero");
-					} else {
 						if (isBothInteger) {
 							operands.push((Integer) operand1
 									% (Integer) operand2);
@@ -646,7 +604,6 @@ public class ExpUtil {
 							operands.push(operand1.doubleValue()
 									% operand2.doubleValue());
 						}
-					}
 					break;
 				case POWER:
 					if (isBothInteger) {
@@ -713,23 +670,26 @@ public class ExpUtil {
 	 *            源表达式
 	 */
 	private String modify(String exp) {
-		String BJexp = StringUtil.toDBC(exp).toLowerCase();
+		exp = StringUtil.toDBC(exp).toLowerCase();
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < BJexp.length(); i++) {
-			if (!Character.isWhitespace(BJexp.charAt(i))) {
-				sb.append(BJexp.charAt(i));
+		for (int i = 0; i < exp.length(); i++) {
+			if (!Character.isWhitespace(exp.charAt(i))) {
+				sb.append(exp.charAt(i));
 			}
 		}
 		return sb.toString();
 	}
 	
-	private Carriage		carriage	= Carriage.DECIMAL;	// 十进制
-	private String			exp			= null;				// 表达式
-	private Stack<Number>	operands	= new Stack<Number>();	// 操作数
-	private Stack<String>	operators	= new Stack<String>();	// 运算符
-	private Number			result		= null;				// 结果
+	private Carriage		carriage	= Carriage.DECIMAL;
+	private String			exp			= null;
+	private Stack<Number>	operands	= new Stack<Number>();
+	private Stack<String>	operators	= new Stack<String>();
+	private Number			result		= null;
 																
 	public enum Carriage {
+		/**
+		 * 进制
+		 */
 		BINARY, DECIMAL, HEX, OCTAL
 	}
 	
@@ -753,6 +713,9 @@ public class ExpUtil {
 	 * @date 2009-10-14
 	 */
 	public enum FunctionTypes {
+		/**
+		 * 函数
+		 */
 		ABS, ACOS, ASIN, ATAN, ATAN2, CBRT, CEIL, COS, COSH, EXP, FLOOR, LN, LOG, LOG2, LOG10, POW, ROUND, SIN, SINH, SQRT, TAN, TANH, FLZZ, FLXZ, NJZZ, NJXZ, JFZZ, JFXZ, DYZZ, DYXZ
 		, FLLX, NJZZLX, NJXZLX, DEBXLX
 	}
@@ -764,6 +727,9 @@ public class ExpUtil {
 	 * @date 2009-10-14
 	 */
 	private enum OperatorTypes {
+		/**
+		 * 运算符
+		 */
 		ADD, DIVIDE, MOD, MULTIPLY, NEGATIVE, POWER, SUBTRACT
 	}
 	
@@ -774,6 +740,9 @@ public class ExpUtil {
 	 * @date 2009-10-14
 	 */
 	private enum TokenTypes {
+		/**
+		 * 标识符类型
+		 */
 		FUNCTION, LEFTP, NUMBER, OPERATOR, RIGHTP
 	}
 }
