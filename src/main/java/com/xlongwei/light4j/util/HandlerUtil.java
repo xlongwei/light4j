@@ -9,20 +9,22 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.codec.CharEncoding;
+import org.jose4j.json.internal.json_simple.JSONObject;
 
 import com.networknt.utility.StringUtils;
+import com.xlongwei.light4j.handler.ServiceHandler;
 
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
-import io.undertow.server.handlers.form.FormData.FileItem;
 import io.undertow.server.handlers.form.FormData.FormValue;
 import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.server.handlers.form.FormParserFactory.Builder;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
+import io.undertow.util.MimeMappings;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -31,9 +33,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class HandlerUtil {
-	private static final String TEXT = "text";
-	private static final String XML = "xml";
-	private static final String JSON = "json";
+	public static final String MIMETYPE_JSON = MimeMappings.DEFAULT.getMimeType("json"), MIMETYPE_TXT = MimeMappings.DEFAULT.getMimeType("txt");
+	private static final String TEXT = "text", XML = "xml", JSON = "json";
+	private static final String SHOWAPI_USER_ID = "showapi_userId";
 	/**
 	 * 请求参数和正文
 	 */
@@ -42,6 +44,10 @@ public class HandlerUtil {
 	 * 请求正文字符串
 	 */
 	public static final String BODYSTRING = "BODYSTRING";
+	/**
+	 * 响应对象
+	 */
+	public static final AttachmentKey<Object> RESP = AttachmentKey.create(Object.class);
 
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> scanHandlers(Class<T> clazz, String scanSpec) {
@@ -107,16 +113,12 @@ public class HandlerUtil {
 		            	if(deque.size() > 1) {
 		            		List<Object> list = new ArrayList<>();
 		            		for(FormValue formValue : deque) {
-		            			list.add(formValue.isFileItem() ? formValue.getFileItem() : formValue.getValue());
+		            			list.add(formValue.isFileItem() ? formValue : formValue.getValue());
 		            		}
 		            		body.put(name, list);
 		            	}else {
 		            		FormValue formValue = deque.getFirst();
-		            		if(formValue.isFileItem()) {
-		            			body.put(name, formValue.getFileItem());
-		            		}else {
-		            			body.put(name, formValue.getValue());
-		            		}
+		            		body.put(name, formValue.isFileItem() ? formValue : formValue.getValue());
 		            	}
 		            }
 		        }
@@ -147,14 +149,17 @@ public class HandlerUtil {
 		}
 	}
 	
+	/** 获取请求参数 */
 	public static String getParam(HttpServerExchange exchange, String name) {
 		return getObject(exchange, name, String.class);
 	}
 	
-	public static FileItem getFile(HttpServerExchange exchange, String name) {
-		return getObject(exchange, name, FileItem.class);
+	/** FormValue包含fileName+FileItem */
+	public static FormValue getFile(HttpServerExchange exchange, String name) {
+		return getObject(exchange, name, FormValue.class);
 	}
 	
+	/** 支持从缓存获取值 */
 	public static String getParam(HttpServerExchange exchange, String name, String cacheKey) {
 		String param = getParam(exchange, name);
 		if(StringUtils.isBlank(param)) {
@@ -168,7 +173,7 @@ public class HandlerUtil {
 	
 	/**
 	 * @param obj
-	 * @param clazz 支持String、FileItem、List
+	 * @param clazz 支持String、FormValue、List
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <T> T getObject(HttpServerExchange exchange, String name, Class<T> clazz) {
@@ -176,16 +181,52 @@ public class HandlerUtil {
 		if(body != null) {
 			Object obj = body.get(name);
 			if(obj != null) {
-				if(clazz==obj.getClass()) {
+				Class<? extends Object> clz = obj.getClass();
+				if(clazz==clz || clazz.isAssignableFrom(clz)) {
 					return (T)obj;
-				}else if(List.class.isAssignableFrom(obj.getClass())) {
+				}else if(List.class.isAssignableFrom(clz)) {
 					obj = ((List)obj).get(0);
-					if(clazz==obj.getClass()) {
+					clz = obj.getClass();
+					if(clazz==clz || clazz.isAssignableFrom(clz)) {
 						return (T)obj;
 					}
 				}
 			}
 		}
 		return null;
+	}
+	
+	/** 仅支持map，其他类型需手动响应 */
+	public static void setResp(HttpServerExchange exchange, Map<String, ?> map) {
+		exchange.putAttachment(HandlerUtil.RESP, map);
+	}
+	
+	/** 仅支持json，其他类型需手动响应 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static void sendResp(HttpServerExchange exchange) {
+		String response = ServiceHandler.BAD_REQUEST;
+		Object resp = exchange.removeAttachment(HandlerUtil.RESP);
+		String mimeType = MIMETYPE_JSON;
+		if(resp != null) {
+			if(resp instanceof Map) {
+				Map map = (Map)resp;
+				Object domain = map.get(UploadUtil.DOMAIN), path = map.get(UploadUtil.PATH);
+				if(domain!=null && path!=null) {
+					//接口响应了domain+path，添加响应参数url
+					map.put("url", domain.toString()+path.toString());
+				}
+				if(map.containsKey(SHOWAPI_USER_ID)) {
+					map.put("ret_code", map.containsKey("error") ? "1" : "0");
+				}
+				response = JSONObject.toJSONString(map);
+			}else if(resp instanceof String) {
+				response = (String)resp;
+				mimeType = MIMETYPE_TXT;
+			}
+		}
+		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, mimeType);
+		exchange.setStatusCode(200);
+		log.info("response: {}", response);
+		exchange.getResponseSender().send(response);
 	}
 }

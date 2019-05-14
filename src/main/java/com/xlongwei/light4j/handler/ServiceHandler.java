@@ -2,7 +2,6 @@ package com.xlongwei.light4j.handler;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -10,14 +9,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import org.jose4j.json.internal.json_simple.JSONArray;
-import org.jose4j.json.internal.json_simple.JSONAware;
 import org.jose4j.json.internal.json_simple.JSONObject;
 import org.omg.CORBA.IntHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.util.ConfigUtil;
@@ -27,8 +23,6 @@ import com.xlongwei.light4j.util.TokenCounter;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
-import io.undertow.util.Headers;
-import io.undertow.util.MimeMappings;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -53,7 +47,6 @@ public class ServiceHandler implements LightHttpHandler {
 	}
 
 	@Override
-	@SuppressWarnings("rawtypes")
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		if (exchange.isInIoThread()) {
             exchange.dispatch(this);
@@ -75,26 +68,7 @@ public class ServiceHandler implements LightHttpHandler {
 				serviceCounter.count("service", name);
 			}
 		}
-		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, MimeMappings.DEFAULT.getMimeType("json"));
-		exchange.setStatusCode(200);
-		String response = BAD_REQUEST;
-		Object resp = exchange.getAttachment(AbstractHandler.RESP);
-		if(resp != null) {
-			//支持String、JSONObject、JSONArray、Map、Collection等
-			if(resp instanceof String) {
-				response = (String)resp;
-			}else if(resp instanceof JSONAware) {
-				response = ((JSONAware)resp).toJSONString();
-			}else if(resp instanceof Map) {
-				response = JSONObject.toJSONString((Map)resp);
-			}else if(resp instanceof Collection) {
-				response = JSONArray.toJSONString((Collection)resp);
-			}else {
-				response = Config.getInstance().getMapper().writeValueAsString(resp);
-			}
-		}
-		log.info("result: {}", response);
-		exchange.getResponseSender().send(response);
+		HandlerUtil.sendResp(exchange);
 	}
 	/** 支持子服务名反射调用同名方法，子服务存入RESP对象即可 */
 	public static abstract class AbstractHandler implements LightHttpHandler {
@@ -102,10 +76,6 @@ public class ServiceHandler implements LightHttpHandler {
 		 * 子服务路径，存在时反射调用子服务方法，否则子类覆盖handleRequest方法
 		 */
 		public static final AttachmentKey<String> PATH = AttachmentKey.create(String.class);
-		/**
-		 * 响应对象，不存在时响应bad request，支持String、JSONObject、JSONArray、Map、Collection等
-		 */
-		public static final AttachmentKey<Object> RESP = AttachmentKey.create(Object.class);
 		protected Logger log = LoggerFactory.getLogger(getClass());
 		private Map<String, Method> methods = new HashMap<>();
 		public AbstractHandler() {
@@ -127,7 +97,8 @@ public class ServiceHandler implements LightHttpHandler {
 		public String name() {
 			String simpleName = getClass().getSimpleName();
 			int handler = simpleName.indexOf("Handler");
-			return handler>0 ? simpleName.substring(0, handler).toLowerCase() : simpleName;
+			String name = handler>0 ? simpleName.substring(0, handler) : simpleName;
+			return new StringBuilder(name.length()).append(Character.toLowerCase(name.charAt(0))).append(name.substring(1)).toString();
 		}
 
 		@Override

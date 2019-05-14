@@ -9,7 +9,7 @@
 
 #### 安装教程
 
-1. 调试运行主类：com.networknt.server.Server，需要先运行redis-server
+1. 调试运行主类：运行redis-server，调试com.networknt.server.Server，自定义：-Dupload.save=H:/works/itecheast/Servers/uploads/
 2. 部署打包命令：mvn package -P release -Dmaven.javadoc.skip=true
 3. 服务运行命令：mvn exec:java -P release，jar -jar target/light4j-3.0.1.jar
 

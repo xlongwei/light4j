@@ -2,13 +2,22 @@ enabled: true
 
 handlers:
   - com.xlongwei.light4j.handler.ServiceHandler@service
+  - com.xlongwei.light4j.handler.UploadHandler@upload
   - com.xlongwei.light4j.handler.WeixinHandler@weixin
 
 paths:
   - path: '/service/*'
+    method: 'GET'
+    exec:
+      - service
+  - path: '/service/*'
     method: 'POST'
     exec:
       - service
+  - path: '/upload/*'
+    method: 'POST'
+    exec:
+      - upload
   - path: '/callback/weixin.xml'
     method: 'GET'
     exec:

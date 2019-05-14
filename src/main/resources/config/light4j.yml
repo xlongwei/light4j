@@ -7,6 +7,10 @@ redis:
   # host:port:dbs:password:timeout:weight
   cacheDbs: 127.0.0.1:6379:3-7
 
+upload:
+  save: /soft/uploads/
+  url: http://s.xlongwei.com/uploads/
+
 weixin:
   appSecret: 07735561e5ea7ce0567963293023172e
   token: MyushAydimubIlliaheimGofsidWein3

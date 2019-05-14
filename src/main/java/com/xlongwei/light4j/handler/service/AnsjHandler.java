@@ -63,9 +63,9 @@ public class AnsjHandler extends AbstractHandler {
 			break;
 		}
 		if(list!=null) {
-			exchange.putAttachment(AbstractHandler.RESP, StringUtil.params("result", StringUtil.join(list, null, null, " ")));
+			HandlerUtil.setResp(exchange, StringUtil.params("result", StringUtil.join(list, null, null, " ")));
 		}else if(string!=null) {
-			exchange.putAttachment(AbstractHandler.RESP, StringUtil.params("result", string));
+			HandlerUtil.setResp(exchange, StringUtil.params("result", string));
 		}
 	}
 

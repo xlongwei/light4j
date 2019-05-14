@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Map;
 
 import org.apache.commons.codec.binary.StringUtils;
 
@@ -23,11 +22,10 @@ public class RedisUtil {
 	public static final JedisPool JEDIS_POOL;
 	
 	static {
-		Map<String, String> config = ConfigUtil.redis();
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
 		poolConfig.setMaxIdle(30);
 		poolConfig.setMaxWait(3000L);
-		String hostAndPort = config.get("configDb");
+		String hostAndPort = ConfigUtil.REDIS.get("configDb");
 		log.info("redis.configDb={}", hostAndPort);
 		
 		String[] hostPort = hostAndPort.split("[:]");

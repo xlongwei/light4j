@@ -177,9 +177,8 @@ public class WeixinUtil {
 		for(String type : classCache.keySet()) {
 			log.info("type:{} => clazz:{}", type, classCache.get(type));
 		}
-		Map<String, String> config = ConfigUtil.weixin();
-		String token = config.get("token");
-		String encodingAesKey = config.get("encodingAesKey");
+		String token = ConfigUtil.WEIXIN.get("token");
+		String encodingAesKey = ConfigUtil.WEIXIN.get("encodingAesKey");
 		configAES(appid, token, encodingAesKey);
 		help.setContent(RedisConfig.get("weixin.help"));
 	}

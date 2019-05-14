@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jose4j.json.internal.json_simple.JSONObject;
-
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
@@ -42,7 +40,7 @@ public class PinyinHandler extends AbstractHandler {
 				}
 				map.put("header", header.toString());
 			}
-			exchange.putAttachment(AbstractHandler.RESP, JSONObject.toJSONString(map));
+			HandlerUtil.setResp(exchange, map);
 		}
 	}
 

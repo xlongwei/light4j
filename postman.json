@@ -4,7 +4,7 @@
         "id": "715be48a-3a8a-9494-7a27-921178135295",
         "name": "light4j",
         "timestamp": 1557330375276,
-        "order": ["7e17eed5-ae7a-c219-b5e1-4ea022458cf0", "786c1852-6505-3bae-da6a-729adc4014be", "9d693769-413e-581c-8a4a-7f06264c03f6", "442ca0be-af0a-6fae-e763-80012fb4db1f", "8277fa8a-0cc5-e13f-47b7-1091ae22895f"],
+        "order": ["7e17eed5-ae7a-c219-b5e1-4ea022458cf0", "786c1852-6505-3bae-da6a-729adc4014be", "9d693769-413e-581c-8a4a-7f06264c03f6", "442ca0be-af0a-6fae-e763-80012fb4db1f", "8277fa8a-0cc5-e13f-47b7-1091ae22895f", "cd64d8f6-a3bd-e6e2-f2b5-913fcb38d721", "d5c1bd40-4724-1555-b3c7-ee3d33321ce5"],
         "requests": [{
             "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
             "id": "442ca0be-af0a-6fae-e763-80012fb4db1f",
@@ -82,6 +82,44 @@
             "timestamp": 0,
             "version": 2,
             "time": 1557411947824
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "cd64d8f6-a3bd-e6e2-f2b5-913fcb38d721",
+            "name": "upload",
+            "description": "",
+            "url": "http://{{host}}/upload/temp",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "type",
+                "value": "image",
+                "type": "text"
+            }, {
+                "key": "file",
+                "value": "",
+                "type": "file"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "d5c1bd40-4724-1555-b3c7-ee3d33321ce5",
+            "name": "base64Image",
+            "description": "",
+            "url": "http://{{host}}/service/base64Image",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "img",
+                "value": "image/3.1128175997762396162.jpg",
+                "type": "file"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
         }]
     }],
     "environments": [{

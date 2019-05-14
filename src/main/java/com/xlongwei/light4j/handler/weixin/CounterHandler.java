@@ -122,22 +122,28 @@ public class CounterHandler extends AbstractTextHandler {
 		 */
 		public static Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
 		static {
-			Date date = SystemClock.date();
-			String day, key, value;
-			do {
-				day = DateUtil.format(date, "yyyy-MM-dd");
-				key = "service"+day;
-				value = RedisConfig.get(key);
-				if(StringUtil.hasLength(value)) {
-					Map<String, Integer> count = ConfigUtil.stringMapInteger(value);
-					if(count!=null) {
-						counts.put(day, count);
-						date = DateUtils.addDays(date, -1);
-						continue;
-					}
+			//等3秒再加载缓存数据
+			TaskUtil.schedule(new Runnable() {
+				@Override
+				public void run() {
+					Date date = SystemClock.date();
+					String day, key, value;
+					do {
+						day = DateUtil.format(date, "yyyy-MM-dd");
+						key = "service"+day;
+						value = RedisConfig.get(key);
+						if(StringUtil.hasLength(value)) {
+							Map<String, Integer> count = ConfigUtil.stringMapInteger(value);
+							if(count!=null) {
+								counts.put(day, count);
+								date = DateUtils.addDays(date, -1);
+								continue;
+							}
+						}
+						break;
+					}while(true);
 				}
-				break;
-			}while(true);
+			}, 3, TimeUnit.SECONDS);
 			//每天凌晨更新昨天数据
 			TaskUtil.scheduleAtFixedRate(new Runnable() {
 				@Override
