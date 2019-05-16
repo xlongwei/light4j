@@ -23,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ConfigUtil {
 
 	public static final Map<String, Object> CONFIG = Config.getInstance().getJsonMapConfig("light4j");
-	/** light4j自定义配置 */
-	public static final Map<String, String> LIGHT4J, REDIS, UPLOAD, WEIXIN;
 	
 	static {
 		//使用env或properties覆盖自定义配置
@@ -41,19 +39,15 @@ public class ConfigUtil {
 						keyValue = System.getProperty(keyName);
 					}
 					if(StringUtil.isBlank(keyValue)==false) {
-						replace.put(keyName, keyValue);
+						replace.put(name, keyValue);
 						log.info("config {} => {}", keyName, keyValue);
 					}
 				}
 				map.putAll(replace);
 			}
 		}
-		log.info("config load success");
-		LIGHT4J = (Map<String, String>)CONFIG.get("light4j");
-		REDIS = (Map<String, String>)CONFIG.get("redis");
-		UPLOAD = (Map<String, String>)CONFIG.get("upload");
-		WEIXIN = (Map<String, String>)CONFIG.get("weixin");
-		DIRECTORY = LIGHT4J.get("directory");
+		log.info("light4j config loaded");
+		DIRECTORY = config("light4j").get("directory");
 	}
 	
 	public static final String DIRECTORY;
@@ -82,6 +76,10 @@ public class ConfigUtil {
 			}
 		}
 		return null;
+	}
+	
+	public static Map<String, String> config(String name) {
+		return (Map<String, String>)CONFIG.get(name);
 	}
 	
 	public static Map<String, Integer> stringMapInteger(String json) {

@@ -7,6 +7,9 @@ redis:
   # host:port:dbs:password:timeout:weight
   cacheDbs: 127.0.0.1:6379:3-7
 
+soffice:
+  hosts: 127.0.0.1:8100-8102:false
+
 upload:
   save: /soft/uploads/
   url: http://s.xlongwei.com/uploads/

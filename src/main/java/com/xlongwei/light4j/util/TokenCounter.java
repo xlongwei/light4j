@@ -9,10 +9,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.omg.CORBA.IntHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 继承TokenCounter，实现getId、update、insert<br/>
@@ -21,12 +21,11 @@ import com.xlongwei.light4j.util.IdWorker.SystemClock;
  * 统计MyTokenCounter.count(token,type)
  * @author hongwei
  */
+@Slf4j
 public class TokenCounter {
 	public int expireCount = 20;
 	public long expireTime = TimeUnit.SECONDS.toMillis(60);
-	
 	private String date = getDate();
-	protected static Logger log = LoggerFactory.getLogger(TokenCounter.class);
 	private BlockingQueue<String> removeTokens = new LinkedBlockingQueue<String>();
 	private BlockingQueue<TokenType> tokenTypes = new LinkedBlockingQueue<TokenType>();
 	private final Map<String, TokenCount> tokenCounts = new HashMap<String, TokenCount>();

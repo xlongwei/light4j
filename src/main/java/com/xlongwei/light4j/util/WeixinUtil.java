@@ -76,16 +76,16 @@ public class WeixinUtil {
 				return wxBizMsgCrypt;
 			}
 			if(StringUtil.isBlank(token) || StringUtil.isBlank(encodingAesKey)) {
-				token = RedisUtil.get(cache, "token."+appId);
-				encodingAesKey = RedisUtil.get(cache, "aeskey."+appId);
+				token = RedisConfig.get(cache, "token."+appId);
+				encodingAesKey = RedisConfig.get(cache, "aeskey."+appId);
 				if(StringUtil.isBlank(token) || StringUtil.isBlank(encodingAesKey)) {
 					return null;
 				}
 				wxBizMsgCrypts.put(appId, wxBizMsgCrypt = new WXBizMsgCrypt(token, encodingAesKey, appId));
 			}else {
 				wxBizMsgCrypts.put(appId, wxBizMsgCrypt = new WXBizMsgCrypt(token, encodingAesKey, appId));
-				RedisUtil.persist(cache, "token."+appId, token);
-				RedisUtil.persist(cache, "aeskey."+appId, encodingAesKey);
+				RedisConfig.persist(cache, "token."+appId, token);
+				RedisConfig.persist(cache, "aeskey."+appId, encodingAesKey);
 			}
 			return wxBizMsgCrypt;
 		}catch(Exception e) {
@@ -177,8 +177,9 @@ public class WeixinUtil {
 		for(String type : classCache.keySet()) {
 			log.info("type:{} => clazz:{}", type, classCache.get(type));
 		}
-		String token = ConfigUtil.WEIXIN.get("token");
-		String encodingAesKey = ConfigUtil.WEIXIN.get("encodingAesKey");
+		Map<String, String> config = ConfigUtil.config("weixin");
+		String token = config.get("token");
+		String encodingAesKey = config.get("encodingAesKey");
 		configAES(appid, token, encodingAesKey);
 		help.setContent(RedisConfig.get("weixin.help"));
 	}

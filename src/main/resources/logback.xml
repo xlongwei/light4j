@@ -1,23 +1,46 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration scan="false" scanPeriod="60 seconds" debug="false">
     <contextName>light4j</contextName>
+    <property name="logFile" value="logs/light4j.log"/>
+    <property name="logPattern" value="%cn %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{0}:%L %msg%n"/>
     
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{0}:%L %msg%n</pattern>
+            <pattern>${logPattern}</pattern>
         </encoder>
     </appender>
     
-    <!-- 
-	<appender name="SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
-		<RemoteHost>logserver</RemoteHost>
-		<Port>6000</Port>
-		<ReconnectionDelay>10000</ReconnectionDelay>
-		<IncludeCallerData>false</IncludeCallerData>
-	</appender>
-	 -->
-    
-    <root level="info">
-    	<appender-ref ref="STDOUT"/>
-    </root>
+    <if condition='"true".equals(property("logserver"))'>
+    	<then>
+			<appender name="SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
+				<RemoteHost>logserver</RemoteHost>
+				<Port>6000</Port>
+				<ReconnectionDelay>10000</ReconnectionDelay>
+				<IncludeCallerData>false</IncludeCallerData>
+			</appender>
+    	</then>
+    	<else>
+		    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		        <file>${logFile}</file>
+		        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+		            <fileNamePattern>${logFile}.%d{yyyy-MM-dd}</fileNamePattern>
+		        </rollingPolicy>
+		        <encoder>
+		            <pattern>${logPattern}</pattern>
+		        </encoder>
+		    </appender>
+    	</else>
+    </if>
+
+	<root level="info">
+		<appender-ref ref="STDOUT" />
+		<if condition='"true".equals(property("logserver"))'>
+			<then>
+				<appender-ref ref="SOCKET" />
+			</then>
+			<else>
+				<appender-ref ref="FILE" />
+			</else>
+		</if>
+	</root>
 </configuration>

@@ -19,15 +19,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 执行单次任务或定时任务工具类（用于减少new Thread()和new Timer()的使用）
  * @author hongwei
  */
+@Slf4j
 public class TaskUtil {
-	private static Logger logger = LoggerFactory.getLogger(TaskUtil.class);
 	private static ExecutorService cachedExecutor = null;
 	private static ScheduledExecutorService scheduledExecutor = null;
 	private static Map<Runnable, Future<?>> keepRunningTasks = null;
@@ -52,13 +51,13 @@ public class TaskUtil {
 		}
 		if(shutdownHooks!=null && shutdownHooks.size()>0) {
 			for(Object shutdownHook:shutdownHooks) {
-				logger.info("shutdown: "+shutdownHook);
+				log.info("shutdown: "+shutdownHook);
 				Class<? extends Object> clazz = shutdownHook.getClass();
 				if(Closeable.class.isAssignableFrom(clazz)) {
 					try {
 						((Closeable)shutdownHook).close();
 					}catch(IOException e) {
-						logger.warn("fail to shutdown Closeable: "+shutdownHook, e);
+						log.warn("fail to shutdown Closeable: "+shutdownHook, e);
 					}
 				}else if(Runnable.class.isAssignableFrom(clazz)) {
 					TaskUtil.submit((Runnable)shutdownHook);
@@ -71,7 +70,7 @@ public class TaskUtil {
 		}
 		scheduledExecutor.shutdown();
 		cachedExecutor.shutdown();
-		logger.info("TaskUtil executors shutdown.");
+		log.info("TaskUtil executors shutdown.");
 		if(!scheduledExecutor.isTerminated()) {
 			scheduledExecutor.shutdownNow();
 		}
@@ -143,7 +142,7 @@ public class TaskUtil {
 		if(mills > 0) {
 			return schedule(task, mills, TimeUnit.MILLISECONDS);
 		} else {
-			logger.info("scheduleAt "+time+" not executed cause of passed "+new Date());
+			log.info("scheduleAt "+time+" not executed cause of passed "+new Date());
 		}
 		return null;
 	}
@@ -230,7 +229,7 @@ public class TaskUtil {
 		try {
 			return future.get();
 		} catch (Exception e) {
-			logger.warn("fail to wait task: "+task, e);
+			log.warn("fail to wait task: "+task, e);
 			future.cancel(true);
 			return null;
 		}
@@ -240,7 +239,7 @@ public class TaskUtil {
 		try {
 			Thread.sleep(milliseconds);
 		}catch(Exception e) {
-			logger.warn("fail to sleep millis: "+milliseconds, e);
+			log.warn("fail to sleep millis: "+milliseconds, e);
 		}
 	}
 	
@@ -298,7 +297,7 @@ public class TaskUtil {
 								}
 								callbackedFutures.add(future);
 							}catch (Exception e) {
-								logger.warn("TaskUtil callbackedTasks warn: ", e);
+								log.warn("TaskUtil callbackedTasks warn: ", e);
 							}
 						}
 					}

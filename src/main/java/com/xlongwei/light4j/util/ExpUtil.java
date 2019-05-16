@@ -44,8 +44,7 @@ public class ExpUtil {
 	 * @param functionType
 	 *            函数类型
 	 */
-	private static void addFunction(String function, Integer params,
-			FunctionTypes functionType) {
+	private static void addFunction(String function, Integer params, FunctionTypes functionType) {
 		functionParams.put(function, params);
 		functionTypes.put(function, functionType);
 	}
@@ -60,8 +59,7 @@ public class ExpUtil {
 	 * @param operatorType
 	 *            运算符类型
 	 */
-	private static void addOperator(String operator, Integer priority,
-			OperatorTypes operatorType) {
+	private static void addOperator(String operator, Integer priority, OperatorTypes operatorType) {
 		priorities.put(operator, priority);
 		operatorTypes.put(operator, operatorType);
 	}
@@ -219,16 +217,17 @@ public class ExpUtil {
 							throw new ExpException("Invalid Dot");
 						}
 					}
-					i++; sb.append(c);
-				} while ((i < exp.length()) && ((c == '.') || Character.isDigit(c) || ("abcdef".indexOf(c) > -1)));
+					sb.append(c);
+				} while ((++i < exp.length()) && (((c=exp.charAt(i)) == '.') || Character.isDigit(c) || ("abcdef".indexOf(c) > -1)));
 				i--; lastTokenType = operand(sb, isDouble);
 			} else if (operatorTypes.keySet().contains(String.valueOf(c))) {
 				lastTokenType = operator(lastTokenType, c);
 			} else if (Character.isLetter(c)) {
 				StringBuilder operator = new StringBuilder();
-				while ((i < exp.length()) && ((Character.isLetter(c)) || (Character.isDigit(c)))) {
-					i++; operator.append(c);
+				do {
+					operator.append(c);
 				}
+				while ((++i < exp.length()) && ((Character.isLetter(c=exp.charAt(i))) || (Character.isDigit(c))));
 				String function = operator.toString();
 				if (functionParams.containsKey(operator.toString())) {
 					lastTokenType = checkFunction(lastTokenType, c);

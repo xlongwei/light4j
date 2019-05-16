@@ -53,16 +53,16 @@ public class WeixinHandler implements LightHttpHandler {
 			if(aes) {
 				String msgSignature = HandlerUtil.getParam(exchange, "msg_signature");
 				String decrypt = WeixinUtil.decrypt(WeixinUtil.appid, msgSignature, timestamp, nonce, xml);
-				logger.info("decrypt: "+decrypt);
+				log.info("decrypt: "+decrypt);
 				xml = decrypt;
 			}
 			AbstractMessage msg = StringUtil.isBlank(xml) ? null : AbstractMessage.fromXML(xml);
 			msg = msg == null ? null : WeixinUtil.dispatch(msg);
 			xml = msg !=null ? msg.toXML() : "";
-			logger.info(xml);
+			log.info(xml);
 			if(aes && !StringUtil.isBlank(xml)) {
 				String encrypt = WeixinUtil.encrypt(WeixinUtil.appid, xml, timestamp, nonce);
-				logger.info("encrypt: "+encrypt);
+				log.info("encrypt: "+encrypt);
 				xml = encrypt;
 			}
 			exchange.getResponseSender().send(xml);

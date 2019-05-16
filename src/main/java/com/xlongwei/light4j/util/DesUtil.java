@@ -24,16 +24,16 @@ import javax.crypto.spec.PBEParameterSpec;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.binary.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * DES对称加密工具
  * @author xlongwei
  */
+@Slf4j
 public final class DesUtil {
-	private static Logger 				logger			= LoggerFactory.getLogger(DesUtil.class);
 	private Cipher				ecipher;
 	private Cipher				dcipher;
 	private static Map<String, Cipher>	eciphers		= new HashMap<String, Cipher>();
@@ -62,7 +62,7 @@ public final class DesUtil {
 			}
 			return desUtil;
 		}catch (Exception e) {
-			logger.warn("fail to get desUtil instance: "+password, e);
+			log.warn("fail to get desUtil instance: "+password, e);
 		}
 		return desUtil;
 	}
@@ -74,7 +74,7 @@ public final class DesUtil {
 		try{
 			return desUtil.ecipher.doFinal(bytes);
 		}catch(Exception e) {
-			logger.warn("fail to encrypt bytes: "+bytes.length, e);
+			log.warn("fail to encrypt bytes: "+bytes.length, e);
 			return null;
 		}
 	}
@@ -86,7 +86,7 @@ public final class DesUtil {
 		try{
 			return desUtil.dcipher.doFinal(bytes);
 		}catch(Exception e) {
-			logger.warn("fail to decrypt bytes: "+bytes.length, e);
+			log.warn("fail to decrypt bytes: "+bytes.length, e);
 			return null;
 		}
 	}
@@ -114,7 +114,7 @@ public final class DesUtil {
 			byte[] enc = desUtil.ecipher.doFinal(utf8);
 			return Hex.encodeHexString(enc);
 		}catch (Exception e) {
-			logger.warn("fail to encryptHex str: "+str, e);
+			log.warn("fail to encryptHex str: "+str, e);
 			return null;
 		}
 	}
@@ -128,7 +128,7 @@ public final class DesUtil {
 			byte[] utf8 = desUtil.dcipher.doFinal(dec);
 			return StringUtils.newStringUtf8(utf8);
 		}catch (Exception e) {
-			logger.warn("fail to decryptHex str: "+str, e);
+			log.warn("fail to decryptHex str: "+str, e);
 			return null;
 		}
 	}
@@ -145,7 +145,7 @@ public final class DesUtil {
 			}
 			return true;
 		}catch (IOException e) {
-			logger.warn("fail to encrypt InputStream", e);
+			log.warn("fail to encrypt InputStream", e);
 			return false;
 		}finally {
 			IoUtils.safeClose(in);
@@ -166,7 +166,7 @@ public final class DesUtil {
 			}
 			return true;
 		}catch (IOException e) {
-			logger.warn("fail to decrypt InputStream", e);
+			log.warn("fail to decrypt InputStream", e);
 			return false;
 		}finally {
 			IoUtils.safeClose(in);
@@ -179,7 +179,7 @@ public final class DesUtil {
 	 */
 	public static boolean encrypt(File src, File dst) {
 		if(!src.exists() || src.isDirectory() || dst.exists() || dst.isDirectory()) {
-			logger.info("can't encrypt bad file or directory");
+			log.info("can't encrypt bad file or directory");
 			return false;
 		}
 		
@@ -196,7 +196,7 @@ public final class DesUtil {
 			}
 			return true;
 		}catch(Exception e) {
-			logger.warn("fail to encrypt file", e);
+			log.warn("fail to encrypt file", e);
 			return false;
 		}finally {
 			IoUtils.safeClose(fis);
@@ -209,7 +209,7 @@ public final class DesUtil {
 	 */
 	public static boolean decrypt(File src, File dst) {
 		if(!src.exists() || src.isDirectory() || dst.exists() || dst.isDirectory()) {
-			logger.info("can't decrypt bad file or directory");
+			log.info("can't decrypt bad file or directory");
 			return false;
 		}
 		
@@ -227,7 +227,7 @@ public final class DesUtil {
 			}
 			return true;
 		}catch(Exception e) {
-			logger.warn("fail to decrypt file");
+			log.warn("fail to decrypt file");
 			return false;
 		}finally {
 			IoUtils.safeClose(fis);
@@ -262,7 +262,7 @@ public final class DesUtil {
 		try {
 			return new SealedObject(serializable, desUtil.ecipher);
 		}catch (Exception e) {
-			logger.warn("fail to encrypt serializable", e);
+			log.warn("fail to encrypt serializable", e);
 			return null;
 		}
 	}
@@ -274,7 +274,7 @@ public final class DesUtil {
 		try {
 			return (Serializable) sealedObject.getObject(desUtil.dcipher);
 		}catch (Exception e) {
-			logger.warn("fail to decrypt serializable", e);
+			log.warn("fail to decrypt serializable", e);
 			return null;
 		}
 	}
@@ -289,7 +289,7 @@ public final class DesUtil {
 			byte[] enc = ecipher.doFinal(utf8);
 			return Base64.encodeBase64URLSafeString(enc);
 		}catch (Exception e) {
-			logger.warn("fail to encrypt str: "+str, e);
+			log.warn("fail to encrypt str: "+str, e);
 			return null;
 		}
 	}
@@ -303,7 +303,7 @@ public final class DesUtil {
 			byte[] utf8 = dcipher.doFinal(dec);
 			return StringUtils.newStringUtf8(utf8);
 		}catch (Exception e) {
-			logger.warn("fail to decrypt str: "+str, e);
+			log.warn("fail to decrypt str: "+str, e);
 			return null;
 		}
 	}

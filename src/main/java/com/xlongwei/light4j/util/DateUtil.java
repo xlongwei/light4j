@@ -9,18 +9,18 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.commons.lang3.time.FastDateFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.networknt.utility.CollectionUtil;
 import com.networknt.utility.StringUtils;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 常见日期类型处理：字符串、日期Date、长整数new Date(long)，parse(time).getTime()
  * @author xlongwei
  */
+@Slf4j
 public class DateUtil {
-	private static Logger log = LoggerFactory.getLogger(DateUtil.class);
 	private static Map<Integer, Set<String>> formats = new HashMap<>();
 	private static Map<String, FastDateFormat> fastDateFormats = new HashMap<>();
 	private static FastDateFormat httpHeader = FastDateFormat.getInstance("EEE, dd MMM yyyy HH:mm:ss zzz", TimeZone.getTimeZone("GMT"), Locale.US);

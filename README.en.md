@@ -8,15 +8,15 @@ Software architecture description
 
 #### Installation
 
-1. xxxx
-2. xxxx
-3. xxxx
+1. redis-server
+2. mvn package -P release -Dmaven.javadoc.skip=true
+3. jar -jar target/light4j-3.0.1.jar
 
 #### Instructions
 
-1. xxxx
-2. xxxx
-3. xxxx
+1. -Dupload.save=H:/works/itecheast/Servers/uploads/
+2. -Dlight4j.directory=/soft/softwares/library/
+3. -Dlogserver=true
 
 #### Contribution
 

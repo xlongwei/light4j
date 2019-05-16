@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 import org.apache.commons.codec.binary.StringUtils;
 
@@ -16,8 +17,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class UploadUtil {
+	public static final Map<String, String> CONFIG = ConfigUtil.config("upload");
 	/** SAVE-文件系统保存目录 URL-互联网访问网址 */
-	public static final String SAVE = ConfigUtil.UPLOAD.get("save"), URL = ConfigUtil.UPLOAD.get("url");
+	public static final String SAVE = CONFIG.get("save"), URL = CONFIG.get("url");
 	/** SAVE-临时文件保存目录 URL-临时文件访问网址 */
 	public static final String SAVE_TEMP = SAVE + "temp/", URL_TEMP = URL + "temp/";
 	/** 文件上传操作码 */
@@ -25,6 +27,12 @@ public class UploadUtil {
 	/** 文件上传响应码 */
 	public static final String DOMAIN ="domain", PATH = "path";
 	
+	/**
+	 * 根据文件名获取可用保存路径
+	 * @param type image word pdf等
+	 * @param fileName
+	 * @return
+	 */
 	public static String path(String type, String fileName) {
 		type = StringUtil.isBlank(type) ? "" : type.trim()+"/";
 		String name = FileUtil.getFileName(fileName), ext = FileUtil.getFileExt(fileName);
@@ -40,6 +48,7 @@ public class UploadUtil {
 		return file;
 	}
 	
+	/** 尝试处理中文乱码 */
 	public static String string(String string) {
 		return StringUtils.newStringIso8859_1(StringUtils.getBytesUtf8(string));
 	}

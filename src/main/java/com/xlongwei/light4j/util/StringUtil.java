@@ -20,21 +20,21 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.CharEncoding;
 
 import com.networknt.utility.CharUtils;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * 
+ * string util
  * @author xlongwei
  *
  */
+@Slf4j
 public class StringUtil {
 	private static final String LINE_SPLIT = "[\r\n]+";
-	private static Logger logger = LoggerFactory.getLogger(StringUtil.class);
 
 	/** 将多行路径转换为列表，用于上传多张图片 */
 	@SuppressWarnings("unchecked")
@@ -89,7 +89,7 @@ public class StringUtil {
 			md = MessageDigest.getInstance(algorithm);
 			digest = md.digest(content.getBytes(CharEncoding.UTF_8));
 		} catch (Exception e) {
-			logger.warn("fail to digest "+algorithm+" of content: "+content, e);
+			log.warn("fail to digest "+algorithm+" of content: "+content, e);
 		}
 		return toHexString(digest);
 	}
@@ -1234,7 +1234,7 @@ public class StringUtil {
 				try{
 					sb.append(URLEncoder.encode(str1, CharEncoding.UTF_8));
 				}catch(Exception e) {
-					logger.warn("fail to encode str: {}, ex: {}", str1, e.getMessage());
+					log.warn("fail to encode str: {}, ex: {}", str1, e.getMessage());
 				}
 				i += 3;
 			}			

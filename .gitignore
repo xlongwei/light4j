@@ -16,12 +16,14 @@ hs_err_pid*
 .metadata
 bin/
 tmp/
+logs
 *.tmp
 *.bak
 *.swp
 *~.nib
 local.properties
 .settings
+.vscode
 .loadpath
 .recommenders
 .classpath

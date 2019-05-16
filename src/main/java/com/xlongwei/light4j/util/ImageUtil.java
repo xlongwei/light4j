@@ -1,5 +1,11 @@
 package com.xlongwei.light4j.util;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+
+import javax.imageio.ImageIO;
+
 import org.apache.commons.codec.binary.Base64;
 
 /**
@@ -36,5 +42,36 @@ public class ImageUtil {
 	 */
 	public static String encode(byte[] img, String format) {
 		return prefix(format) + Base64.encodeBase64String(img);
+	}
+	
+	
+	/** 解码base64图片 */
+	public static byte[] decode(String base64) {
+		return Base64.decodeBase64(prefixRemove(base64));
+	}
+	
+	public static BufferedImage image(byte[] bytes) {
+		try {
+			ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+			BufferedImage img = ImageIO.read(bais);
+			bais.close();
+			return img;
+		}catch(Exception e) {}
+		return null;
+	}
+	
+	/** 获取图片的字节码 */
+	public static byte[] bytes(BufferedImage img) {
+		return bytes(img, "PNG");
+	}
+	
+	public static byte[] bytes(BufferedImage img, String format) {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ImageIO.write(img, format, baos);
+			baos.close();
+			return baos.toByteArray();
+		}catch (Exception e) {}
+		return null;
 	}
 }

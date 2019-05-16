@@ -8,17 +8,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import lombok.extern.slf4j.Slf4j;
+
 
 /**
  * 限时过期映射
  * @author hongwei
  */
+@Slf4j
 @SuppressWarnings("unchecked")
 public class ExpireTimeMap<K, V> extends AbstractMap<K, V> {
-	private static Log log = LogFactory.getLog(ExpireTimeMap.class);
-	
 	private final Map<K, V> map;
 	private long expireTime;
 	private boolean afterLastAccess;

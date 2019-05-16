@@ -4,10 +4,9 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.networknt.utility.StringUtils;
+
+import lombok.extern.slf4j.Slf4j;
 
 
 
@@ -15,8 +14,8 @@ import com.networknt.utility.StringUtils;
  * 解析字符串值为基本类型：整数，长整数，浮点数，布尔值
  * @author xlongwei
  */
+@Slf4j
 public class NumberUtil {
-	private static Logger logger = LoggerFactory.getLogger(NumberUtil.class);
 	
 	public static Integer parseInt(String number, Integer defValue) {
 		try {
@@ -25,7 +24,7 @@ public class NumberUtil {
 				return Integer.parseInt(number);
 			}
 		} catch (Exception e) {
-			logger.warn("fail to parse int: {}, ex: {}", number, e.getMessage());
+			log.warn("fail to parse int: {}, ex: {}", number, e.getMessage());
 		}
 		return defValue;
 	}
@@ -37,7 +36,7 @@ public class NumberUtil {
 				return Long.parseLong(number);
 			}
 		} catch (Exception e) {
-			logger.warn("fail to parse long: {}, ex: {}", number, e.getMessage());
+			log.warn("fail to parse long: {}, ex: {}", number, e.getMessage());
 		}
 		return defValue;
 	}
@@ -49,7 +48,7 @@ public class NumberUtil {
 				return Double.parseDouble(number);
 			}
 		} catch (Exception e) {
-			logger.warn("fail to parse double: {}, ex: {}", number, e.getMessage());
+			log.warn("fail to parse double: {}, ex: {}", number, e.getMessage());
 		}
 		return defValue;
 	}
@@ -64,7 +63,7 @@ public class NumberUtil {
 				return new BigDecimal(number);
 			}
 		} catch (Exception e) {
-			logger.warn("fail to parse big decimal: {}, ex: {}", number, e.getMessage());
+			log.warn("fail to parse big decimal: {}, ex: {}", number, e.getMessage());
 		}
 		return defValue;
 	}
@@ -113,7 +112,7 @@ public class NumberUtil {
 			}
     		return (E)Enum.valueOf(defValue.getDeclaringClass(), value);
     	}catch(Exception e) {
-    		logger.warn("fail to parse enum {} : {}", defValue, value);
+    		log.warn("fail to parse enum {} : {}", defValue, value);
     		return defValue;
     	}
     }
@@ -224,7 +223,7 @@ public class NumberUtil {
 		try {
 			return new ExpUtil().parse(exp).getResult().toString();
 		} catch (Exception e) {
-			logger.warn("fail to parse exp: {}, ex: {}", exp, e.getMessage());
+			log.warn("fail to parse exp: {}, ex: {}", exp, e.getMessage());
 			return null;
 		}
 	}

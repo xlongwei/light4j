@@ -49,7 +49,7 @@ public class UploadHandler extends AbstractHandler {
 				}
 			}
 			if(target!=null && target.exists()) {
-				HandlerUtil.setResp(exchange, StringUtil.params("domain", UploadUtil.URL_TEMP, "path", path));
+				HandlerUtil.setResp(exchange, StringUtil.params(UploadUtil.DOMAIN, UploadUtil.URL_TEMP, UploadUtil.PATH, path));
 			}
 		}
 	}
