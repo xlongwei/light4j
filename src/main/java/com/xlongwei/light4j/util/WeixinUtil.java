@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.qq.weixin.mp.aes.AesException;
 import com.qq.weixin.mp.aes.WXBizMsgCrypt;
@@ -205,7 +206,8 @@ public class WeixinUtil {
 				Field[] fields = AbstractMessage.getFields(this.getClass());
 				boolean isEvent = Type.event.equals(getMsgType());
 				for(Field field : fields) {
-					if(isEvent && "MsgId".equals(field.getName()))
+					String name = StringUtils.capitalize(field.getName());
+					if(isEvent && "MsgId".equals(name))
 					 {
 						//event没有MsgId字段
 						continue; 
@@ -215,7 +217,7 @@ public class WeixinUtil {
 					if(!StringUtil.isBlank(string) && !string.matches("\\d+")) {
 						string = XmlObject.cdata(string);
 					}
-					xml.add(field.getName(), string);
+					xml.add(name, string);
 				}
 			}catch(Exception e) {
 				log.info(e.getMessage());
@@ -472,6 +474,7 @@ public class WeixinUtil {
 			public static int weixinLimit() {
 				return NumberUtil.parseInt(RedisConfig.get("weixin.response.limit.length"), 450);
 			}
+			protected static String split = "[ ,;:　，；：、]+";
 		}
 	}
 	

@@ -14,6 +14,8 @@ import org.apache.commons.codec.binary.Base64;
  *
  */
 public class ImageUtil {
+	public static String attr = "imgCode";
+	
 	/** 判断是否base64字符串 */
 	public static boolean isBase64(String base64) {
 		return !StringUtil.isBlank(base64) && base64.indexOf("base64,") > -1;

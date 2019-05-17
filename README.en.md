@@ -1,7 +1,7 @@
 # light4j
 
 #### Description
-基于light-4j微服务框架的个人应用
+a microservice project using light-4j
 
 #### Software Architecture
 Software architecture description
@@ -9,28 +9,53 @@ Software architecture description
 #### Installation
 
 1. redis-server
-2. mvn package -P release -Dmaven.javadoc.skip=true
-3. jar -jar target/light4j-3.0.1.jar
+2. mvn compile
+3. mvn exec:exec
+
+profile "debug" is activated by default.
 
 #### Instructions
 
-1. -Dupload.save=H:/works/itecheast/Servers/uploads/
-2. -Dlight4j.directory=/soft/softwares/library/
-3. -Dlogserver=true
+1. rewrite configs in config/light4j.yml
 
-#### Contribution
+-Dupload.save=/soft/uploads -Dlight4j.directory=/soft/softwares/library/
 
-1. Fork the repository
-2. Create Feat_xxx branch
-3. Commit your code
-4. Create Pull Request
+2. append logs to logserver or logfile
+
+-Dlogserver -Dlogfile=path/log
+
+### Debug
+
+1. com.networknt.server.Server
+
+you can config vm arguments -Dupload.save=/soft/uploads -Dlight4j.directory=/soft/softwares/library/
+
+2. using postman(chrome plugin) to import postman.json
+
+#### Deploy
+
+1. mvn compile jar:jar
+
+2. mvn dependency:copy-dependencies -DoutputDirectory=target/deploy
+
+3. copy target/light4j-3.0.1.jar target/deploy
+
+you need only upload "deploy" directory once, after that you just need to update light4j-3.0.1.jar.
+
+4. java -Dlight4j.directory=H:/works/itecheast/Servers/library/ -Dupload.save=H:/works/itecheast/Servers/uploads/ -jar target/deploy/light4j-3.0.1.jar
+
+redis-server is required. "mvn package -P release -Dmaven.javadoc.skip=true" will package one-jar "target/light4j-3.0.1.jar" that can be deployed also. 
+
+#### Features
+
+1. lombok
+
+org.projectlombok:lombok:1.16.18+
+
+2. logback if/else
+
+org.codehaus.janino:janino:2.6.1
 
 
-#### Gitee Feature
 
-1. You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2. Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3. Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4. The most valuable open source project [GVP](https://gitee.com/gvp)
-5. The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6. The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+

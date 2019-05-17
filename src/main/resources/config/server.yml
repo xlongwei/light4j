@@ -1,28 +1,7 @@
-
-# Server configuration
----
-# This is the default binding address if the service is dockerized.
 ip: 0.0.0.0
-
-# Http port if enableHttp is true. It will be ignored if dynamicPort is true.
 httpPort: 8080
-
-# Enable HTTP should be false by default. It should be only used for testing with clients or tools
-# that don't support https or very hard to import the certificate. Otherwise, https should be used.
-# When enableHttp, you must set enableHttps to false, otherwise, this flag will be ignored. There is
-# only one protocol will be used for the server at anytime. If both http and https are true, only
-# https listener will be created and the server will bind to https port only.
 enableHttp: true
-
-# Https port if enableHttps is true. It will be ignored if dynamicPort is true.
-httpsPort: 8443
-
-# Enable HTTPS should be true on official environment and most dev environments.
 enableHttps: false
-
-# Unique service identifier. Used in service registration and discovery etc.
+enableHttp2: false
 serviceId: com.xlongwei.light4j
-
-# Build Number
-# Allows teams to audit the value and set it according to their release management processes
 buildNumber: 3.0.1
