@@ -1,5 +1,6 @@
 light4j:
   directory: http://t.xlongwei.com/softwares/library/
+  frontUrl: http://cms.xlongwei.com
 
 redis:
   # host:port:db:password:timeout
@@ -13,8 +14,3 @@ soffice:
 upload:
   save: /soft/uploads/
   url: http://s.xlongwei.com/uploads/
-
-weixin:
-  appSecret: 07735561e5ea7ce0567963293023172e
-  token: MyushAydimubIlliaheimGofsidWein3
-  encodingAesKey: PbFKRNMv0MQKhyyadsIJ7KQDu0ydgATT4KXut9cHkNc

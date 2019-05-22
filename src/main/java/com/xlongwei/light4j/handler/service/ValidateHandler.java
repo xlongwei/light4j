@@ -6,7 +6,7 @@ import java.util.Map;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.ImageUtil;
-import com.xlongwei.light4j.util.RedisConfig;
+import com.xlongwei.light4j.util.RedisCache;
 import com.xlongwei.light4j.util.StringUtil;
 
 import io.undertow.server.HttpServerExchange;
@@ -51,7 +51,7 @@ public class ValidateHandler extends AbstractHandler {
 			case "bankCardNumber": valid = StringUtil.isBankCardNumber(value); break;
 			case "checkcode": {
 				String sid = HandlerUtil.getParam(exchange, "sid");
-				String imgCode = RedisConfig.get(ImageUtil.attr, sid);
+				String imgCode = RedisCache.get(ImageUtil.attr, sid);
 				valid = value.equalsIgnoreCase(imgCode); break;
 			}
 			default: if(type.startsWith(SLASH) && type.endsWith(SLASH)) { valid = value.matches(type.substring(1, type.length()-1)); } break;

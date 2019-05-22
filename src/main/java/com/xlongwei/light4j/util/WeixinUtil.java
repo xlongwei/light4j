@@ -38,7 +38,6 @@ public class WeixinUtil {
 	private static Map<Class<?>,Field[]> fieldsCache = new HashMap<>(32);
 	private static Map<String, Class<? extends AbstractMessage>> classCache = new HashMap<>(16);
 	private static Map<String, WXBizMsgCrypt> wxBizMsgCrypts = new HashMap<>(1);
-	private static TextMessage help = new TextMessage();
 	private static Map<Class, List<AbstractMessageHandler>> handlers = new HashMap<>(16);
 	
 	/** 计算签名signature */
@@ -149,11 +148,7 @@ public class WeixinUtil {
 				}
 			}
 		}
-		help.setFromUserName(msg.getToUserName());
-		help.setToUserName(msg.getFromUserName());
-		help.setCreateTime(SystemClock.now()/1000);
-		help.setMsgId(msg.getMsgId());
-		return help;
+		return null;
 	}
 	
 	public static Class getMessageType(Class clazz) {
@@ -178,11 +173,9 @@ public class WeixinUtil {
 		for(String type : classCache.keySet()) {
 			log.info("type:{} => clazz:{}", type, classCache.get(type));
 		}
-		Map<String, String> config = ConfigUtil.config("weixin");
-		String token = config.get("token");
-		String encodingAesKey = config.get("encodingAesKey");
+		String token = RedisConfig.get("weixin.token");
+		String encodingAesKey = RedisConfig.get("weixin.encodingAesKey");
 		configAES(appid, token, encodingAesKey);
-		help.setContent(RedisConfig.get("weixin.help"));
 	}
 	
 	/** 微信公众号消息的封装 */

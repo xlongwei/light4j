@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import com.xlongwei.light4j.util.HttpUtil;
 import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.RedisCache;
+import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
 
@@ -19,7 +20,7 @@ public class YoudaoHandler extends AbstractTextHandler {
 	private Pattern pattern = Pattern.compile("^翻译"+split+"([a-zA-Z]+|[\\u4E00-\\u9FA5]+)$");
 	private static final String WORD = "[a-zA-Z]{3,}";
 	private static final String ERROR_CODE = "errorCode";
-	private static String KEY = "967398425", KEY_FROM = "xlongwei", YOUDAO_API = "http://fanyi.youdao.com/openapi.do";
+	private static String KEY_FROM = "xlongwei", YOUDAO_API = "http://fanyi.youdao.com/openapi.do";
 	private static String CACHE_WEIXIN = "weixin.translate", CACHE_YOUDAO = "youdao.translate";
 	
 	@Override
@@ -65,14 +66,15 @@ public class YoudaoHandler extends AbstractTextHandler {
 	}
 
 	public static String translate(String text) {
-		if(StringUtil.isBlank(KEY) || StringUtil.isBlank(KEY_FROM) || StringUtil.isBlank(text)) {
+		String key = RedisConfig.get("youdao.key");
+		if(StringUtil.isBlank(key) || StringUtil.isBlank(KEY_FROM) || StringUtil.isBlank(text)) {
 			return null;
 		}
 		String cached = RedisCache.get(CACHE_YOUDAO, text);
 		if(!StringUtil.isBlank(cached)) {
 			return cached;
 		}
-		cached = HttpUtil.post(YOUDAO_API, StringUtil.params("keyfrom",KEY_FROM,"key",KEY,"type","data","doctype","json","version","1.1","q",text));
+		cached = HttpUtil.post(YOUDAO_API, StringUtil.params("keyfrom",KEY_FROM,"key",key,"type","data","doctype","json","version","1.1","q",text));
 		RedisCache.set(CACHE_YOUDAO, text, cached);
 		return cached;
 	}

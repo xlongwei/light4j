@@ -4,8 +4,42 @@
         "id": "715be48a-3a8a-9494-7a27-921178135295",
         "name": "light4j",
         "timestamp": 1557330375276,
-        "order": ["7e17eed5-ae7a-c219-b5e1-4ea022458cf0", "786c1852-6505-3bae-da6a-729adc4014be", "9d693769-413e-581c-8a4a-7f06264c03f6", "442ca0be-af0a-6fae-e763-80012fb4db1f", "8277fa8a-0cc5-e13f-47b7-1091ae22895f", "cd64d8f6-a3bd-e6e2-f2b5-913fcb38d721", "d5c1bd40-4724-1555-b3c7-ee3d33321ce5"],
+        "order": ["7e17eed5-ae7a-c219-b5e1-4ea022458cf0", "786c1852-6505-3bae-da6a-729adc4014be", "9d693769-413e-581c-8a4a-7f06264c03f6", "442ca0be-af0a-6fae-e763-80012fb4db1f", "8277fa8a-0cc5-e13f-47b7-1091ae22895f", "cd64d8f6-a3bd-e6e2-f2b5-913fcb38d721", "d5c1bd40-4724-1555-b3c7-ee3d33321ce5", "3c46163b-a435-02ac-a13f-5b76de296db3", "39619239-2d29-0604-5f9a-a5b2b312d318", "70820a1c-be76-14cd-930d-158f7e4ba91c", "f3ecdf29-586c-35f1-3d0a-0f2771105f96", "cd2a2eef-45dd-ed48-8373-714905360df9", "7081bf2a-988d-48b8-0cb7-b98d28e8c574", "b1ccdd09-17e6-2872-e102-273da22038a1"],
         "requests": [{
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "39619239-2d29-0604-5f9a-a5b2b312d318",
+            "name": "money",
+            "description": "",
+            "url": "http://{{host}}/service/money/daxie",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "amount",
+                "value": "123123",
+                "type": "text"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "3c46163b-a435-02ac-a13f-5b76de296db3",
+            "name": "excel",
+            "description": "",
+            "url": "http://{{host}}/service/excel/column",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "name",
+                "value": "AA",
+                "type": "text"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        }, {
             "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
             "id": "442ca0be-af0a-6fae-e763-80012fb4db1f",
             "name": "pinyin",
@@ -22,6 +56,40 @@
             "timestamp": 0,
             "version": 2,
             "time": 1557408590933
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "7081bf2a-988d-48b8-0cb7-b98d28e8c574",
+            "name": "checkcode",
+            "description": "",
+            "url": "http://{{host}}/service/checkcode/code",
+            "method": "POST",
+            "headers": "",
+            "data": [],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "70820a1c-be76-14cd-930d-158f7e4ba91c",
+            "name": "validate",
+            "description": "",
+            "url": "http://{{host}}/service/validate",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "type",
+                "value": "mobile",
+                "type": "text"
+            }, {
+                "key": "value",
+                "value": "188",
+                "type": "text"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
         }, {
             "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
             "id": "786c1852-6505-3bae-da6a-729adc4014be",
@@ -53,14 +121,14 @@
             "id": "8277fa8a-0cc5-e13f-47b7-1091ae22895f",
             "name": "weixin",
             "description": "",
-            "url": "http://localhost:8080/callback/weixin.xml?timestamp=timestamp&nonce=nonce",
+            "url": "http://{{host}}/callback/weixin.xml?timestamp=timestamp&nonce=nonce",
             "method": "POST",
             "headers": "",
             "data": "<xml><ToUserName><![CDATA[gh_8a53061dc477]]></ToUserName>\n<FromUserName><![CDATA[oZ4I0uFLpp16B6V_FDTgn7Q3hQzA]]></FromUserName>\n<CreateTime>1557332369</CreateTime>\n<MsgType><![CDATA[text]]></MsgType>\n<Content><![CDATA[缁熻]]></Content>\n<MsgId>22295637874647106</MsgId>\n</xml>",
             "dataMode": "raw",
             "timestamp": 0,
             "version": 2,
-            "time": 1557412128904
+            "time": 1558023550975
         }, {
             "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
             "id": "9d693769-413e-581c-8a4a-7f06264c03f6",
@@ -82,6 +150,44 @@
             "timestamp": 0,
             "version": 2,
             "time": 1557411947824
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "b1ccdd09-17e6-2872-e102-273da22038a1",
+            "name": "qrcode",
+            "description": "",
+            "url": "http://{{host}}/service/qrcode/encode",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "content",
+                "value": "123",
+                "type": "text"
+            }, {
+                "key": "logo",
+                "value": "https://s.xlongwei.com/uploads/img/avatar/x-64.png",
+                "type": "text"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "cd2a2eef-45dd-ed48-8373-714905360df9",
+            "name": "property",
+            "description": "",
+            "url": "http://{{host}}/service/property",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "key",
+                "value": "mbrola.base",
+                "type": "text"
+            }],
+            "dataMode": "urlencoded",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
         }, {
             "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
             "id": "cd64d8f6-a3bd-e6e2-f2b5-913fcb38d721",
@@ -120,6 +226,23 @@
             "timestamp": 0,
             "responses": [],
             "version": 2
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "f3ecdf29-586c-35f1-3d0a-0f2771105f96",
+            "name": "dict",
+            "description": "",
+            "url": "http://{{host}}/service/dict",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "parts",
+                "value": "鏃� 鏈�",
+                "type": "text"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
         }]
     }],
     "environments": [{
@@ -131,6 +254,15 @@
             "type": "text"
         }],
         "timestamp": 1557408416621
+    }, {
+        "id": "639ac6b1-47fb-881c-a563-8884d61dcb24",
+        "name": "cms",
+        "values": [{
+            "key": "host",
+            "value": "cms.xlongwei.com",
+            "type": "text"
+        }],
+        "timestamp": 1558023591310
     }],
     "headerPresets": [],
     "globals": []

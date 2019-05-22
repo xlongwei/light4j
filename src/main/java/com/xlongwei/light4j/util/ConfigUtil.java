@@ -47,10 +47,12 @@ public class ConfigUtil {
 			}
 		}
 		log.info("light4j config loaded");
-		DIRECTORY = config("light4j").get("directory");
+		Map<String, String> light4j = config("light4j");
+		DIRECTORY = light4j.get("directory");
+		FRONT_URL = light4j.get("frontUrl");
 	}
 	
-	public static final String DIRECTORY;
+	public static final String DIRECTORY, FRONT_URL;
 	
 	public static final TypeReference<Map<String, Integer>> STRING_MAP_INTEGER = new TypeReference<Map<String, Integer>>() {};
 	public static final TypeReference<Map<String, Object>> STRING_MAP_OBJECT = new TypeReference<Map<String, Object>>() {};

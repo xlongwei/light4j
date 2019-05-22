@@ -35,6 +35,9 @@
         <version.httpmime>4.3.4</version.httpmime>
         <version.fastjson>1.2.31</version.fastjson>
         <version.jodconverter>2.2.1</version.jodconverter>
+        <version.freetts>1.2.2</version.freetts>
+        <version.zxing>3.2.1</version.zxing>
+        <version.vcard>0.10.0</version.vcard>
     </properties>
 
     <dependencies>
@@ -290,6 +293,56 @@
 			<artifactId>httpmime</artifactId>
 			<version>${version.httpmime}</version>
 		</dependency>
+		<dependency>
+		  <groupId>org.mobicents.external.freetts</groupId>
+		  <artifactId>freetts</artifactId>
+		  <version>${version.freetts}</version>
+		</dependency>
+		<dependency>
+		  <groupId>org.mobicents.external.freetts</groupId>
+		  <artifactId>cmu_time_awb</artifactId>
+		  <version>${version.freetts}</version>
+		</dependency>
+		<dependency>
+		  <groupId>org.mobicents.external.freetts</groupId>
+		  <artifactId>cmu_us_kal</artifactId>
+		  <version>${version.freetts}</version>
+		</dependency>
+		<dependency>
+		  <groupId>org.mobicents.external.freetts</groupId>
+		  <artifactId>cmutimelex</artifactId>
+		  <version>${version.freetts}</version>
+		</dependency>
+		<dependency>
+		  <groupId>org.mobicents.external.freetts</groupId>
+		  <artifactId>en_us</artifactId>
+		  <version>${version.freetts}</version>
+		</dependency>
+		<dependency>
+		  <groupId>org.mobicents.external.freetts</groupId>
+		  <artifactId>cmudict04</artifactId>
+		  <version>${version.freetts}</version>
+		</dependency>
+		<dependency>
+		  <groupId>org.mobicents.external.freetts</groupId>
+		  <artifactId>cmulex</artifactId>
+		  <version>${version.freetts}</version>
+		</dependency>
+		<dependency>
+		  <groupId>org.mobicents.external.freetts</groupId>
+		  <artifactId>mbrola</artifactId>
+		  <version>${version.freetts}</version>
+		</dependency>		
+		<dependency>
+		  <groupId>com.google.zxing</groupId>
+		  <artifactId>javase</artifactId>
+		  <version>${version.zxing}</version>
+		</dependency>
+		<dependency>
+		   <groupId>com.googlecode.ez-vcard</groupId>
+		   <artifactId>ez-vcard</artifactId>
+		   <version>${version.vcard}</version>
+		</dependency>		
         
         <!-- Test Dependencies -->
         <dependency>
