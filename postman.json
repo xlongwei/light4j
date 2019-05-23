@@ -4,7 +4,7 @@
         "id": "715be48a-3a8a-9494-7a27-921178135295",
         "name": "light4j",
         "timestamp": 1557330375276,
-        "order": ["7e17eed5-ae7a-c219-b5e1-4ea022458cf0", "786c1852-6505-3bae-da6a-729adc4014be", "9d693769-413e-581c-8a4a-7f06264c03f6", "442ca0be-af0a-6fae-e763-80012fb4db1f", "8277fa8a-0cc5-e13f-47b7-1091ae22895f", "cd64d8f6-a3bd-e6e2-f2b5-913fcb38d721", "d5c1bd40-4724-1555-b3c7-ee3d33321ce5", "3c46163b-a435-02ac-a13f-5b76de296db3", "39619239-2d29-0604-5f9a-a5b2b312d318", "70820a1c-be76-14cd-930d-158f7e4ba91c", "f3ecdf29-586c-35f1-3d0a-0f2771105f96", "cd2a2eef-45dd-ed48-8373-714905360df9", "7081bf2a-988d-48b8-0cb7-b98d28e8c574", "b1ccdd09-17e6-2872-e102-273da22038a1"],
+        "order": ["7e17eed5-ae7a-c219-b5e1-4ea022458cf0", "786c1852-6505-3bae-da6a-729adc4014be", "9d693769-413e-581c-8a4a-7f06264c03f6", "442ca0be-af0a-6fae-e763-80012fb4db1f", "8277fa8a-0cc5-e13f-47b7-1091ae22895f", "cd64d8f6-a3bd-e6e2-f2b5-913fcb38d721", "d5c1bd40-4724-1555-b3c7-ee3d33321ce5", "3c46163b-a435-02ac-a13f-5b76de296db3", "39619239-2d29-0604-5f9a-a5b2b312d318", "70820a1c-be76-14cd-930d-158f7e4ba91c", "f3ecdf29-586c-35f1-3d0a-0f2771105f96", "cd2a2eef-45dd-ed48-8373-714905360df9", "7081bf2a-988d-48b8-0cb7-b98d28e8c574", "b1ccdd09-17e6-2872-e102-273da22038a1", "7915b551-e2e6-9424-09e8-1ddc70ddb79c", "63c09430-4a40-cfd0-5ef6-db7331bbf2c9"],
         "requests": [{
             "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
             "id": "39619239-2d29-0604-5f9a-a5b2b312d318",
@@ -58,6 +58,23 @@
             "time": 1557408590933
         }, {
             "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "63c09430-4a40-cfd0-5ef6-db7331bbf2c9",
+            "name": "idcard",
+            "description": "",
+            "url": "http://{{host}}/service/idcard/area",
+            "method": "POST",
+            "headers": "",
+            "data": [{
+                "key": "area",
+                "value": "511623",
+                "type": "text"
+            }],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
             "id": "7081bf2a-988d-48b8-0cb7-b98d28e8c574",
             "name": "checkcode",
             "description": "",
@@ -103,6 +120,19 @@
             "timestamp": 0,
             "version": 2,
             "time": 1557408600814
+        }, {
+            "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
+            "id": "7915b551-e2e6-9424-09e8-1ddc70ddb79c",
+            "name": "pdnovel",
+            "description": "",
+            "url": "http://{{host}}/service/pdnovel/books",
+            "method": "POST",
+            "headers": "",
+            "data": [],
+            "dataMode": "params",
+            "timestamp": 0,
+            "responses": [],
+            "version": 2
         }, {
             "collectionId": "715be48a-3a8a-9494-7a27-921178135295",
             "id": "7e17eed5-ae7a-c219-b5e1-4ea022458cf0",
@@ -256,13 +286,13 @@
         "timestamp": 1557408416621
     }, {
         "id": "639ac6b1-47fb-881c-a563-8884d61dcb24",
-        "name": "cms",
+        "name": "api",
         "values": [{
             "key": "host",
-            "value": "cms.xlongwei.com",
+            "value": "api.xlongwei.com",
             "type": "text"
         }],
-        "timestamp": 1558023591310
+        "timestamp": 1558629022057
     }],
     "headerPresets": [],
     "globals": []

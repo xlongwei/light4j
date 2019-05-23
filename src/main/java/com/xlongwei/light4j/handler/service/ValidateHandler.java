@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
+import com.xlongwei.light4j.util.IdCardUtil;
 import com.xlongwei.light4j.util.ImageUtil;
 import com.xlongwei.light4j.util.RedisCache;
 import com.xlongwei.light4j.util.StringUtil;
@@ -42,6 +43,7 @@ public class ValidateHandler extends AbstractHandler {
 			case "barcode": valid = StringUtil.isBarcode(value); break;
 			case "ip": valid = StringUtil.isIp(value); break;
 			case "url": valid = StringUtil.isUrl(value); break;
+			case "idArea": valid = IdCardUtil.areas.containsKey(value); break;
 			case "idNumber": valid = StringUtil.isIdNumber(value); break;
 			case "sccNumber": valid = StringUtil.isSccNumber(value.toUpperCase()); break;
 			case "businessNo": valid = StringUtil.isBusinessNo(value); break;
