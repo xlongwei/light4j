@@ -1,7 +1,5 @@
 package com.xlongwei.light4j.util;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -37,19 +35,13 @@ public final class RelationUtil {
 		}
 
 		@Override
+		public int hashCode() {
+			return l.hashCode() * 37 + r.hashCode();
+		}
+
+		@Override
 		public String toString() {
-			return "[" + l.toString() + "," + r.toString() + "]";
-		}
-
-		public void print(PrintStream out) {
-			print(new PrintWriter(out));
-		}
-
-		public void print(PrintWriter out) {
-			out.print(l.toString());
-			out.print("\t+\t");
-			out.println(r.toString());
-			out.flush();
+			return l.toString() + "<->" + r.toString();
 		}
 	}
 
@@ -89,19 +81,6 @@ public final class RelationUtil {
 		 * @return lsize
 		 */
 		public int lsize();
-
-		/** print 
-		 * @param out
-		 * @param isCompact
-		 */
-		public void print(PrintStream out, boolean isCompact);
-
-		/** print 
-		 * @param out
-		 * @param isCompact
-		 */
-		public void print(PrintWriter out, boolean isCompact);
-
 		/** remove 
 		 * @param lo
 		 * @param ro
@@ -115,11 +94,7 @@ public final class RelationUtil {
 	}
 
 	public static class Relation11<L, R> implements Relation<L, R> {
-		public Relation11() {
-			// 注意这里不能包含L和R
-			init();
-		}
-
+		
 		@Override
 		public void add(L lo, R ro) {
 			// add to lmap
@@ -186,62 +161,27 @@ public final class RelationUtil {
 		}
 
 		@Override
-		public void print(PrintStream out, boolean isCompact) {
-			print(new PrintWriter(out), isCompact);
-		}
-
-		@Override
-		public void print(PrintWriter out, boolean isCompact) {
-			// print lmap
-			out.println("[LMAP]");
-			for (L lo : lmap.keySet()) {
-				out.print(lo.toString());
-				out.print("\t:");
-				R ro = lmap.get(lo);
-				out.print("\t");
-				out.print(ro.toString());
-				out.print("\n");
-			}
-
-			// print rmap
-			out.println("[RMAP]");
-			for (R ro : rmap.keySet()) {
-				out.print(ro.toString());
-				out.print("\t:");
-				L lo = rmap.get(ro);
-				out.print("\t");
-				out.print(lo.toString());
-				out.print("\n");
-			}
-
-			out.flush();
-		}
-
-		@Override
 		public void remove(L lo, R ro) {
-			if (!contains(lo, ro)) {
-				return;
+			if (contains(lo, ro)) {
+				lmap.remove(lo);
+				rmap.remove(ro);
 			}
-			lmap.remove(lo);
-			rmap.remove(ro);
 		}
 
 		public void removeL(L lo) {
 			R ro = lmap.get(lo);
-			if (ro == null) {
-				return;
+			if (ro != null) {
+				lmap.remove(lo);
+				rmap.remove(ro);
 			}
-			lmap.remove(lo);
-			rmap.remove(ro);
 		}
 
 		public void removeR(R ro) {
 			L lo = rmap.get(ro);
-			if (lo == null) {
-				return;
+			if (lo != null) {
+				lmap.remove(lo);
+				rmap.remove(ro);
 			}
-			lmap.remove(lo);
-			rmap.remove(ro);
 		}
 
 		@Override
@@ -249,18 +189,8 @@ public final class RelationUtil {
 			return rmap.size();
 		}
 
-		private void init() {
-			if (lmap == null) {
-				lmap = new Hashtable<L, R>();
-			}
-			if (rmap == null) {
-				rmap = new Hashtable<R, L>();
-			}
-		}
-
-		Hashtable<L, R> lmap = null;
-
-		Hashtable<R, L> rmap = null;
+		Hashtable<L, R> lmap = new Hashtable<L, R>();
+		Hashtable<R, L> rmap = new Hashtable<R, L>();
 	}
 
 	/**
@@ -269,10 +199,6 @@ public final class RelationUtil {
 	 * @param <R>
 	 */
 	public static class Relation1N<L, R> implements Relation<L, R> {
-		public Relation1N() {
-			// 注意这里不能包含L和R
-			init();
-		}
 
 		@Override
 		public void add(L lo, R ro) {
@@ -345,49 +271,11 @@ public final class RelationUtil {
 		}
 
 		@Override
-		public void print(PrintStream out, boolean isCompact) {
-			print(new PrintWriter(out), isCompact);
-		}
-
-		@Override
-		public void print(PrintWriter out, boolean isCompact) {
-			// print lmap
-			out.println("[LMAP]");
-			for (L lo : lmap.keySet()) {
-				out.print(lo.toString());
-				out.print("\t:");
-				HashSet<R> rd = lmap.get(lo);
-				for (R ro : rd) {
-					if (!isCompact) {
-						out.print("\n");
-					}
-					out.print("\t");
-					out.print(ro.toString());
-				}
-				out.print("\n");
-			}
-
-			// print rmap
-			out.println("[RMAP]");
-			for (R ro : rmap.keySet()) {
-				out.print(ro.toString());
-				out.print("\t:");
-				L lo = rmap.get(ro);
-				out.print("\t");
-				out.print(lo.toString());
-				out.print("\n");
-			}
-
-			out.flush();
-		}
-
-		@Override
 		public void remove(L lo, R ro) {
-			if (!contains(lo, ro)) {
-				return;
+			if (contains(lo, ro)) {
+				removeRObjectFromLMap(lo, ro);
+				removeLObjectFromRMap(lo, ro);
 			}
-			removeRObjectFromLMap(lo, ro);
-			removeLObjectFromRMap(lo, ro);
 		}
 
 		public void removeL(L lo) {
@@ -415,22 +303,11 @@ public final class RelationUtil {
 			return rmap.size();
 		}
 
-		private void init() {
-			if (lmap == null) {
-				lmap = new Hashtable<L, HashSet<R>>();
-			}
-			if (rmap == null) {
-				rmap = new Hashtable<R, L>();
-			}
-		}
-
 		private void removeLObjectFromRMap(L lo, R ro) {
-			// here the relation contains lo and ro
 			rmap.remove(ro);
 		}
 
 		private void removeRObjectFromLMap(L lo, R ro) {
-			// here the relation contains lo and ro
 			HashSet<R> rd = lmap.get(lo);
 			rd.remove(ro);
 			if (rd.size() == 0) {
@@ -438,9 +315,9 @@ public final class RelationUtil {
 			}
 		}
 
-		Hashtable<L, HashSet<R>> lmap = null;
+		Hashtable<L, HashSet<R>> lmap = new Hashtable<L, HashSet<R>>();
 
-		Hashtable<R, L> rmap = null;
+		Hashtable<R, L> rmap = new Hashtable<R, L>();
 	}
 
 	/**
@@ -449,22 +326,8 @@ public final class RelationUtil {
 	 * @param <R>
 	 */
 	public static class RelationNn<L, R> implements Relation<L, R> {
-		Hashtable<L, HashSet<R>> lmap = null;
-		Hashtable<R, HashSet<L>> rmap = null;
-
-		public RelationNn() {
-			// 注意这里不能包含L和R
-			init();
-		}
-
-		private void init() {
-			if (lmap == null) {
-				lmap = new Hashtable<L, HashSet<R>>();
-			}
-			if (rmap == null) {
-				rmap = new Hashtable<R, HashSet<L>>();
-			}
-		}
+		Hashtable<L, HashSet<R>> lmap = new Hashtable<L, HashSet<R>>();
+		Hashtable<R, HashSet<L>> rmap = new Hashtable<R, HashSet<L>>();
 
 		@Override
 		public void add(L lo, R ro) {
@@ -570,48 +433,6 @@ public final class RelationUtil {
 		}
 
 		@Override
-		public void print(PrintStream out, boolean isCompact) {
-			print(new PrintWriter(out), isCompact);
-		}
-
-		@Override
-		public void print(PrintWriter out, boolean isCompact) {
-			// print lmap
-			out.println("[LMAP]");
-			for (L lo : lmap.keySet()) {
-				out.print(lo.toString());
-				out.print("\t:");
-				HashSet<R> rd = lmap.get(lo);
-				for (R ro : rd) {
-					if (!isCompact) {
-						out.print("\n");
-					}
-					out.print("\t");
-					out.print(ro.toString());
-				}
-				out.print("\n");
-			}
-
-			// print rmap
-			out.println("[RMAP]");
-			for (R ro : rmap.keySet()) {
-				out.print(ro.toString());
-				out.print("\t:");
-				HashSet<L> ld = rmap.get(ro);
-				for (L lo : ld) {
-					if (!isCompact) {
-						out.print("\n");
-					}
-					out.print("\t");
-					out.print(lo.toString());
-				}
-				out.print("\n");
-			}
-
-			out.flush();
-		}
-
-		@Override
 		public ArrayList<RelationPair<L, R>> all() {
 			ArrayList<RelationPair<L, R>> r = new ArrayList<RelationPair<L, R>>();
 			for (L lo : lmap.keySet()) {
@@ -639,5 +460,4 @@ public final class RelationUtil {
 			return rmap.size();
 		}
 	}
-
 }

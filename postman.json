@@ -10,7 +10,7 @@
             "id": "39619239-2d29-0604-5f9a-a5b2b312d318",
             "name": "money",
             "description": "",
-            "url": "http://{{host}}/service/money/daxie",
+            "url": "{{host}}/service/money/daxie",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -27,7 +27,7 @@
             "id": "3c46163b-a435-02ac-a13f-5b76de296db3",
             "name": "excel",
             "description": "",
-            "url": "http://{{host}}/service/excel/column",
+            "url": "{{host}}/service/excel/column",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -44,7 +44,7 @@
             "id": "442ca0be-af0a-6fae-e763-80012fb4db1f",
             "name": "pinyin",
             "description": "",
-            "url": "http://{{host}}/service/pinyin",
+            "url": "{{host}}/service/pinyin",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -61,7 +61,7 @@
             "id": "63c09430-4a40-cfd0-5ef6-db7331bbf2c9",
             "name": "idcard",
             "description": "",
-            "url": "http://{{host}}/service/idcard/area",
+            "url": "{{host}}/service/idcard/area",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -78,7 +78,7 @@
             "id": "7081bf2a-988d-48b8-0cb7-b98d28e8c574",
             "name": "checkcode",
             "description": "",
-            "url": "http://{{host}}/service/checkcode/code",
+            "url": "{{host}}/service/checkcode/code",
             "method": "POST",
             "headers": "",
             "data": [],
@@ -91,7 +91,7 @@
             "id": "70820a1c-be76-14cd-930d-158f7e4ba91c",
             "name": "validate",
             "description": "",
-            "url": "http://{{host}}/service/validate",
+            "url": "{{host}}/service/validate",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -112,7 +112,7 @@
             "id": "786c1852-6505-3bae-da6a-729adc4014be",
             "name": "datetime",
             "description": "",
-            "url": "http://{{host}}/service/datetime",
+            "url": "{{host}}/service/datetime",
             "method": "POST",
             "headers": "",
             "data": [],
@@ -125,7 +125,7 @@
             "id": "7915b551-e2e6-9424-09e8-1ddc70ddb79c",
             "name": "pdnovel",
             "description": "",
-            "url": "http://{{host}}/service/pdnovel/books",
+            "url": "{{host}}/service/pdnovel/books",
             "method": "POST",
             "headers": "",
             "data": [],
@@ -138,7 +138,7 @@
             "id": "7e17eed5-ae7a-c219-b5e1-4ea022458cf0",
             "name": "ansj",
             "description": "",
-            "url": "http://{{host}}/service/ansj/jianfan?fan=true&text=姹夎",
+            "url": "{{host}}/service/ansj/jianfan?fan=true&text=姹夎",
             "method": "POST",
             "headers": "",
             "data": [],
@@ -151,7 +151,7 @@
             "id": "8277fa8a-0cc5-e13f-47b7-1091ae22895f",
             "name": "weixin",
             "description": "",
-            "url": "http://{{host}}/callback/weixin.xml?timestamp=timestamp&nonce=nonce",
+            "url": "{{host}}/callback/weixin.xml?timestamp=timestamp&nonce=nonce",
             "method": "POST",
             "headers": "",
             "data": "<xml><ToUserName><![CDATA[gh_8a53061dc477]]></ToUserName>\n<FromUserName><![CDATA[oZ4I0uFLpp16B6V_FDTgn7Q3hQzA]]></FromUserName>\n<CreateTime>1557332369</CreateTime>\n<MsgType><![CDATA[text]]></MsgType>\n<Content><![CDATA[缁熻]]></Content>\n<MsgId>22295637874647106</MsgId>\n</xml>",
@@ -164,7 +164,7 @@
             "id": "9d693769-413e-581c-8a4a-7f06264c03f6",
             "name": "des",
             "description": "",
-            "url": "http://{{host}}/service/des/encrypt",
+            "url": "{{host}}/service/des/encrypt",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -185,7 +185,7 @@
             "id": "b1ccdd09-17e6-2872-e102-273da22038a1",
             "name": "qrcode",
             "description": "",
-            "url": "http://{{host}}/service/qrcode/encode",
+            "url": "{{host}}/service/qrcode/encode",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -206,7 +206,7 @@
             "id": "cd2a2eef-45dd-ed48-8373-714905360df9",
             "name": "property",
             "description": "",
-            "url": "http://{{host}}/service/property",
+            "url": "{{host}}/service/property",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -223,7 +223,7 @@
             "id": "cd64d8f6-a3bd-e6e2-f2b5-913fcb38d721",
             "name": "upload",
             "description": "",
-            "url": "http://{{host}}/upload/temp",
+            "url": "{{host}}/upload/temp",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -244,7 +244,7 @@
             "id": "d5c1bd40-4724-1555-b3c7-ee3d33321ce5",
             "name": "base64Image",
             "description": "",
-            "url": "http://{{host}}/service/base64Image",
+            "url": "{{host}}/service/base64Image",
             "method": "POST",
             "headers": "",
             "data": [{
@@ -261,14 +261,9 @@
             "id": "f3ecdf29-586c-35f1-3d0a-0f2771105f96",
             "name": "dict",
             "description": "",
-            "url": "http://{{host}}/service/dict",
+            "url": "{{host}}/service/dict",
             "method": "POST",
             "headers": "",
-            "data": [{
-                "key": "parts",
-                "value": "鏃� 鏈�",
-                "type": "text"
-            }],
             "dataMode": "params",
             "timestamp": 0,
             "responses": [],
@@ -280,16 +275,16 @@
         "name": "light4j",
         "values": [{
             "key": "host",
-            "value": "127.0.0.1:8080",
+            "value": "http://127.0.0.1:8080",
             "type": "text"
         }],
         "timestamp": 1557408416621
     }, {
         "id": "639ac6b1-47fb-881c-a563-8884d61dcb24",
-        "name": "api",
+        "name": "http2",
         "values": [{
             "key": "host",
-            "value": "api.xlongwei.com",
+            "value": "https://api.xlongwei.com:8443",
             "type": "text"
         }],
         "timestamp": 1558629022057

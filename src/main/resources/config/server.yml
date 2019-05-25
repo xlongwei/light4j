@@ -1,7 +1,9 @@
 ip: 0.0.0.0
 httpPort: 8080
 enableHttp: true
-enableHttps: false
-enableHttp2: false
+enableHttp2: true
+httpsPort: 8443
+enableHttps: ${enableHttps}
+keystoreName: server.keystore
 serviceId: com.xlongwei.light4j
 buildNumber: 3.0.1
