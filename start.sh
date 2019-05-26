@@ -1,5 +1,5 @@
 usage(){
-    echo "Usage: sh start.sh status | start | stop | restart | refresh | package | keystore" 
+    echo "Usage: sh start.sh status | start | stop | restart | refresh | package | build | keystore" 
 }
 
 status(){
@@ -29,19 +29,27 @@ stop(){
 	fi
 }
 
-package(){
+clean(){
+    echo "clean light4j ..."
+	mvn clean
+}
+
+jar(){
 	echo "compile light4j ..."
 	mvn compile jar:jar
-	
+}
+
+dependency(){
 	echo "copy dependencies ..."
 	mvn dependency:copy-dependencies -DoutputDirectory=target
 }
 
 start(){
 	echo "starting light4j ..."
-	setsid java -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
-	echo "starting light4j https ..."
-	env enableHttps=true setsid java -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
+	#setsid java -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
+	setsid java -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -cp target/light4j-3.0.1.jar com.xlongwei.light4j.Servers >> /dev/null 2>&1 &
+	#echo "starting light4j https ..."
+	#env enableHttps=true setsid java -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
 }
 
 keystore(){
@@ -63,9 +71,10 @@ else
 	status) status ;;
 	start) start ;;
 	stop) stop ;;
-	package) package ;;
+	build) jar ;;
+	package) jar && dependency ;;
 	restart) stop && start ;;
-	refresh) stop && package && start ;;
+	refresh) stop && clean && jar && dependency && start ;;
 	keystore) keystore $@;;
 	*) usage ;;
 	esac

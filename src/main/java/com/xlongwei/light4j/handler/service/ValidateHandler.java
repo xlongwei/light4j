@@ -43,8 +43,8 @@ public class ValidateHandler extends AbstractHandler {
 			case "barcode": valid = StringUtil.isBarcode(value); break;
 			case "ip": valid = StringUtil.isIp(value); break;
 			case "url": valid = StringUtil.isUrl(value); break;
-			case "idArea": valid = IdCardUtil.areas.containsKey(value); break;
-			case "idNumber": valid = StringUtil.isIdNumber(value); break;
+			case "idArea": valid = IdCardUtil.areas.containsKey(value); map.put("area", StringUtil.join(IdCardUtil.areas(value), null, null, null)); break;
+			case "idNumber": valid = StringUtil.isIdNumber(value); map.put("area", StringUtil.join(IdCardUtil.areas(value), null, null, null)); break;
 			case "sccNumber": valid = StringUtil.isSccNumber(value.toUpperCase()); break;
 			case "businessNo": valid = StringUtil.isBusinessNo(value); break;
 			case "organizationCode": valid = StringUtil.isOrganizationCode(value); break;

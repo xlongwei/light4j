@@ -116,8 +116,8 @@ public class DocHandler extends AbstractHandler {
 		}
 		if(!target.exists()) {
 			String base64 = HandlerUtil.getParam(exchange, "base64");
-			base64 = ImageUtil.prefixRemove(base64);
-			if(StringUtil.isBlank(base64)==false) {
+			base64 = StringUtil.isBlank(base64) ? null : ImageUtil.prefixRemove(base64);
+			if(!StringUtil.isBlank(base64)) {
 				byte[] bs = Base64.decodeBase64(base64);
 				UploadUtil.save(new ByteArrayInputStream(bs), target);
 			}

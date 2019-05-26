@@ -1,23 +1,32 @@
 package com.xlongwei.light4j.handler.service;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
+import com.alibaba.excel.EasyExcelFactory;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ExcelUtil;
+import com.xlongwei.light4j.util.FileUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.IdWorker;
+import com.xlongwei.light4j.util.ImageUtil;
 import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.UploadUtil;
 
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.form.FormData.FormValue;
 
 /**
  * excel handler
@@ -69,6 +78,39 @@ public class ExcelHandler extends AbstractHandler {
 			number = ExcelUtil.columnNumber(name);
 		}
 		HandlerUtil.setResp(exchange, StringUtil.params("name", name, "number", String.valueOf(number)));
+	}
+	
+	public void read(HttpServerExchange exchange) throws Exception {
+		InputStream is = null;
+		String url = HandlerUtil.getParam(exchange, "url");
+		if(StringUtil.isUrl(url)) {
+			is = FileUtil.stream(url);
+		}
+		if(is == null) {
+			String base64 = HandlerUtil.getParam(exchange, "base64");
+			base64 = StringUtil.isBlank(base64) ? null : ImageUtil.prefixRemove(base64);
+			if(!StringUtil.isBlank(base64)) {
+				byte[] bs = Base64.decodeBase64(base64);
+				if(bs != null) {
+					is = new ByteArrayInputStream(bs);
+				}
+			}
+		}
+		if(is == null) {
+			FormValue file = HandlerUtil.getFile(exchange, "file");
+			if(file!=null && file.isFileItem()) {
+				is = file.getFileItem().getInputStream();
+			}
+		}
+		if(is != null) {
+			int sheetNo = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "sheetNo"), 1);
+			int headLine = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "headLine"), 0);
+			List<Object> data = EasyExcelFactory.read(new BufferedInputStream(is), new com.alibaba.excel.metadata.Sheet(sheetNo, headLine));
+			Map<String, Object> map = new HashMap<>(2);
+			map.put("size", data==null ? 0 : data.size());
+			map.put("data", data);
+			HandlerUtil.setResp(exchange, map);
+		}
 	}
 	
 	public void width(HttpServerExchange exchange) throws Exception {
