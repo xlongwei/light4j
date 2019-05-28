@@ -27,6 +27,7 @@ import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -44,36 +45,38 @@ import java.util.zip.ZipOutputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 
-import com.networknt.server.DummyTrustManager;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 
+import com.networknt.server.Server;
+
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * file util
  * @author xlongwei
- *
  */
 @Slf4j
 public final class FileUtil {
 	public static String	unixLineSeparator		= "\n";
 	public static String	dosLineSeparator		= "\r\n";
-	public static String	defaultlineSeparator		= System.getProperty("line.separator");
+	public static String	defaultlineSeparator	= System.getProperty("line.separator");
 	public static String	lineSeparator		= defaultlineSeparator;
 	public static String	defaultCharsetName	= Charset.defaultCharset().name();
 	public static SSLContext sslContext = null;
+	public static TrustManager[] trustAllCerts = Server.TRUST_ALL_CERTS;
+	public static HostnameVerifier verifyAllHosts = new NoopHostnameVerifier();
 	
 	static {
 		try {
-	        SSLContext sc = SSLContext.getInstance("SSL");  
-	        sc.init(null, new TrustManager[] { new DummyTrustManager() }, null);  
-	        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-	        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {  
-	        	@Override public boolean verify(String urlHostName, SSLSession session) { return true; }  
-			});
-	        sslContext = sc;
+			//这行代码可以让OkHttpUtil支持HTTP2协议，却会导致多个service handler响应失败
+			//Security.insertProviderAt(org.conscrypt.Conscrypt.newProvider(), 1);
+			sslContext = SSLContext.getInstance("SSL");
+	        sslContext.init(null, trustAllCerts, new SecureRandom());
+	        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+	        HttpsURLConnection.setDefaultHostnameVerifier(verifyAllHosts);
 		}catch(Exception e) {
 			log.warn("fail to init https ssl context, ex: {}", e.getMessage());
 		}
@@ -390,7 +393,7 @@ public final class FileUtil {
 			StringTokenizer tokens = new StringTokenizer(content, "\r\n");
 			while(tokens.hasMoreTokens()) {
 				String token = tokens.nextToken();
-				if(token.length() > 0) {
+				if(token != null) {
 					lines.add(token);
 				}
 			}
@@ -405,7 +408,7 @@ public final class FileUtil {
 			StringTokenizer tokens = new StringTokenizer(content, "\r\n");
 			while(tokens.hasMoreTokens()) {
 				String token = tokens.nextToken();
-				if(token.length() > 0) {
+				if(token != null) {
 					lines.add(token);
 				}
 			}
@@ -1019,6 +1022,11 @@ public final class FileUtil {
 				}
 			};
 		}
+	}
+	@AllArgsConstructor
+	public static class FileItem {
+		public String name;
+		public File file;
 	}
 	public static Comparator<File> fileComparator = new Comparator<File>() {
 		@Override

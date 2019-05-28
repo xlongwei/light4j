@@ -32,13 +32,15 @@
         <version.janino>2.6.1</version.janino>
         <version.poi>3.17</version.poi>
         <version.itext>2.0.8.1</version.itext>
-        <version.httpmime>4.3.4</version.httpmime>
+        <version.httpmime>4.5.2</version.httpmime>
         <version.fastjson>1.2.31</version.fastjson>
         <version.jodconverter>2.2.1</version.jodconverter>
         <version.freetts>1.2.2</version.freetts>
         <version.zxing>3.2.1</version.zxing>
         <version.vcard>0.10.0</version.vcard>
         <version.easyexcel>1.1.2-beta5</version.easyexcel>
+        <version.okhttp>3.10.0</version.okhttp>
+        <version.conscrypt>2.1.0</version.conscrypt>
     </properties>
 
     <dependencies>
@@ -349,6 +351,16 @@
         	<artifactId>easyexcel</artifactId>
         	<version>${version.easyexcel}</version>
         </dependency>
+        <dependency>
+        	<groupId>com.squareup.okhttp3</groupId>
+        	<artifactId>okhttp</artifactId>
+        	<version>${version.okhttp}</version>
+        </dependency>
+		<dependency>
+		    <groupId>org.conscrypt</groupId>
+		    <artifactId>conscrypt-openjdk-uber</artifactId>
+		    <version>${version.conscrypt}</version>
+		</dependency>
         
         <!-- Test Dependencies -->
         <dependency>
@@ -357,7 +369,7 @@
             <version>${version.junit}</version>
             <scope>test</scope>
         </dependency>
-        
+
     </dependencies>
 
 

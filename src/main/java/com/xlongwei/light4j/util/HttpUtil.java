@@ -1,6 +1,5 @@
 package com.xlongwei.light4j.util;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -17,7 +16,8 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import lombok.AllArgsConstructor;
+import com.xlongwei.light4j.util.FileUtil.FileItem;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -83,13 +83,7 @@ public class HttpUtil {
 		}
 	}
 	
-	@AllArgsConstructor
-	public static class FileItem {
-		private String name;
-		private File file;
-	}
-	
-	private static void prepare() {
+	static {
 		RequestConfig requestConfig = RequestConfig.custom()
 				.setConnectionRequestTimeout(connectionRequestTimeout)
 				.setConnectTimeout(connectionTimeout)
@@ -99,12 +93,7 @@ public class HttpUtil {
 				.setDefaultRequestConfig(requestConfig)
 				.setMaxConnTotal(maxConnTotal)
 				.setMaxConnPerRoute(maxConnPerRoute)
-				.setSslcontext(FileUtil.sslContext)
-				.setUserAgent("JSONClient / HttpClient 4.3")
+				.setSSLContext(FileUtil.sslContext)
 				.build();
-	}
-	
-	static {
-		prepare();
 	}
 }

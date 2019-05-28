@@ -15,12 +15,14 @@ import com.xlongwei.light4j.util.RedisCache;
 import com.xlongwei.light4j.util.StringUtil;
 
 import io.undertow.server.HttpServerExchange;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * checkcode handler
  * @author xlongwei
  *
  */
+@Slf4j
 public class CheckcodeHandler extends AbstractHandler {
 
 	public void image(HttpServerExchange exchange) throws Exception {

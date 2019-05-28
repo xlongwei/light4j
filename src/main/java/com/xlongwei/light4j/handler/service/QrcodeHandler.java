@@ -24,12 +24,14 @@ import ezvcard.parameter.TelephoneType;
 import ezvcard.property.Address;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData.FormValue;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * qrcode handler
  * @author xlongwei
  *
  */
+@Slf4j
 public class QrcodeHandler extends AbstractHandler {
 
 	public void encode(HttpServerExchange exchange) throws Exception {

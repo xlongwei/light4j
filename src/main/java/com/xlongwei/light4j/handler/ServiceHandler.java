@@ -11,8 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.jose4j.json.internal.json_simple.JSONObject;
 import org.omg.CORBA.IntHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.utility.StringUtils;
@@ -71,12 +69,12 @@ public class ServiceHandler implements LightHttpHandler {
 		HandlerUtil.sendResp(exchange);
 	}
 	/** 支持子服务名反射调用同名方法，子服务存入RESP对象即可 */
+	@Slf4j
 	public static abstract class AbstractHandler implements LightHttpHandler {
 		/**
 		 * 子服务路径，存在时反射调用子服务方法，否则子类覆盖handleRequest方法
 		 */
 		public static final AttachmentKey<String> PATH = AttachmentKey.create(String.class);
-		protected Logger log = LoggerFactory.getLogger(getClass());
 		private Map<String, Method> methods = new HashMap<>();
 		public AbstractHandler() {
 			Method[] declaredMethods = getClass().getDeclaredMethods();

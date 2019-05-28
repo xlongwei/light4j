@@ -36,7 +36,7 @@ public class DesHandler extends AbstractHandler {
 	}
 	
 	public void pwgen(HttpServerExchange exchange) throws Exception {
-		String data = StringUtils.defaultString(HandlerUtil.getParam(exchange, "options"), "-N 6 -s 24");
+		String data = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "options"), "-N 6 -s 24");
 		List<String> passwords = PwHelper.process(StringUtils.split(data), null);
 		if(passwords.size()>0) {
 			Map<String, Object> map = new HashMap<>(1);
