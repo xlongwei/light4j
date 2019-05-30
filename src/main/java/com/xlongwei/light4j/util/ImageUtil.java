@@ -36,6 +36,9 @@ public class ImageUtil {
 	public static String random(int length, boolean specials) {
 		StringBuilder random = new StringBuilder();
 		int size = specials ? specialChars.length : normalChars.length;
+		if(length < 1) {
+			length = 4;
+		}
 		while(length-->0) {
 			random.append(specials ? specialChars[RandomUtils.nextInt(0, size)] : normalChars[RandomUtils.nextInt(0, size)]);
 		}
@@ -199,11 +202,13 @@ public class ImageUtil {
 	 * @param type -2 length+specials 0中文 1算术 2拆字 -1随机
 	 */
 	public static Tuple<String, BufferedImage> create(int length, boolean specials, int type) {
-		String[] special = special(type);
+		String[] special = type<-1 ? null : special(type);
 		String code = special!=null&& special.length>0 ? special[0] : null;
-		String check = code!=null&&special.length>1&&special[1]!=null ? special[1] : special[0];
+		String check = null;
 		if(code==null) {
 			check = code = random(length, specials);
+		}else {
+			check = special.length>1 ? special[1] : code;
 		}
 		BufferedImage image = create(code);
 		String sid = String.valueOf(IdWorker.getId());
