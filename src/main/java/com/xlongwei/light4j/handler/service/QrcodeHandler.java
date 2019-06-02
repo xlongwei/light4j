@@ -126,18 +126,21 @@ public class QrcodeHandler extends AbstractHandler {
 		String url = HandlerUtil.getParam(exchange, "url");
 		
 		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+		if(StringUtil.isBlank(userName)) {
+			String liveqrcodeUserName = HandlerUtil.getParam(exchange, "liveqrcode_userName");
+			if(!StringUtil.isBlank(liveqrcodeUserName)) {
+				userName = RedisConfig.get("liveqrcode_userName."+liveqrcodeUserName);
+			}
+		}
 		String clientNames = RedisConfig.get("liveqrcode.client.names");
-		boolean isClient = StringUtil.splitContains(clientNames, userName);
+		boolean isClient = !StringUtil.isBlank(userName) && StringUtil.splitContains(clientNames, userName);
 		logger.info("userName: {}, isClient: {}, clientNames: {}", userName, isClient, clientNames);
 		
 		String codeKey = isClient ? "liveqrcode."+userName+"."+code : "livecode."+code;
-		if(StringUtil.isUrl(url)) {
+		if(!StringUtil.isBlank(url) && (isClient || StringUtil.isUrl(url))) {
 			RedisConfig.set(codeKey, url);
 		} else {
 			url = RedisConfig.get(codeKey);
-		}
-		if(!StringUtil.isUrl(url)) {
-			url = RedisConfig.get("livecode.xlongwei.com");
 		}
 		HandlerUtil.setResp(exchange, StringUtil.params("code", code, "url", url, "liveUrl", ConfigUtil.FRONT_URL+"/open/qrcode/"+code+".html"));
 	}

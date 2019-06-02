@@ -190,6 +190,8 @@ public class HandlerUtil {
 					if(clazz==clz || clazz.isAssignableFrom(clz)) {
 						return (T)obj;
 					}
+				}else if(String.class==clazz){
+					return (T)obj.toString();
 				}
 			}
 		}
