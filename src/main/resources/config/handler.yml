@@ -4,6 +4,7 @@ handlers:
   - com.xlongwei.light4j.handler.ServiceHandler@service
   - com.xlongwei.light4j.handler.UploadHandler@upload
   - com.xlongwei.light4j.handler.WeixinHandler@weixin
+  - com.xlongwei.light4j.provider.WebSocketHandlerProvider@websocket
 
 paths:
   - path: '/service/*'
@@ -26,3 +27,7 @@ paths:
     method: 'POST'
     exec:
       - weixin
+  - path: '/ws/*'
+    method: 'GET'
+    exec:
+      - websocket

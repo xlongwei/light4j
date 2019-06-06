@@ -42,6 +42,7 @@
         <version.mysql>5.1.43</version.mysql>
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.dbutils>1.7</version.dbutils>
+        <version.commons-io>2.6</version.commons-io>
     </properties>
 
     <dependencies>
@@ -366,6 +367,11 @@
             <groupId>commons-dbutils</groupId>
             <artifactId>commons-dbutils</artifactId>
             <version>${version.dbutils}</version>
+        </dependency>
+        <dependency>
+        	<groupId>commons-io</groupId>
+        	<artifactId>commons-io</artifactId>
+        	<version>${version.commons-io}</version>
         </dependency>
         
         <!-- Test Dependencies -->
