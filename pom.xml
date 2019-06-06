@@ -39,8 +39,9 @@
         <version.zxing>3.2.1</version.zxing>
         <version.vcard>0.10.0</version.vcard>
         <version.easyexcel>1.1.2-beta5</version.easyexcel>
-        <version.okhttp>3.10.0</version.okhttp>
-        <version.conscrypt>2.1.0</version.conscrypt>
+        <version.mysql>5.1.43</version.mysql>
+        <version.hikaricp>3.1.0</version.hikaricp>
+        <version.dbutils>1.7</version.dbutils>
     </properties>
 
     <dependencies>
@@ -352,15 +353,20 @@
         	<version>${version.easyexcel}</version>
         </dependency>
         <dependency>
-        	<groupId>com.squareup.okhttp3</groupId>
-        	<artifactId>okhttp</artifactId>
-        	<version>${version.okhttp}</version>
+        	<groupId>mysql</groupId>
+        	<artifactId>mysql-connector-java</artifactId>
+        	<version>${version.mysql}</version>
         </dependency>
-		<dependency>
-		    <groupId>org.conscrypt</groupId>
-		    <artifactId>conscrypt-openjdk-uber</artifactId>
-		    <version>${version.conscrypt}</version>
-		</dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${version.hikaricp}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-dbutils</groupId>
+            <artifactId>commons-dbutils</artifactId>
+            <version>${version.dbutils}</version>
+        </dependency>
         
         <!-- Test Dependencies -->
         <dependency>
