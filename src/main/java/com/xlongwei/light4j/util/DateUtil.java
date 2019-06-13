@@ -32,7 +32,7 @@ public class DateUtil {
 		}
 	}
 	
-	public static void addFormat(String format) {
+	public static FastDateFormat addFormat(String format) {
 		if(StringUtils.isNotBlank(format)) {
 			try {
 				FastDateFormat fastDateFormat = FastDateFormat.getInstance(format);
@@ -46,10 +46,12 @@ public class DateUtil {
 					set.add(format);
 					fastDateFormats.put(format, fastDateFormat);
 				}
+				return fastDateFormat;
 			}catch(Exception e) {
 				log.warn("fail to add format: {}, ex: {}", format, e.getMessage());
 			}
 		}
+		return null;
 	}
 
 
@@ -96,6 +98,9 @@ public class DateUtil {
 			return null;
 		}
 		FastDateFormat fastDateFormat = fastDateFormats.get(format);
+		if(fastDateFormat == null) {
+			fastDateFormat = addFormat(format);
+		}
 		return fastDateFormat==null ? null : fastDateFormat.format(date);
 	}
 

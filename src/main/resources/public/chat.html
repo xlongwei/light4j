@@ -1,5 +1,7 @@
 <html>
-<head><title>Chat</title>
+<head>
+<meta charset="UTF-8">
+<title>Chat</title>
 <script>
     var socket;
     if (window.WebSocket) {
@@ -8,6 +10,7 @@
         socket.onmessage = function (event) {
             var chat = document.getElementById('chat');
             chat.innerHTML = chat.innerHTML + event.data + "<br />";
+            chat.scrollTop = chat.scrollHeight;
         };
     } else {
         alert("Your browser does not support Websockets. (Use Chrome)");
@@ -23,6 +26,45 @@
             alert("The socket is not open.");
         }
         return false;
+    }
+    
+    function onPaste(){
+    	console.log('on paste');
+    	var event = window.event || arguments.callee.arguments[0];
+        var items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        for (var index in items) {
+            var item = items[index];
+            console.log("item: "+item);
+            if (item.type && item.type.match(/image.*/)) {
+                var blob = item.getAsFile();                        
+                var reader = new FileReader();
+                reader.onload = function(event) {                            
+                    var base64 = event.target.result;
+                    console.log("base64: "+base64);
+                    send("<img src='"+base64+"'/>");
+                };
+                reader.readAsDataURL(blob);
+            }
+        }
+    }
+    
+    function onSelect(){
+    	console.log('on select');
+    	var event = window.event || arguments.callee.arguments[0];
+    	var files = event.target.files;
+    	for(var index in files){
+    		var file = files[index];
+    		console.log("file: "+file);
+            if (file.type && file.type.match(/image.*/)) {
+                var reader = new FileReader();
+                reader.onload = function(event) {                            
+                    var base64 = event.target.result;
+                    console.log("base64: "+base64);
+                    send("<img src='"+base64+"'/>");
+                };
+                reader.readAsDataURL(file);
+            }    		
+    	}
     }
 </script>
 <style type="text/css">
@@ -71,7 +113,7 @@
 </head>
 <body>
 <div class="page">
-    <div class="center" >
+    <div class="center" onpaste="onPaste()">
         <h1>Web Socket Chat</h1>
         <div id="chat" style="height:100%;width: 100%; overflow: scroll;">
 
@@ -80,7 +122,8 @@
 
         <form onsubmit="return false;" class="chatform" action="">
             <label for="msg" style="display:inline">Message</label>
-            <input type="text" name="message" id="msg"  onkeypress="if(event.keyCode==13) { send(this.form.message.value); this.value='' } " />
+            <input type="text" name="message" id="msg"  onkeypress="if(event.keyCode==13) { send(this.form.message.value); this.value='' } " placeholder="支持粘贴QQ截图"/>
+            <label title="选择图片"><input type="file" style="display:none" onchange="onSelect()" accept="image/*">➕</label>
         </form>
     </div>
 </div>

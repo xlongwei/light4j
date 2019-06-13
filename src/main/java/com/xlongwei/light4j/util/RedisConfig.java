@@ -1,5 +1,8 @@
 package com.xlongwei.light4j.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -133,6 +136,44 @@ public class RedisConfig {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				jedis.del(byteKey);
 				return null;
+			}
+		});
+	}
+	
+	/** 加入列表头部 */
+	public static Long lpush(final String cache, final String key, final String value) {
+		return execute(new JedisCallback<Long>() {
+			@Override
+			public Long doInJedis(Jedis jedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				return jedis.lpush(byteKey, RedisUtil.byteValue(value));
+			}
+		});
+	}
+	
+	/** 获取列表范围 */
+	public static List<String> lrange(final String cache, final String key, final int start, final int end) {
+		return execute(new JedisCallback<List<String>>() {
+			@Override
+			public List<String> doInJedis(Jedis jedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				List<byte[]> lrange = jedis.lrange(byteKey, start, end);
+				List<String> list = new ArrayList<>(lrange.size());
+				for(byte[] bs : lrange) {
+					list.add(RedisUtil.stringValue(bs));
+				}
+				return list;
+			}
+		});
+	}
+	
+	/** 加入列表头部 */
+	public static String ltrim(final String cache, final String key, final int start, final int end) {
+		return execute(new JedisCallback<String>() {
+			@Override
+			public String doInJedis(Jedis jedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				return jedis.ltrim(byteKey, start, end);
 			}
 		});
 	}

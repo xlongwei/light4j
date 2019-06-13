@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MySqlUtil {
-	public static final Map<String, HikariDataSource> DATASOURCEMap = new HashMap<>();
+	public static final Map<String, HikariDataSource> DATASOURCEMAP = new HashMap<>();
 	public static final HikariDataSource DATASOURCE;
 	public static final QueryRunner QUERYRUNNER;
 	
@@ -42,9 +42,9 @@ public class MySqlUtil {
             }
             HikariConfig config = new HikariConfig(props);
             HikariDataSource ds = new HikariDataSource(config);
-            DATASOURCEMap.put(k, ds);
+            DATASOURCEMAP.put(k, ds);
 		});
-		DATASOURCE = DATASOURCEMap.get("mysql");
+		DATASOURCE = DATASOURCEMAP.get("mysql");
 		QUERYRUNNER = new QueryRunner(DATASOURCE);
 		log.info("mysql config loaded");
 		

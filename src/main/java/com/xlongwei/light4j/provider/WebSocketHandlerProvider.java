@@ -1,6 +1,19 @@
 package com.xlongwei.light4j.provider;
 
+import static io.undertow.Handlers.path;
+import static io.undertow.Handlers.resource;
+import static io.undertow.Handlers.websocket;
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import org.apache.commons.io.input.Tailer;
+import org.apache.commons.io.input.TailerListenerAdapter;
+
 import com.networknt.handler.HandlerProvider;
+import com.xlongwei.light4j.util.DateUtil;
+import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
@@ -16,17 +29,6 @@ import io.undertow.websockets.core.WebSockets;
 import io.undertow.websockets.spi.WebSocketHttpExchange;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.undertow.Handlers.path;
-import static io.undertow.Handlers.resource;
-import static io.undertow.Handlers.websocket;
-
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.Set;
-
-import org.apache.commons.io.input.Tailer;
-import org.apache.commons.io.input.TailerListenerAdapter;
-
 /**
  * web socket handler
  * @author xlongwei
@@ -34,6 +36,8 @@ import org.apache.commons.io.input.TailerListenerAdapter;
  */
 @Slf4j
 public class WebSocketHandlerProvider implements HandlerProvider {
+	private final String key = "ws.chat";
+	private final int length = 18;
     @Override
     public HttpHandler getHandler() {
         return path()
@@ -43,13 +47,25 @@ public class WebSocketHandlerProvider implements HandlerProvider {
                         channel.getReceiveSetter().set(new AbstractReceiveListener() {
                             @Override
                             protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
-                            	Set<WebSocketChannel> peerConnections = channel.getPeerConnections();
-                                String msg = channel.getSourceAddress()+"/"+peerConnections.size()+": "+message.getData();
-                                peerConnections.parallelStream().forEach(c -> WebSockets.sendText(msg, c, null));
+                                String msg = String.format("[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date(),"HH:mm:ss"), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), message.getData());
+                                channel.getPeerConnections().parallelStream().forEach(c -> WebSockets.sendText(msg, c, null));
                                 log.info(msg);
+                                Long size = RedisConfig.lpush(RedisConfig.CACHE, key, msg);
+                                if(size > length) {
+                                	RedisConfig.ltrim(RedisConfig.CACHE, key, 0, length-1);
+                                }
                             }
                         });
                         channel.resumeReceives();
+                        List<String> list = RedisConfig.lrange(RedisConfig.CACHE, key, 0, length);
+                        int size = list==null ? 0 : list.size();
+                        log.info("ws chat on connect, history size: {}", size);
+                        if(size > 0) {
+                        	for(int i=size-1; i>=0; i--) {
+                        		String msg = list.get(i);
+                        		WebSockets.sendText(msg, channel, null);
+                        	}
+                        }
                     }
                 }))
                 .addPrefixPath("/ws/logs", websocket(new WebSocketConnectionCallback() {
@@ -63,13 +79,12 @@ public class WebSocketHandlerProvider implements HandlerProvider {
 	                			tailer = new Tailer(logs, StandardCharsets.UTF_8, new TailerListenerAdapter() {
 									@Override
 									public void handle(String line) {
-										Set<WebSocketChannel> peerConnections = channel.getPeerConnections();
 										if(channel.getPeerConnections().isEmpty()) {
 											log.info("tailer no connections and stop");
 											tailer.stop();
 											tailer = null;
 										}else {
-											peerConnections.parallelStream().forEach(c -> WebSockets.sendText(line, c, null));
+											channel.getPeerConnections().parallelStream().forEach(c -> WebSockets.sendText(line, c, null));
 										}
 									}
 	                			}, 1000, true, false, 4096);

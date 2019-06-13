@@ -137,7 +137,8 @@ public class QrcodeHandler extends AbstractHandler {
 		logger.info("userName: {}, isClient: {}, clientNames: {}", userName, isClient, clientNames);
 		
 		String codeKey = isClient ? "liveqrcode."+userName+"."+code : "livecode."+code;
-		if(!StringUtil.isBlank(url) && (isClient || StringUtil.isUrl(url))) {
+		boolean isClientOrUrl = isClient || StringUtil.isUrl(url);
+		if(!StringUtil.isBlank(url) && (isClientOrUrl)) {
 			RedisConfig.set(codeKey, url);
 		} else {
 			url = RedisConfig.get(codeKey);

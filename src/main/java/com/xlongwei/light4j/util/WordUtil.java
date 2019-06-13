@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.usermodel.Range;
 import org.apache.poi.hwpf.usermodel.Table;
@@ -79,56 +78,44 @@ public class WordUtil {
 	}
 
 	public static HWPFDocument read(File doc) {
-		InputStream is = null;
-		try {
-			HWPFDocument document = new HWPFDocument(is = new FileInputStream(doc));
+		try(InputStream is = new FileInputStream(doc)) {
+			HWPFDocument document = new HWPFDocument(is);
 			log.info("read doc file: " + doc);
 			return document;
 		} catch (IOException e) {
 			log.warn("fail to read doc file: " + doc.getAbsolutePath(), e);
 			return null;
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 	}
 	public static XWPFDocument readx(File docx) {
-		InputStream is = null;
-		try {
-			XWPFDocument document = new XWPFDocument(is = new FileInputStream(docx));
+		try(InputStream is = new FileInputStream(docx)) {
+			XWPFDocument document = new XWPFDocument(is);
 			log.info("read docx file: " + docx);
 			return document;
 		} catch (IOException e) {
 			log.warn("fail to read docx file: " + docx.getAbsolutePath(), e);
 			return null;
-		} finally {
-			IOUtils.closeQuietly(is);
 		}
 	}
 
 	public static boolean write(HWPFDocument doc, File docFile) {
-		OutputStream os = null;
-		try {
-			doc.write(os = new FileOutputStream(docFile));
+		try(OutputStream os = new FileOutputStream(docFile)) {
+			doc.write(os);
 			log.info("write doc to file: " + docFile);
 			return true;
 		} catch (IOException e) {
 			log.warn("fail to write doc to file: " + docFile, e);
 			return false;
-		} finally {
-			IOUtils.closeQuietly(os);
 		}
 	}
 	public static boolean writex(XWPFDocument docx, File docxFile) {
-		OutputStream os = null;
-		try {
-			docx.write(os = new FileOutputStream(docxFile));
+		try(OutputStream os = new FileOutputStream(docxFile)) {
+			docx.write(os);
 			log.info("write docx to file: " + docxFile);
 			return true;
 		} catch (IOException e) {
 			log.warn("fail to write docx to file: " + docxFile, e);
 			return false;
-		} finally {
-			IOUtils.closeQuietly(os);
 		}
 	}
 
