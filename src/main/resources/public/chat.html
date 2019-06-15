@@ -2,70 +2,239 @@
 <head>
 <meta charset="UTF-8">
 <title>Chat</title>
+<script src="https://cdn.bootcss.com/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
 <script>
-    var socket;
-    if (window.WebSocket) {
-    	var wsurl = (location.protocol.toString().startsWith("https") ? "wss://" : "ws://") + location.host + "/ws/chat";
-        socket = new WebSocket(wsurl);
-        socket.onmessage = function (event) {
-            var chat = document.getElementById('chat');
-            chat.innerHTML = chat.innerHTML + event.data + "<br />";
-            chat.scrollTop = chat.scrollHeight;
-        };
-    } else {
-        alert("Your browser does not support Websockets. (Use Chrome)");
-    }
+   	var wsurl = (location.protocol.toString().startsWith("https") ? "wss://" : "ws://") + location.host + "/ws/chat";
+    var socket = new ReconnectingWebSocket(wsurl);
+    socket.onmessage = function (event) {
+        var chat = document.getElementById('chat');
+        chat.innerHTML = chat.innerHTML + event.data + "<br />";
+        chat.scrollTop = chat.scrollHeight;
+    };
 
     function send(message) {
-        if (!window.WebSocket) {
-            return false;
-        }
-        if (socket.readyState == WebSocket.OPEN) {
-            socket.send(message);
-        } else {
-            alert("The socket is not open.");
-        }
-        return false;
+        socket.send(message);
     }
     
     function onPaste(){
-    	console.log('on paste');
     	var event = window.event || arguments.callee.arguments[0];
         var items = (event.clipboardData || event.originalEvent.clipboardData).items;
         for (var index in items) {
             var item = items[index];
-            console.log("item: "+item);
             if (item.type && item.type.match(/image.*/)) {
-                var blob = item.getAsFile();                        
-                var reader = new FileReader();
-                reader.onload = function(event) {                            
-                    var base64 = event.target.result;
-                    console.log("base64: "+base64);
-                    send("<img src='"+base64+"'/>");
-                };
-                reader.readAsDataURL(blob);
+                var file = item.getAsFile();                        
+                getBase64(file, function(base64){
+                	send("<img src='"+base64+"'/>");
+                })
             }
         }
     }
     
     function onSelect(){
-    	console.log('on select');
     	var event = window.event || arguments.callee.arguments[0];
     	var files = event.target.files;
     	for(var index in files){
     		var file = files[index];
-    		console.log("file: "+file);
             if (file.type && file.type.match(/image.*/)) {
-                var reader = new FileReader();
-                reader.onload = function(event) {                            
-                    var base64 = event.target.result;
-                    console.log("base64: "+base64);
-                    send("<img src='"+base64+"'/>");
-                };
-                reader.readAsDataURL(file);
+                getBase64(file, function(base64){
+                	send("<img src='"+base64+"'/>");
+                })
             }    		
     	}
     }
+    //callback(base64)
+    function getBase64(file, callback){
+        var reader = new FileReader();
+        reader.onload = function(event) {                            
+            var base64 = event.target.result;
+            callback(base64);
+        };
+        reader.readAsDataURL(file);    	
+    }
+    
+    var SRecorder = function(stream) {
+        config = {};
+     
+        config.sampleBits = config.smapleBits || 8;
+        config.sampleRate = config.sampleRate || (44100 / 6);
+     
+        var context = new AudioContext();
+        var audioInput = context.createMediaStreamSource(stream);
+        var recorder = context.createScriptProcessor(4096, 1, 1);
+     
+        var audioData = {
+            size: 0          //录音文件长度
+            , buffer: []    //录音缓存
+            , inputSampleRate: context.sampleRate    //输入采样率
+            , inputSampleBits: 16      //输入采样数位 8, 16
+            , outputSampleRate: config.sampleRate    //输出采样率
+            , oututSampleBits: config.sampleBits      //输出采样数位 8, 16
+            , clear: function() {
+                this.buffer = [];
+                this.size = 0;
+            }
+            , input: function (data) {
+                this.buffer.push(new Float32Array(data));
+                this.size += data.length;
+            }
+            , compress: function () { //合并压缩
+                //合并
+                var data = new Float32Array(this.size);
+                var offset = 0;
+                for (var i = 0; i < this.buffer.length; i++) {
+                    data.set(this.buffer[i], offset);
+                    offset += this.buffer[i].length;
+                }
+                //压缩
+                var compression = parseInt(this.inputSampleRate / this.outputSampleRate);
+                var length = data.length / compression;
+                var result = new Float32Array(length);
+                var index = 0, j = 0;
+                while (index < length) {
+                    result[index] = data[j];
+                    j += compression;
+                    index++;
+                }
+                return result;
+            }
+            , encodeWAV: function () {
+                var sampleRate = Math.min(this.inputSampleRate, this.outputSampleRate);
+                var sampleBits = Math.min(this.inputSampleBits, this.oututSampleBits);
+                var bytes = this.compress();
+                var dataLength = bytes.length * (sampleBits / 8);
+                var buffer = new ArrayBuffer(44 + dataLength);
+                var data = new DataView(buffer);
+     
+                var channelCount = 1;//单声道
+                var offset = 0;
+     
+                var writeString = function (str) {
+                    for (var i = 0; i < str.length; i++) {
+                        data.setUint8(offset + i, str.charCodeAt(i));
+                    }
+                };
+                
+                // 资源交换文件标识符
+                writeString('RIFF'); offset += 4;
+                // 下个地址开始到文件尾总字节数,即文件大小-8
+                data.setUint32(offset, 36 + dataLength, true); offset += 4;
+                // WAV文件标志
+                writeString('WAVE'); offset += 4;
+                // 波形格式标志
+                writeString('fmt '); offset += 4;
+                // 过滤字节,一般为 0x10 = 16
+                data.setUint32(offset, 16, true); offset += 4;
+                // 格式类别 (PCM形式采样数据)
+                data.setUint16(offset, 1, true); offset += 2;
+                // 通道数
+                data.setUint16(offset, channelCount, true); offset += 2;
+                // 采样率,每秒样本数,表示每个通道的播放速度
+                data.setUint32(offset, sampleRate, true); offset += 4;
+                // 波形数据传输率 (每秒平均字节数) 单声道×每秒数据位数×每样本数据位/8
+                data.setUint32(offset, channelCount * sampleRate * (sampleBits / 8), true); offset += 4;
+                // 快数据调整数 采样一次占用字节数 单声道×每样本的数据位数/8
+                data.setUint16(offset, channelCount * (sampleBits / 8), true); offset += 2;
+                // 每样本数据位数
+                data.setUint16(offset, sampleBits, true); offset += 2;
+                // 数据标识符
+                writeString('data'); offset += 4;
+                // 采样数据总数,即数据总大小-44
+                data.setUint32(offset, dataLength, true); offset += 4;
+                // 写入采样数据
+                if (sampleBits === 8) {
+                    for (var i = 0; i < bytes.length; i++, offset++) {
+                        var s = Math.max(-1, Math.min(1, bytes[i]));
+                        var val = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                        val = parseInt(255 / (65535 / (val + 32768)));
+                        data.setInt8(offset, val, true);
+                    }
+                } else {
+                    for (var i = 0; i < bytes.length; i++, offset += 2) {
+                        var s = Math.max(-1, Math.min(1, bytes[i]));
+                        data.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                    }
+                }
+     
+                return new Blob([data], { type: 'audio/wav' });
+            }
+        };
+     
+        this.start = function () {
+            audioInput.connect(recorder);
+            recorder.connect(context.destination);
+        }
+     
+        this.stop = function () {
+            recorder.disconnect();
+        }
+     
+        this.getBlob = function () {
+            return audioData.encodeWAV();
+        }
+     
+        this.clear = function() {
+            audioData.clear();
+        }
+     
+        recorder.onaudioprocess = function (e) {
+            audioData.input(e.inputBuffer.getChannelData(0));
+        }
+    };
+    
+    var door = false;
+    var gRecorder = null;
+    var blob = null;
+    
+	if (navigator.getUserMedia) {
+		try {
+			navigator.getUserMedia({audio: true, video: false},
+				function(stream) {
+					gRecorder = new SRecorder(stream);
+				},
+				function(){
+					console.log('您设备上的麦克风无法使用，如果确认存在麦克风设备请重启浏览器重试')
+				});
+		} catch (err){
+			alert('您设备上的麦克风无法使用，如果确认存在麦克风设备请重启浏览器重试')
+		}
+	} else if (navigator.webkitGetUserMedia) {
+		try {
+			navigator.webkitGetUserMedia('audio', function(stream) {
+				gRecorder = new SRecorder(stream);
+			},
+			function(){
+				console.log('您设备上的麦克风无法使用，如果确认存在麦克风设备请重启浏览器重试')
+			});
+		} catch (err) {
+			console.log('您设备上的麦克风无法使用，如果确认存在麦克风设备请重启浏览器重试')
+		}
+	}
+    
+    function startRecord(){
+    	if(!door) {
+            gRecorder.start();
+            door = true;
+        }
+    }
+    
+    function stopRecord(){
+		if(door) {
+             blob = gRecorder.getBlob();
+             gRecorder.clear();
+             gRecorder.stop();
+             door = false;
+        }
+    }
+    
+    function sendRecord(){
+		if(!door && blob) {
+             getBase64(blob, function(base64){
+            	 send("<audio preload controls src='"+base64+"'/>");
+            	 blob = null;
+             })
+        }
+    }
+    
 </script>
 <style type="text/css">
     html,body {width:100%;height:100%;}
@@ -124,6 +293,7 @@
             <label for="msg" style="display:inline">Message</label>
             <input type="text" name="message" id="msg"  onkeypress="if(event.keyCode==13) { send(this.form.message.value); this.value='' } " placeholder="支持粘贴QQ截图"/>
             <label title="选择图片"><input type="file" style="display:none" onchange="onSelect()" accept="image/*">➕</label>
+            <label title="按住录音，松开发送，移出放弃" onmousedown="startRecord()" onmouseup="stopRecord(); sendRecord()" onmouseout="stopRecord()">录音</label>
         </form>
     </div>
 </div>

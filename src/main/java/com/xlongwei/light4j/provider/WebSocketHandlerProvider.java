@@ -47,7 +47,7 @@ public class WebSocketHandlerProvider implements HandlerProvider {
                         channel.getReceiveSetter().set(new AbstractReceiveListener() {
                             @Override
                             protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
-                                String msg = String.format("[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date(),"HH:mm:ss"), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), message.getData());
+                                String msg = String.format("<br>[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), message.getData());
                                 channel.getPeerConnections().parallelStream().forEach(c -> WebSockets.sendText(msg, c, null));
                                 log.info(msg);
                                 Long size = RedisConfig.lpush(RedisConfig.CACHE, key, msg);
