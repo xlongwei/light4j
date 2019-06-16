@@ -14,6 +14,7 @@ import org.apache.commons.io.input.TailerListenerAdapter;
 import com.networknt.handler.HandlerProvider;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
+import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
@@ -45,11 +46,23 @@ public class WebSocketHandlerProvider implements HandlerProvider {
                     @Override
                     public void onConnect(WebSocketHttpExchange exchange, WebSocketChannel channel) {
                         channel.getReceiveSetter().set(new AbstractReceiveListener() {
+                        	boolean mute = false;
                             @Override
                             protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
-                                String msg = String.format("<br>[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), message.getData());
-                                channel.getPeerConnections().parallelStream().forEach(c -> WebSockets.sendText(msg, c, null));
+                            	String txt = message.getData();
+                                String msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), txt);
+                                if(!mute) {
+                                	channel.getPeerConnections().parallelStream().forEach(c -> WebSockets.sendText(msg, c, null));
+                                }
                                 log.info(msg);
+                                if(StringUtil.firstNotBlank(RedisConfig.get("ws.chat.mute"), "mute").equals(txt)) {
+                                	mute = !mute;
+                                	log.info("chat mute: {}", mute);
+                                }else if("history".equals(txt)) {
+                                	boolean history = !NumberUtil.parseBoolean(RedisConfig.get("ws.chat.history"), true);
+                                	RedisConfig.set("ws.chat.history", String.valueOf(history));
+                                	log.info("chat history: {}", history);
+                                }
                                 Long size = RedisConfig.lpush(RedisConfig.CACHE, key, msg);
                                 if(size > length) {
                                 	RedisConfig.ltrim(RedisConfig.CACHE, key, 0, length-1);
@@ -57,10 +70,11 @@ public class WebSocketHandlerProvider implements HandlerProvider {
                             }
                         });
                         channel.resumeReceives();
+                        boolean history = NumberUtil.parseBoolean(RedisConfig.get("ws.chat.history"), true);
                         List<String> list = RedisConfig.lrange(RedisConfig.CACHE, key, 0, length);
                         int size = list==null ? 0 : list.size();
-                        log.info("ws chat on connect, history size: {}", size);
-                        if(size > 0) {
+                        log.info("ws chat on connect, history size: {}, history enabled: {}", size, history);
+                        if(size > 0 && history) {
                         	for(int i=size-1; i>=0; i--) {
                         		String msg = list.get(i);
                         		WebSockets.sendText(msg, channel, null);
