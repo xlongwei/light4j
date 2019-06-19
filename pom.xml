@@ -43,6 +43,7 @@
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.dbutils>1.7</version.dbutils>
         <version.commons-io>2.6</version.commons-io>
+        <version.icu4j>64.2</version.icu4j>
     </properties>
 
     <dependencies>
@@ -373,6 +374,12 @@
         	<artifactId>commons-io</artifactId>
         	<version>${version.commons-io}</version>
         </dependency>
+		<dependency>
+		    <groupId>com.ibm.icu</groupId>
+		    <artifactId>icu4j</artifactId>
+		    <version>${version.icu4j}</version>
+		</dependency>
+
         
         <!-- Test Dependencies -->
         <dependency>
