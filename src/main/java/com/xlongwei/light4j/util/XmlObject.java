@@ -369,7 +369,7 @@ public class XmlObject implements Cloneable {
 		 */
 		public FieldValue(String field, String value) {
 			if(field!=null && field.length()>0) {
-				this.field = field; this.value = value==null ? "" : value;
+				this.field = field; this.value = value==null ? "" : value.trim();
 			}else {
 				throw new IllegalArgumentException("bad field: "+field);
 			}

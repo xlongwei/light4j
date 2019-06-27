@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.DateUtils;
 
+import com.xlongwei.light4j.util.AdtUtil.PairList;
+import com.xlongwei.light4j.util.AdtUtil.PairList.PriorityPairList.PriorityComparator;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
@@ -59,6 +61,8 @@ public class CounterHandler extends AbstractTextHandler {
 					sb.append("total: ").append(total);
 					return sb.toString();
 				}
+			}else if("reload".equals(cmd)){
+				ServiceCounter.reload();
 			}else {
 				return countDays(cmd);
 			} 
@@ -106,10 +110,11 @@ public class CounterHandler extends AbstractTextHandler {
 			break;
 		}while(true);
 		if(isNumbers) {
-			for(String key : totalCount.keySet()) {
-				Integer times = totalCount.get(key);
-				sb.append(key).append("=").append(times).append("\n");
-				total += times;
+			PairList<String, Integer> pairList = new PairList.PriorityPairList<>(PriorityComparator.DESEND);
+			pairList.putAll(totalCount);
+			while(pairList.moveNext()) {
+				sb.append(pairList.getData()).append("=").append(pairList.getPriority()).append("\n");
+				total += pairList.getPriority();
 			}
 		}
 		sb.append("total: ").append(total);
@@ -122,6 +127,22 @@ public class CounterHandler extends AbstractTextHandler {
 		 */
 		public static Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
 		static {
+			reload();
+			//每天凌晨更新昨天数据
+			TaskUtil.scheduleAtFixedRate(new Runnable() {
+				@Override
+				public void run() {
+					String day = DateUtil.format(DateUtils.addDays(SystemClock.date(),-1), "yyyy-MM-dd"), key = "service"+day, value = RedisConfig.get(key);
+					if(StringUtil.hasLength(value)) {
+						Map<String, Integer> count = ConfigUtil.stringMapInteger(value);
+						if(count!=null) {
+							counts.put(day, count);
+						}
+					}
+				}
+			}, 24-DateUtils.getFragmentInHours(SystemClock.date(), Calendar.DATE), 24, TimeUnit.HOURS);
+		}
+		public static void reload() {
 			//等3秒再加载缓存数据
 			TaskUtil.schedule(new Runnable() {
 				@Override
@@ -144,19 +165,6 @@ public class CounterHandler extends AbstractTextHandler {
 					}while(true);
 				}
 			}, 3, TimeUnit.SECONDS);
-			//每天凌晨更新昨天数据
-			TaskUtil.scheduleAtFixedRate(new Runnable() {
-				@Override
-				public void run() {
-					String day = DateUtil.format(DateUtils.addDays(SystemClock.date(),-1), "yyyy-MM-dd"), key = "service"+day, value = RedisConfig.get(key);
-					if(StringUtil.hasLength(value)) {
-						Map<String, Integer> count = ConfigUtil.stringMapInteger(value);
-						if(count!=null) {
-							counts.put(day, count);
-						}
-					}
-				}
-			}, 24-DateUtils.getFragmentInHours(SystemClock.date(), Calendar.DATE), 24, TimeUnit.HOURS);
 		}
 		public static boolean refresh() {
 			String day = DateUtil.format(SystemClock.date(), "yyyy-MM-dd"), key = "service"+day, value = RedisConfig.get(key);

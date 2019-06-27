@@ -16,6 +16,7 @@ import redis.clients.jedis.ShardedJedisPool;
  */
 @Slf4j
 public class RedisCache {
+	public static int DEFAULT_SECONDS = 604800;
 	public static ShardedJedisPool SHARDED_JEDIS_POOL;
 	private static List<JedisShardInfo> nodes = new LinkedList<>();
 	static {
@@ -73,7 +74,7 @@ public class RedisCache {
 	}
 	
 	public static void set(String cache, String key, String value) {
-		set(cache, key, value, 604800);
+		set(cache, key, value, DEFAULT_SECONDS);
 	}
 	
 	public static void set(final String cache, final String key, final String value, final int seconds) {
@@ -97,6 +98,28 @@ public class RedisCache {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				expire(shardedJedis, byteKey, seconds);
 				return null;
+			}
+		});
+	}
+	
+	/** 超时获取 */
+	public static Long ttl(final String cache, final String key) {
+		return execute(new ShardedJedisCallback<Long>() {
+			@Override
+			public Long doInShardedJedis(ShardedJedis shardedJedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				return shardedJedis.ttl(byteKey);
+			}
+		});
+	}
+	
+	/** 获取分片 */
+	public static MyJedisShardInfo shardInfo(final String cache, final String key) {
+		return execute(new ShardedJedisCallback<MyJedisShardInfo>() {
+			@Override
+			public MyJedisShardInfo doInShardedJedis(ShardedJedis shardedJedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				return (MyJedisShardInfo)shardedJedis.getShardInfo(byteKey);
 			}
 		});
 	}

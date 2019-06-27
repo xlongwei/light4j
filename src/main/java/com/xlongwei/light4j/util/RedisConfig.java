@@ -14,6 +14,7 @@ import redis.clients.jedis.JedisPool;
  */
 @Slf4j
 public class RedisConfig {
+	public static int DEFAULT_SECONDS = 604800;
 	public static final String CACHE = "property";
 	public static final JedisPool JEDIS_POOL;
 	
@@ -88,7 +89,7 @@ public class RedisConfig {
 	}
 	
 	public static void set(String cache, String key, String value) {
-		set(cache, key, value, 604800);
+		set(cache, key, value, DEFAULT_SECONDS);
 	}
 	
 	public static void set(final String cache, final String key, final String value, final int seconds) {

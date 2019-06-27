@@ -46,10 +46,11 @@ dependency(){
 
 start(){
 	echo "starting light4j ..."
-	#setsid java -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
-	setsid java -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -cp target/light4j-3.0.1.jar com.xlongwei.light4j.Servers >> /dev/null 2>&1 &
+	JVM_OPS="-server -Xmx768M -XX:MaxPermSize=256m"
+	#setsid java $JVM_OPS -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
+	setsid java $JVM_OPS -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -cp target/light4j-3.0.1.jar com.xlongwei.light4j.Servers >> /dev/null 2>&1 &
 	#echo "starting light4j https ..."
-	#env enableHttps=true setsid java -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
+	#env enableHttps=true setsid java $JVM_OPS -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
 }
 
 keystore(){
