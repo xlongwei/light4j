@@ -2,6 +2,7 @@ package com.xlongwei.light4j.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
@@ -16,6 +17,7 @@ import redis.clients.jedis.JedisPool;
 public class RedisConfig {
 	public static int DEFAULT_SECONDS = 604800;
 	public static final String CACHE = "property";
+	public static final String LOCK = "lock";
 	public static final JedisPool JEDIS_POOL;
 	
 	static {
@@ -84,6 +86,32 @@ public class RedisConfig {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteValue = jedis.get(byteKey);
 				return RedisUtil.stringValue(byteValue);
+			}
+		});
+	}
+	
+	/**
+	 * 获取缓存值，不存在时从supplier取值，并存入缓存
+	 * @param cache
+	 * @param key
+	 * @param supplier 延迟计算，缓存有值时不会计算求值
+	 * @return
+	 */
+	public static String get(final String cache, final String key, final Supplier<String> supplier) {
+		return execute(new JedisCallback<String>() {
+			@Override
+			public String doInJedis(Jedis jedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				byte[] byteValue = jedis.get(byteKey);
+				String value = RedisUtil.stringValue(byteValue);
+				if(StringUtil.isBlank(value) && supplier!=null) {
+					value = supplier.get();
+					if(StringUtil.hasLength(value)) {
+						byteValue = RedisUtil.byteValue(value);
+						jedis.set(byteKey, byteValue);
+					}
+				}
+				return value;
 			}
 		});
 	}
@@ -175,6 +203,41 @@ public class RedisConfig {
 			public String doInJedis(Jedis jedis) {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				return jedis.ltrim(byteKey, start, end);
+			}
+		});
+	}
+	
+	/** 分布式锁，无限等待锁
+	 * @param seconds 10 获得锁后锁定10秒
+	 * */
+	public static boolean lock(String cache, String key, int seconds) {
+		return lock(cache, key, seconds, 0);
+	}
+	
+	/** 分布式锁，限时等待锁
+	 * @param seconds 10 获得锁后锁定10秒
+	 * @param wait <=0 无限等待 10等待10秒
+	 * */
+	public static boolean lock(String cache, String key, final int seconds, final int wait) {
+		final byte[] fk = RedisUtil.byteKey(cache, key);
+		return execute(new JedisCallback<Boolean>() {
+			@Override
+			public Boolean doInJedis(Jedis jedis) {
+				long setnx = jedis.setnx(fk, fk);
+				boolean locked = setnx==1;
+				long totalWait = 0, tw = 31, fw = wait*1000;
+				while(!locked) {
+					TaskUtil.sleep(tw);
+					setnx = jedis.setnx(fk, fk);
+					locked = setnx==1;
+					totalWait += tw;
+					if(fw>0 && totalWait>fw) {
+						if(!locked) return false;
+						else break;
+					}
+				}
+				expire(jedis, fk, seconds);
+				return true;
 			}
 		});
 	}

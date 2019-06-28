@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class HtmlUtil {
+	public static String cache = "html";
 	public static Pattern pattern = Pattern.compile("<meta.*charset=[\"\']?([0-9a-zA-Z-]+)[\"\']", Pattern.CASE_INSENSITIVE);
 
 	/** 探测字节文本的编码 */
@@ -156,6 +157,9 @@ public class HtmlUtil {
 	/** 获取网址的字符串 */
 	public static String get(String url, Header ... headers) {
 		try {
+			String rootUrl = StringUtil.rootUrl(url);
+			RedisConfig.lock(RedisConfig.LOCK, rootUrl, NumberUtil.parseInt(RedisConfig.get("crawler.crawl.seconds.html"), 5));
+			log.info("get html of url: {}", url);
 			RequestBuilder requestBuilder = RequestBuilder.get(url);
 			if(headers!=null && headers.length>0) {
 				for(Header header : headers) {
@@ -190,6 +194,9 @@ public class HtmlUtil {
 	/** 获取post请求后的响应字符串 */
 	public static String post(String url, Map<String, String> headers, Map<String, String> params) {
 		try {
+			String rootUrl = StringUtil.rootUrl(url);
+			RedisConfig.lock(RedisConfig.LOCK, rootUrl, NumberUtil.parseInt(RedisConfig.get("crawler.crawl.seconds.html"), 5));
+			log.info("post html of url: {}, params: {}", url, params);
 			RequestBuilder post = RequestBuilder.post(url);
 			boolean hasHeaders = headers!=null && headers.size()>0;
 			boolean hasParams = params!=null && params.size()>0;

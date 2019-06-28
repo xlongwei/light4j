@@ -235,6 +235,11 @@ public class StringUtil {
 		return dot==-1 ? domain : domain.substring(dot+1);
 	}
 	
+	public static String rootUrl(String url) {
+		int dot = url.indexOf("://"), slash = url.indexOf('/', dot+3);
+		return slash < 0 ? url : url.substring(0, slash+1);
+	}
+	
 	/**
 	 * 首字母大写
 	 */
