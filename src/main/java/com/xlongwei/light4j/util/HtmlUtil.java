@@ -38,23 +38,27 @@ public class HtmlUtil {
 		if(bs==null || bs.length==0) {
 			return null;
 		}
-		String string = new String(bs, StandardCharsets.ISO_8859_1);
-		String charset = StringUtil.getPatternString(string, pattern);
-		//charset声明编码可以优先确定探测编码正确
-		CharsetDetector charsetDetector = new CharsetDetector();
-		charsetDetector.setText(bs);
-		CharsetMatch[] matchs = charsetDetector.detectAll();
-		if(matchs!=null && matchs.length>0) {
-			int len = matchs.length - 1;
-			for(int i=0; i<len; i++) {
-				if(charset!=null && charset.equalsIgnoreCase(matchs[i].getName())) {
-					return charset;
+		try {
+			String string = new String(bs, StandardCharsets.ISO_8859_1);
+			String charset = StringUtil.getPatternString(string, pattern);
+			//charset声明编码可以优先确定探测编码正确
+			CharsetDetector charsetDetector = new CharsetDetector();
+			charsetDetector.setText(bs);
+			CharsetMatch[] matchs = charsetDetector.detectAll();
+			if(matchs!=null && matchs.length>0) {
+				int len = matchs.length - 1;
+				for(int i=0; i<len; i++) {
+					if(charset!=null && charset.equalsIgnoreCase(matchs[i].getName())) {
+						return charset;
+					}
+					if(matchs[i+1].getConfidence()<matchs[i].getConfidence()) {
+						return matchs[i].getName();
+					}
 				}
-				if(matchs[i+1].getConfidence()<matchs[i].getConfidence()) {
-					return matchs[i].getName();
-				}
+				return matchs[len].getName();
 			}
-			return matchs[len].getName();
+		}catch(Exception e) {
+			log.info("fail to charset bs, ex: {}", e.getMessage());
 		}
 		return null;
 	}

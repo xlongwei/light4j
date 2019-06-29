@@ -24,12 +24,14 @@ import com.xlongwei.light4j.util.WordUtil;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData.FormValue;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * doc handler
  * @author xlongwei
  *
  */
+@Slf4j
 public class DocHandler extends AbstractHandler {
 	private String[] exts = {"doc","docx","xls","xlsx","txt","html","ppt","pptx",
 			"rtf","csv","tsv","svg","wiki","xhtml","odt","ods","odp","odg","sxw","sxc","sxi","wpd"};
@@ -43,6 +45,7 @@ public class DocHandler extends AbstractHandler {
 		}
 		
 		File doc = getDoc(exchange);
+		log.info("doc file: {}, exists: {}", doc.getAbsolutePath(), doc.exists());
 		if(doc.exists()==false) {
 			return;
 		}
@@ -63,6 +66,7 @@ public class DocHandler extends AbstractHandler {
 		default:
 			break;
 		}
+		log.info("toFile: {}, exists: {}", toFile==null?"null":toFile.getAbsolutePath(), toFile!=null&&toFile.exists());
 		if(toFile!=null && toFile.exists()) {
 			Map<String, String> map = new HashMap<>(4);
 			map.put(UploadUtil.DOMAIN, UploadUtil.URL_TEMP);
@@ -71,6 +75,7 @@ public class DocHandler extends AbstractHandler {
 			if(base64File) {
 				map.put("base64", Base64.encodeBase64String(FileUtil.readStream(toFile).toByteArray()));
 			}
+			HandlerUtil.setResp(exchange, map);
 		}
 	}
 

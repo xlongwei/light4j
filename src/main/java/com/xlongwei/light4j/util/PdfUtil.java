@@ -121,6 +121,7 @@ public class PdfUtil {
 	 */
 	public static boolean doc2pdf(File source, File target) {
 		String hostAndPort = roundGet.get();
+		log.info("convert file source: {}, target: {}, hostAndPort: {}", source.getAbsolutePath(), target.getAbsolutePath(), hostAndPort);
 		try {
 			String[] split = hostAndPort.split("[:]");
 			String host = split[0]; int port = NumberUtil.parseInt(split.length>1?split[1]:null, 8100); boolean stream = NumberUtil.parseBoolean(split.length>2?split[2]:null, false);
@@ -130,10 +131,10 @@ public class PdfUtil {
 			long s = System.currentTimeMillis();
 			converter.convert(source, target);
 			connection.disconnect();
-			log.info("convert file success in ms: "+(System.currentTimeMillis()-s)+", hosts: "+hostAndPort);
+			log.info("convert file success in ms: {}, hosts: {}, target: {}", (System.currentTimeMillis()-s), hostAndPort, target);
 			return true;
 		} catch (Exception e) {
-			log.warn("fail to convert file, source: "+source.getAbsolutePath()+", target: "+target.getAbsolutePath()+", hosts: "+hostAndPort+", ex: "+e.getMessage());
+			log.info("fail to convert file source: {}, ex: ", source, e.getMessage());
 		}
 		return false;
 	}
