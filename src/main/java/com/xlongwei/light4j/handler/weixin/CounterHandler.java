@@ -28,6 +28,7 @@ import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextH
 public class CounterHandler extends AbstractTextHandler {
 
 	private static final String TAG = "统计";
+	private static final String RELOAD = "reload";
 
 	@Override
 	public String handle(String content) {
@@ -61,7 +62,7 @@ public class CounterHandler extends AbstractTextHandler {
 					sb.append("total: ").append(total);
 					return sb.toString();
 				}
-			}else if("reload".equals(cmd)){
+			}else if(RELOAD.equals(cmd)){
 				ServiceCounter.reload();
 			}else {
 				return countDays(cmd);

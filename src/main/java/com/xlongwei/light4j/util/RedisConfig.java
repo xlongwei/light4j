@@ -232,8 +232,11 @@ public class RedisConfig {
 					locked = setnx==1;
 					totalWait += tw;
 					if(fw>0 && totalWait>fw) {
-						if(!locked) return false;
-						else break;
+						if(!locked) {
+							return false;
+						} else {
+							break;
+						}
 					}
 				}
 				expire(jedis, fk, seconds);

@@ -40,6 +40,24 @@ public class WeixinUtil {
 	private static Map<String, WXBizMsgCrypt> wxBizMsgCrypts = new HashMap<>(1);
 	private static Map<Class, List<AbstractMessageHandler>> handlers = new HashMap<>(16);
 	
+	/** 获取access_token */
+	public static String accessToken(String appid, String appsecret) {
+		String key = accessTokenKey+"."+appid;
+		String accessToken = RedisConfig.get(cache, key);
+		if(StringUtil.isBlank(accessToken)) {
+			String post = HttpUtil.post(service+"token", StringUtil.params("grant_type","client_credential","appid", appid, "secret", appsecret));
+			accessToken = JsonUtil.get(post, "access_token");
+			if(StringUtil.hasLength(accessToken)) {
+				int expiresIn = JsonUtil.getInt(accessToken, "expires_in");
+				if(expiresIn > 0) {
+					expiresIn = (expiresIn - 10);
+					RedisConfig.set(cache, key, accessToken, expiresIn);
+				}
+			}
+		}
+		return accessToken;
+	}
+	
 	/** 计算签名signature */
 	public static String signature(String ticket, String url, String noncestr, String timestamp) {
 		if(!StringUtil.isBlank(noncestr) && StringUtil.isUrl(url)) {

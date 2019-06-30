@@ -55,7 +55,8 @@ public class HtmlHandler extends AbstractHandler {
 			if(force) {
 				long seconds = RedisConfig.ttl(HtmlUtil.cache, url);
 				log.info("force get html, url: {}, seconds: {}", url, seconds);
-				if(Math.abs(seconds-RedisConfig.DEFAULT_SECONDS)>30) {
+				int thirty = 30;
+				if(Math.abs(seconds-RedisConfig.DEFAULT_SECONDS)>thirty) {
 					html = null;
 				}
 			}
@@ -86,7 +87,8 @@ public class HtmlHandler extends AbstractHandler {
 	public void crawlConfig(HttpServerExchange exchange) throws Exception {
 		String crawl = HandlerUtil.getParam(exchange, "crawl");
 		String config = HandlerUtil.getParam(exchange, "config");
-		if(StringUtil.isBlank(crawl) || (StringUtil.hasLength(config) && crawl.startsWith("demo"))) {
+		boolean isDemo = StringUtil.hasLength(config) && crawl.startsWith("demo");
+		if(StringUtil.isBlank(crawl) || (isDemo)) {
 			//demo为演示配置，不允许外部使用
 		}else {
 			String key = "crawler.crawl.light4j-"+crawl;
@@ -126,7 +128,7 @@ public class HtmlHandler extends AbstractHandler {
 		String service = StringUtil.firstNotBlank(RedisConfig.get("crawler.crawl.ourjs"), "http://localhost:8055")+"/crawl.json";
 		String resp = HtmlUtil.get(service+"?url=html:"+url+"&step=property:"+key);
 		log.info("crawl data resp: {}", resp);
-		Map<String, Object> map = new HashMap<>();
+		Map<String, Object> map = new HashMap<>(4);
 		map.put("crawl", crawl);
 		map.put("url", url);
 		map.put("data", JsonUtil.parseNew(resp));
