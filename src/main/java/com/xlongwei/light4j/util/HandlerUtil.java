@@ -1,7 +1,6 @@
 package com.xlongwei.light4j.util;
 
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
@@ -124,18 +123,13 @@ public class HandlerUtil {
 		        }
 			}else if(StringUtils.isBlank(contentType) || StringUtil.containsOneOfIgnoreCase(contentType, TEXT, JSON, XML)) {
 				InputStream inputStream = exchange.getInputStream();
-				String string = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-				if (string != null) {
-					string = string.trim();
-					String lp = "{";
-					if (string.startsWith(lp)) {
-						Map<String, Object> readValue = ConfigUtil.stringMapObject(string);
-						if(readValue!=null && readValue.size()>0) {
-							body.putAll(readValue);
-						}
-					}else {
-						body.put(BODYSTRING, string);
+				String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
+				if (string.length() > 0) {
+					Map<String, Object> bodyMap = ConfigUtil.stringMapObject(string);
+					if(bodyMap!=null && bodyMap.size()>0) {
+						body.putAll(bodyMap);
 					}
+					body.put(BODYSTRING, string);
 				}
 			}else {
 				log.info("not suppoert Content-Type: {}", contentType);
@@ -167,6 +161,15 @@ public class HandlerUtil {
 			if(StringUtils.isNotBlank(param)) {
 				param = RedisConfig.get(param);
 			}
+		}
+		return param;
+	}
+	
+	/** 支持参数或正文 */
+	public static String getParamOrBody(HttpServerExchange exchange, String name) {
+		String param = getObject(exchange, name, String.class);
+		if(StringUtil.isBlank(param)) {
+			param = getObject(exchange, BODYSTRING, String.class);
 		}
 		return param;
 	}

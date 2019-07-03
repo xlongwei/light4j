@@ -135,6 +135,15 @@ public class NumberUtil {
     	return id!=null && id>0;
     }
     
+    /** 去掉空格和逗号等分隔符 */
+    public static String correctMoney(String money) {
+    	if(StringUtil.isBlank(money)) {
+    		return null;
+    	}
+		return money.chars().filter(c -> c == '.' || Character.isDigit(c))
+				.collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
+    }
+    
     /** 判断是否有效数字金额 */
     public static boolean isMoney(String money) {
     	return money!=null && MONEY_PATTERN.matcher(money).matches();
@@ -142,7 +151,7 @@ public class NumberUtil {
     
     /** 转换数字金额为大写汉字 */
 	public static String daxie(String string) {
-		if(!isMoney(string)) {
+		if(!isMoney(string=correctMoney(string))) {
 			return null;
 		}
 		BigDecimal money = new BigDecimal(string);

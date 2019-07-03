@@ -5,10 +5,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.SimpleBindings;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
@@ -21,6 +29,9 @@ import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.ObjectPool;
+import io.undertow.util.PooledObject;
+import io.undertow.util.SimpleObjectPool;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -31,6 +42,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @SuppressWarnings("unchecked")
 public class HtmlHandler extends AbstractHandler {
+	private static final ObjectPool<ScriptEngine> POOL = new SimpleObjectPool<ScriptEngine>(
+			NumberUtil.parseInt(RedisConfig.get(""), 6), () -> new ScriptEngineManager().getEngineByName("js"),
+			ScriptEngine::getContext, ScriptEngine::getContext);
 
 	public void charset(HttpServerExchange exchange) throws Exception {
 		String charset = null;
@@ -133,5 +147,74 @@ public class HtmlHandler extends AbstractHandler {
 		map.put("url", url);
 		map.put("data", JsonUtil.parseNew(resp));
 		HandlerUtil.setResp(exchange, map);
+	}
+	
+	public void jsConfig(HttpServerExchange exchange) throws Exception {
+		String key = HandlerUtil.getParam(exchange, "key");
+		if(StringUtil.isBlank(key)) {
+			String data = HandlerUtil.getParam(exchange, "data");
+			String js = HandlerUtil.getParamOrBody(exchange, "js");
+			if(StringUtil.isBlank(data) && StringUtil.isBlank(js)) {
+				//bad request
+			}else {
+				Map<String, String> map = new HashMap<>(2);
+				if(StringUtil.hasLength(data)) {
+					boolean valid = JsonUtil.parse(data)!=null || JsonUtil.parseArray(data)!=null;
+					if(valid) {
+						key = String.valueOf(IdWorker.getId());
+						map.put("data", key);
+						RedisConfig.set("js."+key, data);
+					}else {
+						map.put("data", "data must be json object or json array");
+					}
+				}
+				if(StringUtil.hasLength(js)) {
+					key = String.valueOf(IdWorker.getId());
+					map.put("js", key);
+					RedisConfig.set("js."+key, js);
+				}
+				HandlerUtil.setResp(exchange, map);
+			}
+		}else {
+			String config = RedisConfig.get("js."+key);
+			if(StringUtil.hasLength(config)) {
+				HandlerUtil.setResp(exchange, StringUtil.params("config", config));
+			}
+		}
+	}
+	
+	public void jsEval(HttpServerExchange exchange) throws Exception {
+		String data = HandlerUtil.getParam(exchange, "data");
+		String js = HandlerUtil.getParam(exchange, "js");
+		if(StringUtil.isNumbers(data) && StringUtil.isNumbers(js)) {
+			data = RedisConfig.get("js."+data);
+			js = RedisConfig.get("js."+js);
+			if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
+				log.info("jsEval data: {}, js: \n{}", data, js);
+				JSONObject dataObj = JsonUtil.parse(data);
+				JSONArray dataArray = JsonUtil.parseArray(data);
+				if(dataObj!=null || dataArray!=null) {
+					PooledObject<ScriptEngine> pooledObject = POOL.allocate();
+					try{
+						ScriptEngine se = pooledObject.getObject();
+						Bindings bindings = new SimpleBindings();
+						bindings.put("data", dataObj!=null ? dataObj : dataArray);
+						Object result = se.eval(js, bindings);
+						HandlerUtil.setResp(exchange, StringUtil.params("result", result==null ? "null" : JSON.toJSONString(result)));
+					}catch(Exception e) {
+						log.info("fail to eval js, ex: {}", e.getMessage());
+						HandlerUtil.setResp(exchange, StringUtil.params("result", "eval ex: "+e.getMessage()));
+					}finally {
+						pooledObject.close();
+					}
+				}else {
+					HandlerUtil.setResp(exchange, StringUtil.params("result", "bad data config"));
+				}
+			}else {
+				HandlerUtil.setResp(exchange, StringUtil.params("result", "empty data && js"));
+			}
+		}else if(StringUtil.hasLength(data) || StringUtil.hasLength(js)){
+			HandlerUtil.setResp(exchange, StringUtil.params("result", "bad data && js"));
+		}
 	}
 }
