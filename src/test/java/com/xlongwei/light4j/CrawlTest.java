@@ -11,6 +11,11 @@ import com.xlongwei.light4j.util.RedisConfig;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * crawl test
+ * @author xlongwei
+ *
+ */
 @Slf4j
 public class CrawlTest {
 	private String dir = "../ourjs/train", cache = "html", html = "", url = "";

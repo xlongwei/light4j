@@ -10,6 +10,11 @@ import com.ibm.icu.util.ChineseCalendar;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * icu4j test
+ * @author xlongwei
+ *
+ */
 @Slf4j
 public class Icu4jTest {
 

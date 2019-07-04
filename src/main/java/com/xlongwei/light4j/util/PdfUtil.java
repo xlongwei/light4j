@@ -11,6 +11,7 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -35,6 +36,7 @@ import com.lowagie.text.pdf.PdfSignatureAppearance;
 import com.lowagie.text.pdf.PdfSmartCopy;
 import com.lowagie.text.pdf.PdfStamper;
 import com.lowagie.text.pdf.SimpleBookmark;
+import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.util.AdtUtil.Get.Round;
 
 import lombok.extern.slf4j.Slf4j;
@@ -92,6 +94,7 @@ public class PdfUtil {
 	}
 	
 	private static Round<String> roundGet = null;
+	private static Map<String, Tuple<OpenOfficeConnection, DocumentConverter>> soffices = new ConcurrentHashMap<>();
 	static {
 		String[] hostAndPorts = StringUtil.firstNotBlank(ConfigUtil.config("soffice").get("hosts"), "127.0.0.1:8100:false").split("[,;]");
 		List<String> soffices = new ArrayList<>();
@@ -114,6 +117,13 @@ public class PdfUtil {
 			}
 		}
 		roundGet = new Round<>(soffices);
+		TaskUtil.addShutdownHook(new Runnable() {
+			@Override
+			public void run() {
+				log.info("soffices shutdown");
+				PdfUtil.soffices.values().parallelStream().map(tuple -> tuple.first).forEach(OpenOfficeConnection::disconnect);
+			}
+		});
 	}
 	/** 转换文件格式，支持OpenOffice和LibreOffice代理转换
 	 * @param source 支持doc(x) xls(x) ppt(x) txt(rtf) (x)html
@@ -125,12 +135,27 @@ public class PdfUtil {
 		try {
 			String[] split = hostAndPort.split("[:]");
 			String host = split[0]; int port = NumberUtil.parseInt(split.length>1?split[1]:null, 8100); boolean stream = NumberUtil.parseBoolean(split.length>2?split[2]:null, false);
-			OpenOfficeConnection connection = new SocketOpenOfficeConnection(host, port);
-			connection.connect();
-			DocumentConverter converter = stream ? new MyStreamOpenOfficeDocumentConverter(connection) : new MyOpenOfficeDocumentConverter(connection);  
+			Tuple<OpenOfficeConnection, DocumentConverter> tuple = soffices.get(hostAndPort);
+			OpenOfficeConnection connection = null;
+			DocumentConverter converter = null;
+			if(tuple!=null) {
+				if(tuple.first.isConnected()) {
+					connection = tuple.first;
+					converter = tuple.second;
+				}else {
+					tuple.first.disconnect();
+				}
+			}
+			if(connection==null) {
+				connection = new SocketOpenOfficeConnection(host, port);
+				connection.connect();
+				converter = stream ? new MyStreamOpenOfficeDocumentConverter(connection) : new MyOpenOfficeDocumentConverter(connection);
+				tuple = new Tuple<>(connection, converter);
+				soffices.put(hostAndPort, tuple);
+			}
 			long s = System.currentTimeMillis();
 			converter.convert(source, target);
-			connection.disconnect();
+			//connection.disconnect();
 			log.info("convert file success in ms: {}, hosts: {}, target: {}", (System.currentTimeMillis()-s), hostAndPort, target);
 			return true;
 		} catch (Exception e) {

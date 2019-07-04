@@ -1,5 +1,6 @@
 package com.xlongwei.light4j.handler.service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.networknt.utility.StringUtils;
@@ -53,7 +53,7 @@ public class HtmlHandler extends AbstractHandler {
 			charset = StringUtils.trimToEmpty(HtmlUtil.charset(url));
 			HandlerUtil.setResp(exchange, StringUtil.params("charset", charset));
 		}
-		String bytes = HandlerUtil.getParam(exchange, "bytes");
+		String bytes = HandlerUtil.getParamOrBody(exchange, "bytes");
 		if(StringUtil.hasLength(bytes)) {
 			byte[] bs = Base64.decodeBase64(bytes);
 			charset = StringUtils.trimToEmpty(HtmlUtil.charset(bs));
@@ -100,7 +100,7 @@ public class HtmlHandler extends AbstractHandler {
 
 	public void crawlConfig(HttpServerExchange exchange) throws Exception {
 		String crawl = HandlerUtil.getParam(exchange, "crawl");
-		String config = HandlerUtil.getParam(exchange, "config");
+		String config = HandlerUtil.getParamOrBody(exchange, "config");
 		boolean isDemo = StringUtil.hasLength(config) && crawl.startsWith("demo");
 		if(StringUtil.isBlank(crawl) || (isDemo)) {
 			//demo为演示配置，不允许外部使用
@@ -126,7 +126,7 @@ public class HtmlHandler extends AbstractHandler {
 		if(StringUtil.isBlank(RedisConfig.get(key)) || RedisConfig.ttl(RedisConfig.CACHE, key)>0){
 			return;
 		}
-		String html = HandlerUtil.getParam(exchange, "html");
+		String html = HandlerUtil.getParamOrBody(exchange, "html");
 		String url = HandlerUtil.getParam(exchange, "url");
 		if(StringUtil.isBlank(html)) {
 			if(StringUtil.isUrl(url)) {
@@ -185,27 +185,24 @@ public class HtmlHandler extends AbstractHandler {
 	
 	public void jsEval(HttpServerExchange exchange) throws Exception {
 		String data = HandlerUtil.getParam(exchange, "data");
-		String js = HandlerUtil.getParam(exchange, "js");
-		if(StringUtil.isNumbers(data) && StringUtil.isNumbers(js)) {
-			data = RedisConfig.get("js."+data);
-			js = RedisConfig.get("js."+js);
+		String js = HandlerUtil.getParamOrBody(exchange, "js");
+		if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
+			data = StringUtil.isNumbers(data) ? RedisConfig.get("js."+data) : data;
+			js = StringUtil.isNumbers(js) ? RedisConfig.get("js."+js) : js;
 			if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
 				log.info("jsEval data: {}, js: \n{}", data, js);
 				JSONObject dataObj = JsonUtil.parse(data);
 				JSONArray dataArray = JsonUtil.parseArray(data);
 				if(dataObj!=null || dataArray!=null) {
-					PooledObject<ScriptEngine> pooledObject = POOL.allocate();
-					try{
+					try(PooledObject<ScriptEngine> pooledObject = POOL.allocate()){
 						ScriptEngine se = pooledObject.getObject();
 						Bindings bindings = new SimpleBindings();
 						bindings.put("data", dataObj!=null ? dataObj : dataArray);
 						Object result = se.eval(js, bindings);
-						HandlerUtil.setResp(exchange, StringUtil.params("result", result==null ? "null" : JSON.toJSONString(result)));
+						HandlerUtil.setResp(exchange, Collections.singletonMap("result", result));
 					}catch(Exception e) {
 						log.info("fail to eval js, ex: {}", e.getMessage());
 						HandlerUtil.setResp(exchange, StringUtil.params("result", "eval ex: "+e.getMessage()));
-					}finally {
-						pooledObject.close();
 					}
 				}else {
 					HandlerUtil.setResp(exchange, StringUtil.params("result", "bad data config"));
@@ -213,8 +210,6 @@ public class HtmlHandler extends AbstractHandler {
 			}else {
 				HandlerUtil.setResp(exchange, StringUtil.params("result", "empty data && js"));
 			}
-		}else if(StringUtil.hasLength(data) || StringUtil.hasLength(js)){
-			HandlerUtil.setResp(exchange, StringUtil.params("result", "bad data && js"));
 		}
 	}
 }
