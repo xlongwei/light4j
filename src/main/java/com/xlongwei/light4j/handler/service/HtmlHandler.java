@@ -4,9 +4,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
@@ -45,6 +48,7 @@ public class HtmlHandler extends AbstractHandler {
 	private static final ObjectPool<ScriptEngine> POOL = new SimpleObjectPool<ScriptEngine>(
 			NumberUtil.parseInt(RedisConfig.get(""), 6), () -> new ScriptEngineManager().getEngineByName("js"),
 			ScriptEngine::getContext, ScriptEngine::getContext);
+	private static final Map<String, CompiledScript> SCRIPTS = new ConcurrentHashMap<>();
 
 	public void charset(HttpServerExchange exchange) throws Exception {
 		String charset = null;
@@ -106,10 +110,18 @@ public class HtmlHandler extends AbstractHandler {
 			//demo为演示配置，不允许外部使用
 		}else {
 			String key = "crawler.crawl.light4j-"+crawl;
+			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			if(!StringUtil.isBlank(userName)) {
+				key = key.replace("light4j", userName);
+			}
 			if(StringUtil.isBlank(config)) {
 				config = RedisConfig.get(key);
 			}else {
-				RedisConfig.set(key, config);
+				if(StringUtil.isBlank(userName)) {
+					RedisConfig.set(key, config);
+				}else {
+					RedisConfig.persist(key, config);
+				}
 			}
 			if(!StringUtil.isBlank(config)) {
 				HandlerUtil.setResp(exchange, StringUtil.params("crawl", crawl, "config", config));
@@ -123,6 +135,10 @@ public class HtmlHandler extends AbstractHandler {
 			return;
 		}
 		String key = "crawler.crawl.light4j-"+crawl;
+		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+		if(!StringUtil.isBlank(userName)) {
+			key = key.replace("light4j", userName);
+		}
 		if(StringUtil.isBlank(RedisConfig.get(key)) || RedisConfig.ttl(RedisConfig.CACHE, key)>0){
 			return;
 		}
@@ -150,65 +166,110 @@ public class HtmlHandler extends AbstractHandler {
 	}
 	
 	public void jsConfig(HttpServerExchange exchange) throws Exception {
-		String key = HandlerUtil.getParam(exchange, "key");
-		if(StringUtil.isBlank(key)) {
-			String data = HandlerUtil.getParam(exchange, "data");
-			String js = HandlerUtil.getParamOrBody(exchange, "js");
-			if(StringUtil.isBlank(data) && StringUtil.isBlank(js)) {
-				//bad request
-			}else {
-				Map<String, String> map = new HashMap<>(2);
-				if(StringUtil.hasLength(data)) {
-					boolean valid = JsonUtil.parse(data)!=null || JsonUtil.parseArray(data)!=null;
-					if(valid) {
-						key = String.valueOf(IdWorker.getId());
-						map.put("data", key);
-						RedisConfig.set("js."+key, data);
-					}else {
-						map.put("data", "data must be json object or json array");
-					}
-				}
-				if(StringUtil.hasLength(js)) {
-					key = String.valueOf(IdWorker.getId());
-					map.put("js", key);
-					RedisConfig.set("js."+key, js);
-				}
-				HandlerUtil.setResp(exchange, map);
+		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+		String data = HandlerUtil.getParam(exchange, "data"), datakey = HandlerUtil.getParam(exchange, "datakey");
+		String js = HandlerUtil.getParam(exchange, "js"), jskey = HandlerUtil.getParam(exchange, "jskey");
+		if(StringUtil.isBlank(data) && StringUtil.hasLength(datakey)) {
+			data = HandlerUtil.getBodyString(exchange);
+		}else if(StringUtil.isBlank(js) && StringUtil.hasLength(jskey)) {
+			js = HandlerUtil.getBodyString(exchange);
+		}
+		if(StringUtil.isBlank(data) && StringUtil.isBlank(js)) {
+			if(StringUtil.isBlank(datakey) && StringUtil.isBlank(jskey)) {
+				return;
 			}
+			Map<String, String> map = new HashMap<>(2);
+			if(StringUtil.hasLength(datakey)) {
+				data = RedisConfig.get("js."+(StringUtil.isBlank(userName)?"":userName+".")+datakey);
+				map.put("data", StringUtil.hasLength(data) ? data : "no data config");
+			}
+			if(StringUtil.hasLength(jskey)) {
+				js = RedisConfig.get("js."+(StringUtil.isBlank(userName)?"":userName+".")+jskey);
+				map.put("js", StringUtil.hasLength(js) ? js : "no js config");
+			}
+			HandlerUtil.setResp(exchange, map);
 		}else {
-			String config = RedisConfig.get("js."+key);
-			if(StringUtil.hasLength(config)) {
-				HandlerUtil.setResp(exchange, StringUtil.params("config", config));
+			Map<String, String> map = new HashMap<>(2);
+			if(StringUtil.hasLength(data)) {
+				boolean valid = JsonUtil.parse(data)!=null || JsonUtil.parseArray(data)!=null;
+				if(valid) {
+					datakey = StringUtil.firstNotBlank(datakey, String.valueOf(IdWorker.getId()));
+					map.put("datakey", datakey);
+					datakey = "js."+(StringUtil.isBlank(userName)?"":userName+".")+datakey;
+					RedisConfig.set(datakey, data);
+				}else {
+					map.put("error", "data must be json object or json array");
+				}
 			}
+			if(StringUtil.hasLength(js)) {
+				jskey = StringUtil.firstNotBlank(jskey, String.valueOf(IdWorker.getId()));
+				map.put("jskey", jskey);
+				jskey = "js."+(StringUtil.isBlank(userName)?"":userName+".")+jskey;
+				RedisConfig.set(jskey, js);
+				SCRIPTS.remove(jskey);
+			}
+			HandlerUtil.setResp(exchange, map);
 		}
 	}
 	
 	public void jsEval(HttpServerExchange exchange) throws Exception {
 		String data = HandlerUtil.getParam(exchange, "data");
-		String js = HandlerUtil.getParamOrBody(exchange, "js");
+		String js = HandlerUtil.getParam(exchange, "js");
+		//可以向?data=datakey提交js正文，也可以向?js=jskey提交data正文
+		if(StringUtil.isBlank(data) && StringUtil.hasLength(js)) {
+			data = HandlerUtil.getBodyString(exchange);
+		}else if(StringUtil.isBlank(js) && StringUtil.hasLength(data)) {
+			js = HandlerUtil.getBodyString(exchange);
+		}
 		if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
-			data = StringUtil.isNumbers(data) ? RedisConfig.get("js."+data) : data;
-			js = StringUtil.isNumbers(js) ? RedisConfig.get("js."+js) : js;
+			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			//优先取redis配置，其次取原值，userName独立配置
+			data = StringUtil.firstNotBlank(RedisConfig.get("js."+(StringUtil.isBlank(userName)?"":userName+".")+data), data);
+			String jskey = "js."+(StringUtil.isBlank(userName)?"":userName+".")+js;
+			String jsConfig = RedisConfig.get(jskey);
+			if(StringUtil.hasLength(jsConfig)) {
+				js = jsConfig;
+			}else {
+				jskey = null;
+			}
 			if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
 				log.info("jsEval data: {}, js: \n{}", data, js);
 				JSONObject dataObj = JsonUtil.parse(data);
 				JSONArray dataArray = JsonUtil.parseArray(data);
 				if(dataObj!=null || dataArray!=null) {
+					Bindings bindings = new SimpleBindings();
+					bindings.put("data", dataObj!=null ? dataObj : dataArray);
+					Object result = null;
+					if(jskey!=null) {
+						CompiledScript script = SCRIPTS.get(jskey);
+						if(script!=null) {
+							try{
+								result = script.eval(bindings);
+								HandlerUtil.setResp(exchange, Collections.singletonMap("result", result));
+							}catch(Exception e) {
+								log.info("fail to eval js, ex: {}", e.getMessage());
+								HandlerUtil.setResp(exchange, StringUtil.params("error", e.getMessage()));
+							}
+							return;
+						}
+					}
 					try(PooledObject<ScriptEngine> pooledObject = POOL.allocate()){
 						ScriptEngine se = pooledObject.getObject();
-						Bindings bindings = new SimpleBindings();
-						bindings.put("data", dataObj!=null ? dataObj : dataArray);
-						Object result = se.eval(js, bindings);
+						result = se.eval(js, bindings);
 						HandlerUtil.setResp(exchange, Collections.singletonMap("result", result));
+						if(jskey!=null) {
+							CompiledScript script = ((Compilable)se).compile(js);
+							SCRIPTS.put(jskey, script);
+						}
 					}catch(Exception e) {
 						log.info("fail to eval js, ex: {}", e.getMessage());
-						HandlerUtil.setResp(exchange, StringUtil.params("result", "eval ex: "+e.getMessage()));
+						HandlerUtil.setResp(exchange, StringUtil.params("error", e.getMessage()));
 					}
 				}else {
-					HandlerUtil.setResp(exchange, StringUtil.params("result", "bad data config"));
+					HandlerUtil.setResp(exchange, StringUtil.params("error", "bad data config"));
 				}
 			}else {
-				HandlerUtil.setResp(exchange, StringUtil.params("result", "empty data && js"));
+				HandlerUtil.setResp(exchange, StringUtil.params("error", "empty data && js"));
 			}
 		}
 	}

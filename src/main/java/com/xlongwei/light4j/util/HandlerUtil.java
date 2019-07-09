@@ -174,6 +174,11 @@ public class HandlerUtil {
 		return param;
 	}
 	
+	/** 获取正文字符串 */
+	public static String getBodyString(HttpServerExchange exchange) {
+		return getObject(exchange, BODYSTRING, String.class);
+	}
+	
 	/**
 	 * @param obj
 	 * @param clazz 支持String、FormValue、List
