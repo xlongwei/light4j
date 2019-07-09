@@ -111,13 +111,14 @@ public class HtmlHandler extends AbstractHandler {
 		}else {
 			String key = "crawler.crawl.light4j-"+crawl;
 			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
-			if(!StringUtil.isBlank(userName)) {
+			boolean isClient = ConfigUtil.isClient(userName);
+			if(isClient) {
 				key = key.replace("light4j", userName);
 			}
 			if(StringUtil.isBlank(config)) {
 				config = RedisConfig.get(key);
 			}else {
-				if(StringUtil.isBlank(userName)) {
+				if(isClient==false) {
 					RedisConfig.set(key, config);
 				}else {
 					RedisConfig.persist(key, config);
@@ -136,7 +137,8 @@ public class HtmlHandler extends AbstractHandler {
 		}
 		String key = "crawler.crawl.light4j-"+crawl;
 		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
-		if(!StringUtil.isBlank(userName)) {
+		boolean isClient = ConfigUtil.isClient(userName);
+		if(isClient) {
 			key = key.replace("light4j", userName);
 		}
 		if(StringUtil.isBlank(RedisConfig.get(key)) || RedisConfig.ttl(RedisConfig.CACHE, key)>0){
@@ -167,6 +169,7 @@ public class HtmlHandler extends AbstractHandler {
 	
 	public void jsConfig(HttpServerExchange exchange) throws Exception {
 		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+		boolean isClient = ConfigUtil.isClient(userName);
 		String data = HandlerUtil.getParam(exchange, "data"), datakey = HandlerUtil.getParam(exchange, "datakey");
 		String js = HandlerUtil.getParam(exchange, "js"), jskey = HandlerUtil.getParam(exchange, "jskey");
 		if(StringUtil.isBlank(data) && StringUtil.hasLength(datakey)) {
@@ -180,11 +183,11 @@ public class HtmlHandler extends AbstractHandler {
 			}
 			Map<String, String> map = new HashMap<>(2);
 			if(StringUtil.hasLength(datakey)) {
-				data = RedisConfig.get("js."+(StringUtil.isBlank(userName)?"":userName+".")+datakey);
+				data = RedisConfig.get("js."+(isClient==false?"":userName+".")+datakey);
 				map.put("data", StringUtil.hasLength(data) ? data : "no data config");
 			}
 			if(StringUtil.hasLength(jskey)) {
-				js = RedisConfig.get("js."+(StringUtil.isBlank(userName)?"":userName+".")+jskey);
+				js = RedisConfig.get("js."+(isClient==false?"":userName+".")+jskey);
 				map.put("js", StringUtil.hasLength(js) ? js : "no js config");
 			}
 			HandlerUtil.setResp(exchange, map);
@@ -195,7 +198,7 @@ public class HtmlHandler extends AbstractHandler {
 				if(valid) {
 					datakey = StringUtil.firstNotBlank(datakey, String.valueOf(IdWorker.getId()));
 					map.put("datakey", datakey);
-					datakey = "js."+(StringUtil.isBlank(userName)?"":userName+".")+datakey;
+					datakey = "js."+(isClient==false?"":userName+".")+datakey;
 					RedisConfig.set(datakey, data);
 				}else {
 					map.put("error", "data must be json object or json array");
@@ -204,7 +207,7 @@ public class HtmlHandler extends AbstractHandler {
 			if(StringUtil.hasLength(js)) {
 				jskey = StringUtil.firstNotBlank(jskey, String.valueOf(IdWorker.getId()));
 				map.put("jskey", jskey);
-				jskey = "js."+(StringUtil.isBlank(userName)?"":userName+".")+jskey;
+				jskey = "js."+(isClient==false?"":userName+".")+jskey;
 				RedisConfig.set(jskey, js);
 				SCRIPTS.remove(jskey);
 			}
@@ -223,9 +226,10 @@ public class HtmlHandler extends AbstractHandler {
 		}
 		if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
 			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			boolean isClient = ConfigUtil.isClient(userName);
 			//优先取redis配置，其次取原值，userName独立配置
-			data = StringUtil.firstNotBlank(RedisConfig.get("js."+(StringUtil.isBlank(userName)?"":userName+".")+data), data);
-			String jskey = "js."+(StringUtil.isBlank(userName)?"":userName+".")+js;
+			data = StringUtil.firstNotBlank(RedisConfig.get("js."+(isClient==false?"":userName+".")+data), data);
+			String jskey = "js."+(isClient==false?"":userName+".")+js;
 			String jsConfig = RedisConfig.get(jskey);
 			if(StringUtil.hasLength(jsConfig)) {
 				js = jsConfig;

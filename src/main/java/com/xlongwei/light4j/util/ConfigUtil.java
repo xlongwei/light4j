@@ -99,4 +99,12 @@ public class ConfigUtil {
 			return null;
 		}
 	}
+	
+	/** 判断用户是否客户 */
+	public static boolean isClient(String userName) {
+		String clientNames = RedisConfig.get("liveqrcode.client.names");
+		boolean isClient = !StringUtil.isBlank(userName) && StringUtil.splitContains(clientNames, userName);
+		log.info("userName: {}, isClient: {}, clientNames: {}", userName, isClient, clientNames);
+		return isClient;
+	}
 }
