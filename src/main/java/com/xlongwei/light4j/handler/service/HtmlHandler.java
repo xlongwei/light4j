@@ -11,7 +11,7 @@ import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import javax.script.SimpleBindings;
 
 import org.apache.commons.codec.binary.Base64;
@@ -43,10 +43,10 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "restriction" })
 public class HtmlHandler extends AbstractHandler {
 	private static final ObjectPool<ScriptEngine> POOL = new SimpleObjectPool<ScriptEngine>(
-			NumberUtil.parseInt(RedisConfig.get(""), 6), () -> new ScriptEngineManager().getEngineByName("js"),
+			NumberUtil.parseInt(RedisConfig.get(""), 6), () -> new NashornScriptEngineFactory().getScriptEngine("-strict", "--no-java", "--no-syntax-extensions"),
 			ScriptEngine::getContext, ScriptEngine::getContext);
 	private static final Map<String, CompiledScript> SCRIPTS = new ConcurrentHashMap<>();
 
