@@ -11,7 +11,6 @@ import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import javax.script.SimpleBindings;
 
 import org.apache.commons.codec.binary.Base64;
@@ -20,6 +19,7 @@ import org.apache.http.message.BasicHeader;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.networknt.url.HttpURL;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
@@ -35,6 +35,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.ObjectPool;
 import io.undertow.util.PooledObject;
 import io.undertow.util.SimpleObjectPool;
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -147,7 +148,9 @@ public class HtmlHandler extends AbstractHandler {
 		String html = HandlerUtil.getParamOrBody(exchange, "html");
 		String url = HandlerUtil.getParam(exchange, "url");
 		if(StringUtil.isBlank(html)) {
-			if(StringUtil.isUrl(url)) {
+			boolean isUrl = StringUtil.isUrl(url), isWhite = isUrl&&!isClient&&StringUtil.splitContains(RedisConfig.get("livecode.white-domains"), StringUtil.rootDomain(new HttpURL(url).getHost()));
+			log.info("isUrl: {}, userName: {}, isClient: {}, isWhite: {}", isUrl, userName, isClient, isWhite);
+			if(isUrl && (isClient || isWhite)) {
 				final String finalUrl = url;
 				html = RedisConfig.get(HtmlUtil.cache, url, () -> HtmlUtil.get(finalUrl));
 			}else {

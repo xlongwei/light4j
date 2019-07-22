@@ -143,7 +143,11 @@ public class QrcodeHandler extends AbstractHandler {
 		} else {
 			url = RedisConfig.get(codeKey);
 		}
-		HandlerUtil.setResp(exchange, StringUtil.params("code", code, "url", url, "liveUrl", ConfigUtil.FRONT_URL+"/open/qrcode/"+code+".html"));
+		String liveUrl = ConfigUtil.FRONT_URL+"/open/qrcode/"+code+".html", userHost = null;
+		if(isClient && StringUtil.hasLength(userHost=RedisConfig.get("liveqrcode."+userName))) {
+			liveUrl = "http://"+userHost+"/"+code;
+		}
+		HandlerUtil.setResp(exchange, StringUtil.params("code", code, "url", url, "liveUrl", liveUrl));
 	}
 	
 	public void vcard(HttpServerExchange exchange) throws Exception {
