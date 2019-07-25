@@ -3,6 +3,7 @@ package com.xlongwei.light4j.handler.service;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.Map;
 
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
@@ -147,7 +148,11 @@ public class QrcodeHandler extends AbstractHandler {
 		if(isClient && StringUtil.hasLength(userHost=RedisConfig.get("liveqrcode."+userName))) {
 			liveUrl = "http://"+userHost+"/"+code;
 		}
-		HandlerUtil.setResp(exchange, StringUtil.params("code", code, "url", url, "liveUrl", liveUrl));
+		Map<String, String> resp = StringUtil.params("code", code, "url", url, "liveUrl", liveUrl);
+		if(isClient) {
+			resp.put("userName", userName);
+		}
+		HandlerUtil.setResp(exchange, resp);
 	}
 	
 	public void vcard(HttpServerExchange exchange) throws Exception {

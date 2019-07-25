@@ -57,6 +57,7 @@ public class HtmlHandler extends AbstractHandler {
 		if(StringUtil.isUrl(url)) {
 			charset = StringUtils.trimToEmpty(HtmlUtil.charset(url));
 			HandlerUtil.setResp(exchange, StringUtil.params("charset", charset));
+			return;
 		}
 		String bytes = HandlerUtil.getParamOrBody(exchange, "bytes");
 		if(StringUtil.hasLength(bytes)) {
@@ -71,7 +72,7 @@ public class HtmlHandler extends AbstractHandler {
 		if(StringUtil.isUrl(url)) {
 			boolean force = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "force"), false);
 			String html = RedisConfig.get(HtmlUtil.cache, url);
-			if(force) {
+			if(force && StringUtil.hasLength(html)) {
 				long seconds = RedisConfig.ttl(HtmlUtil.cache, url);
 				log.info("force get html, url: {}, seconds: {}", url, seconds);
 				int thirty = 30;
