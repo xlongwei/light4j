@@ -151,7 +151,8 @@ public class HtmlHandler extends AbstractHandler {
 		if(StringUtil.isBlank(html)) {
 			boolean isUrl = StringUtil.isUrl(url), isWhite = isUrl&&!isClient&&StringUtil.splitContains(RedisConfig.get("livecode.white-domains"), StringUtil.rootDomain(new HttpURL(url).getHost()));
 			log.info("isUrl: {}, userName: {}, isClient: {}, isWhite: {}", isUrl, userName, isClient, isWhite);
-			if(isUrl && (isClient || isWhite)) {
+			boolean clientOrWhite = isClient || isWhite;
+			if(isUrl && clientOrWhite) {
 				final String finalUrl = url;
 				html = RedisConfig.get(HtmlUtil.cache, url, () -> HtmlUtil.get(finalUrl));
 			}else {

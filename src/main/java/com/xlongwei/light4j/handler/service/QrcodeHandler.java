@@ -35,6 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class QrcodeHandler extends AbstractHandler {
 
+	private static final String LIVECODE = "livecode.";
+	private static final String LIVEQRCODE = "liveqrcode.";
+
 	public void encode(HttpServerExchange exchange) throws Exception {
 		String content = HandlerUtil.getParam(exchange, "content");
 		Color forground = StringUtil.getColor(HandlerUtil.getParam(exchange, "forground"));
@@ -137,7 +140,7 @@ public class QrcodeHandler extends AbstractHandler {
 		boolean isClient = !StringUtil.isBlank(userName) && StringUtil.splitContains(clientNames, userName);
 		logger.info("userName: {}, isClient: {}, clientNames: {}", userName, isClient, clientNames);
 		
-		String codeKey = isClient ? "liveqrcode."+userName+"."+code : "livecode."+code;
+		String codeKey = isClient ? LIVEQRCODE+userName+"."+code : LIVECODE+code;
 		boolean isClientOrUrl = isClient || StringUtil.isUrl(url);
 		if(!StringUtil.isBlank(url) && (isClientOrUrl)) {
 			RedisConfig.set(codeKey, url);
@@ -145,7 +148,7 @@ public class QrcodeHandler extends AbstractHandler {
 			url = RedisConfig.get(codeKey);
 		}
 		String liveUrl = ConfigUtil.FRONT_URL+"/open/qrcode/"+code+".html", userHost = null;
-		if(isClient && StringUtil.hasLength(userHost=RedisConfig.get("liveqrcode."+userName))) {
+		if(isClient && StringUtil.hasLength(userHost=RedisConfig.get(LIVEQRCODE+userName))) {
 			liveUrl = "http://"+userHost+"/"+code;
 		}
 		Map<String, String> resp = StringUtil.params("code", code, "url", url, "liveUrl", liveUrl);
