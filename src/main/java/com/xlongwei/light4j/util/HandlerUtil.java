@@ -225,7 +225,7 @@ public class HandlerUtil {
 					//接口响应了domain+path，添加响应参数url
 					map.put("url", domain.toString()+path.toString());
 				}
-				if(map.containsKey(SHOWAPI_USER_ID)) {
+				if(StringUtils.isNotBlank(getParam(exchange, SHOWAPI_USER_ID))) {
 					map.put("ret_code", map.containsKey("error") ? "1" : "0");
 				}
 				response = JSONObject.toJSONString(map);
