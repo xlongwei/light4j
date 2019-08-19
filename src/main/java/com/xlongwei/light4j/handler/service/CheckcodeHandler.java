@@ -2,8 +2,6 @@ package com.xlongwei.light4j.handler.service;
 
 import java.awt.image.BufferedImage;
 
-import org.apache.commons.lang3.RandomStringUtils;
-
 import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
@@ -31,24 +29,6 @@ public class CheckcodeHandler extends AbstractHandler {
 			String image = ImageUtil.encode(ImageUtil.bytes(ImageUtil.create(checkcode)), null);
 			HandlerUtil.setResp(exchange, StringUtil.params("image", image));
 		}
-	}
-	
-	public void audio(HttpServerExchange exchange) throws Exception {
-		String checkcode = HandlerUtil.getParam(exchange, "checkcode");
-		if(StringUtil.isBlank(checkcode)) {
-			//0数字 1字母 2数字字母
-			int type = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "type"), 0);
-			int length = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "length"), 4);
-			switch(type) {
-			case 1: checkcode = RandomStringUtils.randomAlphabetic(length); break;
-			case 2: checkcode = RandomStringUtils.randomAlphanumeric(length); break;
-			default: checkcode = RandomStringUtils.randomNumeric(length); break;
-			}
-		}
-		String voice = HandlerUtil.getParam(exchange, "voice");
-		Tuple<String, byte[]> tuple = ImageUtil.speak(voice, checkcode);
-		String audio = ImageUtil.encode(tuple.second, "wav");
-		HandlerUtil.setResp(exchange, StringUtil.params("sid", tuple.first, "audio", audio));
 	}
 	
 	public void code(HttpServerExchange exchange) throws Exception {

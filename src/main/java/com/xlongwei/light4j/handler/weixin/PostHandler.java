@@ -57,7 +57,7 @@ public class PostHandler extends AbstractTextHandler {
 		if(CollectionUtils.isNotEmpty(cities)) {
 			return new StringBuilder("邮编：").append(code).append("，城市：\n").append(StringUtil.join(cities, null, null, "\n")).toString();
 		}
-		String area = IdCardUtil.areas.get(code);
+		String area = StringUtil.join(IdCardUtil.areas(code), null, null, null);;
 		if(StringUtil.hasLength(area)) {
 			return new StringBuilder("行政区：").append(area).toString();
 		}

@@ -11,7 +11,6 @@ import java.io.ByteArrayOutputStream;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 
 import com.networknt.utility.Tuple;
@@ -215,30 +214,6 @@ public class ImageUtil {
 		RedisCache.set(ImageUtil.attr, sid, check);
 		log.info("sid:{}, check:{}, code:{}", sid, check, code);
 		return new Tuple<>(sid, image);
-	}
-	
-	/**
-	 * @param voice kevin16,us1,us2,cn1
-	 * @param text
-	 * @param length
-	 */
-	public static Tuple<String, byte[]> speak(String voice, String text) {
-		if(StringUtil.isBlank(text)) {
-			text = RandomStringUtils.randomAlphanumeric(4);
-		}
-		char[] chars = text.toCharArray();
-		StringBuilder sb = new StringBuilder();
-		for(char c:chars) {
-			if(!Character.isWhitespace(c)) {
-				sb.append(c).append(' ');
-			}
-		}
-		String speak = sb.toString();
-		byte[] bytes = FreettsUtil.speak(voice, speak, true);
-		String sid = String.valueOf(IdWorker.getId());
-		RedisCache.set(ImageUtil.attr, sid, text);
-		log.info("sid:{}, voice:{}, code:{}", sid, voice, text);
-		return new Tuple<>(sid, bytes);
 	}
 	
 	private static Color color(int f, int s) {
