@@ -1,0 +1,60 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Swagger Openapi
+servers:
+  - url: 'http://localhost:8080/openapi'
+paths:
+  /upload:
+    post:
+      summary: post a file to upload
+      operationId: uploadPost
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: upload success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    format: int32
+                  url:
+                    type: string
+              example:
+                - code: 0
+                  url: '#/servers/url'
+        default:
+          description: upload fail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      in: header
+      
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

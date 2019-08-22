@@ -12,13 +12,16 @@ import java.util.concurrent.TimeUnit;
 import org.jose4j.json.internal.json_simple.JSONObject;
 import org.omg.CORBA.IntHolder;
 
+import com.networknt.cors.CorsUtil;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
+import com.xlongwei.light4j.util.PathEndpointSource;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.TokenCounter;
 
+import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import lombok.extern.slf4j.Slf4j;
@@ -59,11 +62,15 @@ public class ServiceHandler implements LightHttpHandler {
 			String name = split[0];
 			AbstractHandler handler = handlers.get(name);
 			if(handler != null) {
-				String path = split.length>1 ? split[1] : "";
-				exchange.putAttachment(AbstractHandler.PATH, path);
-				HandlerUtil.parseBody(exchange);
-				handler.handleRequest(exchange);
-				serviceCounter.count("service", name);
+				if(CorsUtil.isPreflightedRequest(exchange)) {
+					HandlerUtil.setResp(exchange, MapUtil.newHashMap());
+				}else {
+					String path = split.length>1 ? split[1] : "";
+					exchange.putAttachment(AbstractHandler.PATH, path);
+					HandlerUtil.parseBody(exchange);
+					handler.handleRequest(exchange);
+					serviceCounter.count("service", name);
+				}
 			}
 		}
 		HandlerUtil.sendResp(exchange);
@@ -78,6 +85,7 @@ public class ServiceHandler implements LightHttpHandler {
 		private Map<String, Method> methods = new HashMap<>();
 		public AbstractHandler() {
 			Method[] declaredMethods = getClass().getDeclaredMethods();
+			String name = name();
 			for(Method method : declaredMethods) {
 				if("name".equals(method.getName())) {
 					continue;
@@ -85,6 +93,7 @@ public class ServiceHandler implements LightHttpHandler {
 				if(Modifier.isPublic(method.getModifiers())) {
 					// 暂未检查returnType和parameterTypes
 					methods.put(method.getName(), method);
+					log.info("{}/{} => {}", name, method.getName(), method);
 				}
 			}
 		}
@@ -111,6 +120,16 @@ public class ServiceHandler implements LightHttpHandler {
 					log.warn("service handle failed, path: {}, ex: {}", path, e.getMessage());
 				}
 			}
+		}
+	}
+	/**
+	 * 支持所有http方法：/service/* => ServiceHandler
+	 * @author xlongwei
+	 *
+	 */
+	public static class ServiceEndpointSource extends PathEndpointSource {
+		public ServiceEndpointSource() {
+			super("/service/*");
 		}
 	}
 	/** 统计service调用次数，定时保存到redis */

@@ -10,7 +10,9 @@ import java.util.Map;
 import org.apache.commons.codec.CharEncoding;
 import org.jose4j.json.internal.json_simple.JSONObject;
 
+import com.networknt.cors.CorsHeaders;
 import com.networknt.utility.StringUtils;
+import com.networknt.utility.Util;
 import com.xlongwei.light4j.handler.ServiceHandler;
 
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
@@ -22,6 +24,8 @@ import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.server.handlers.form.FormParserFactory.Builder;
 import io.undertow.util.AttachmentKey;
+import io.undertow.util.HeaderMap;
+import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
 import io.undertow.util.MimeMappings;
 import lombok.extern.slf4j.Slf4j;
@@ -214,6 +218,11 @@ public class HandlerUtil {
 	/** 仅支持json，其他类型需手动响应 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static void sendResp(HttpServerExchange exchange) {
+		setCorsHeaders(exchange);
+		if(exchange.isComplete()) {
+			//LayuiHandler.captcha直接输出图片字节流，不响应json
+			return;
+		}
 		String response = ServiceHandler.BAD_REQUEST;
 		Object resp = exchange.removeAttachment(HandlerUtil.RESP);
 		String mimeType = MIMETYPE_JSON;
@@ -238,5 +247,24 @@ public class HandlerUtil {
 		exchange.setStatusCode(200);
 		log.info("response: {}", response);
 		exchange.getResponseSender().send(response);
+	}
+	
+	/**
+	 * 添加跨域访问响应头
+	 * @param exchange
+	 */
+	public static void setCorsHeaders(HttpServerExchange exchange) {
+		HeaderMap responseHeaders = exchange.getResponseHeaders();
+		responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		responseHeaders.addAll(CorsHeaders.ACCESS_CONTROL_ALLOW_METHODS, Util.METHODS);
+		HeaderMap headers = exchange.getRequestHeaders();
+        HeaderValues requestedHeaders = headers.get(CorsHeaders.ACCESS_CONTROL_REQUEST_HEADERS);
+        if (requestedHeaders != null && !requestedHeaders.isEmpty()) {
+        	responseHeaders.addAll(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, requestedHeaders);
+        } else {
+        	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, Headers.CONTENT_TYPE_STRING);
+        	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, Headers.WWW_AUTHENTICATE_STRING);
+        	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, Headers.AUTHORIZATION_STRING);
+        }	
 	}
 }

@@ -5,14 +5,21 @@ handlers:
   - com.xlongwei.light4j.handler.UploadHandler@upload
   - com.xlongwei.light4j.handler.WeixinHandler@weixin
   - com.xlongwei.light4j.provider.WebSocketHandlerProvider@websocket
+# openapi
+  - com.networknt.exception.ExceptionHandler@exception
+  - com.xlongwei.light4j.openapi.extend.MyJwtVerifyHandler@security  
+  - com.networknt.specification.SpecDisplayHandler@spec
+  - com.networknt.specification.SpecSwaggerUIHandler@swaggerui
+  - com.xlongwei.light4j.openapi.OpenapiHandler@openapi
+
+chains:
+  openapi:
+    - exception
+    - security
+    - openapi
 
 paths:
-  - path: '/service/*'
-    method: 'GET'
-    exec:
-      - service
-  - path: '/service/*'
-    method: 'POST'
+  - source: com.xlongwei.light4j.handler.ServiceHandler$ServiceEndpointSource
     exec:
       - service
   - path: '/upload/*'
@@ -31,3 +38,15 @@ paths:
     method: 'GET'
     exec:
       - websocket
+# openapi
+  - path: '/spec.yaml'
+    method: 'get'
+    exec:
+      - spec
+  - path: '/swagger'
+    method: 'get'
+    exec:
+      - swaggerui
+  - source: com.xlongwei.light4j.openapi.OpenapiHandler$OpenapiEndpointSource
+    exec:
+      - openapi

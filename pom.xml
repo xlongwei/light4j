@@ -42,6 +42,7 @@
         <version.dbutils>1.7</version.dbutils>
         <version.commons-io>2.6</version.commons-io>
         <version.icu4j>64.2</version.icu4j>
+        <version.hutool>4.6.1</version.hutool>
     </properties>
 
     <dependencies>
@@ -161,6 +162,11 @@
             <artifactId>server</artifactId>
             <version>${version.light-4j}</version>
         </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>cors</artifactId>
+            <version>${version.light-4j}</version>
+        </dependency>        
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>openapi-parser</artifactId>
@@ -317,7 +323,16 @@
 		    <artifactId>icu4j</artifactId>
 		    <version>${version.icu4j}</version>
 		</dependency>
-
+        <dependency>
+        	<groupId>net.minidev</groupId>
+        	<artifactId>json-smart</artifactId>
+        	<version>2.2.1</version>
+        </dependency>
+        <dependency>
+        	<groupId>cn.hutool</groupId>
+        	<artifactId>hutool-all</artifactId>
+        	<version>${version.hutool}</version>
+        </dependency>
         
         <!-- Test Dependencies -->
         <dependency>
