@@ -1,5 +1,6 @@
 package com.xlongwei.light4j.handler;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Deque;
@@ -117,7 +118,15 @@ public class ServiceHandler implements LightHttpHandler {
 					method.invoke(this, exchange);
 					return;
 				}catch(Exception e) {
-					log.warn("service handle failed, path: {}, ex: {}", path, e.getMessage());
+					String msg = e.getMessage();
+					if(e instanceof InvocationTargetException) {
+						InvocationTargetException ex = (InvocationTargetException)e;
+						Throwable t = ex.getTargetException();
+						if(t != null) {
+							msg = t.getMessage();
+						}
+					}
+					log.warn("service handle failed, path: {}, ex: {}", path, msg);
 				}
 			}
 		}
