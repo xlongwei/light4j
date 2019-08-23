@@ -3,18 +3,25 @@ info:
   version: 1.0.0
   title: Swagger Openapi
 servers:
-  - url: 'http://localhost:8080/openapi'
+  - url: '/openapi'
 paths:
   /upload:
     post:
       summary: post a file to upload
       operationId: uploadPost
+      tags: 
+        - Apis
       requestBody:
+        description: file to upload
+        required: true
         content:
-          application/octet-stream:
+          multipart/form-data:
             schema:
-              type: string
-              format: binary
+              type: object
+              properties: 
+                file:
+                  type: string
+                  format: binary
       security:
         - api_key: []
       responses:

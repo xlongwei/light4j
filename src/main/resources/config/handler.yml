@@ -39,11 +39,11 @@ paths:
     exec:
       - websocket
 # openapi
-  - path: '/spec.yaml'
+  - path: '/openapi/spec.yaml'
     method: 'get'
     exec:
       - spec
-  - path: '/swagger'
+  - path: '/openapi/swagger'
     method: 'get'
     exec:
       - swaggerui

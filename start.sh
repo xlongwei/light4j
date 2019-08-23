@@ -1,5 +1,5 @@
 usage(){
-    echo "Usage: sh start.sh status | start | stop | restart | refresh | package | build | keystore" 
+    echo "Usage: sh start.sh status | start | stop | restart | rebuild | refresh | package | build | keystore" 
 }
 
 status(){
@@ -75,6 +75,7 @@ else
 	build) jar ;;
 	package) jar && dependency ;;
 	restart) stop && start ;;
+	rebuild) stop && jar && start ;;
 	refresh) stop && clean && jar && dependency && start ;;
 	keystore) keystore $@;;
 	*) usage ;;
