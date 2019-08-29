@@ -19,7 +19,7 @@ enableMockJwt: false
 jwt:
   certificate:
     '100': primary.crt
-    '101': secondary.crt
+    '101': server.crt
   clockSkewInSeconds: 60
 
 # Enable or disable JWT token logging for audit. This is to log the entire token
