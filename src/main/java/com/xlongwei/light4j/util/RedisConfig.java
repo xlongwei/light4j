@@ -1,7 +1,9 @@
 package com.xlongwei.light4j.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +92,34 @@ public class RedisConfig {
 		});
 	}
 	
+	public static String hget(final String cache, final String key, final String field) {
+		return execute(new JedisCallback<String>() {
+			@Override
+			public String doInJedis(Jedis jedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				byte[] byteField = RedisUtil.byteKey(field);
+				byte[] byteValue = jedis.hget(byteKey, byteField);
+				return RedisUtil.stringValue(byteValue);
+			}
+		});
+	}
+	
+	public static Map<String, String> hgetAll(final String cache, final String key) {
+		return execute(new JedisCallback<Map<String, String>>() {
+			@Override
+			public Map<String, String> doInJedis(Jedis jedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				Map<byte[], byte[]> hgetAll = jedis.hgetAll(byteKey);
+				Map<String, String> hgetMap = new HashMap<>(16);
+				for(byte[] field : hgetAll.keySet()) {
+					byte[] value = hgetAll.get(field);
+					hgetMap.put(RedisUtil.stringKey(field), RedisUtil.stringValue(value));
+				}
+				return hgetMap;
+			}
+		});
+	}
+	
 	/**
 	 * 获取缓存值，不存在时从supplier取值，并存入缓存
 	 * @param cache
@@ -129,6 +159,23 @@ public class RedisConfig {
 				jedis.set(byteKey, byteValue);
 				expire(jedis, byteKey, seconds);
 				return null;
+			}
+		});
+	}
+	
+	public static void hset(final String cache, final String key, final String field, final String value) {
+		execute(new JedisCallback<Boolean>() {
+			@Override
+			public Boolean doInJedis(Jedis jedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, key);
+				byte[] byteField = RedisUtil.byteKey(field);
+				if(value == null) {
+					jedis.hdel(byteKey, byteField);
+				}else {
+					byte[] byteValue = RedisUtil.byteValue(value);
+					jedis.hset(byteKey, byteField, byteValue);
+				}
+				return Boolean.TRUE;
 			}
 		});
 	}

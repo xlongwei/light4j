@@ -8,6 +8,7 @@ handlers:
 # openapi
   - com.networknt.exception.ExceptionHandler@exception
   - com.xlongwei.light4j.openapi.extend.MyJwtVerifyHandler@security  
+  - com.xlongwei.light4j.openapi.extend.MyJwtShiroHandler@shiro  
   - com.networknt.specification.SpecDisplayHandler@spec
   - com.networknt.specification.SpecSwaggerUIHandler@swaggerui
   - com.xlongwei.light4j.openapi.OpenapiHandler@openapi
@@ -16,6 +17,7 @@ chains:
   openapi:
     - exception
     - security
+    - shiro
     - openapi
 
 paths:

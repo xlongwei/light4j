@@ -18,9 +18,19 @@ public class RedisUtil {
 	
 	static JedisPoolConfig poolConfig = new JedisPoolConfig();
 
+	/** 获取字节key */
+	public static byte[] byteKey(String key) {
+		return StringUtils.getBytesUtf8(key);
+	}
+	
 	/** 默认使用冒号分隔 */
 	public static byte[] byteKey(String cache, String key) {
 		return StringUtils.getBytesUtf8(cache+":"+key);
+	}
+	
+	/** 获取String key */
+	public static String stringKey(byte[] byteKey) {
+		return StringUtils.newStringUtf8(byteKey);
 	}
 
 	/** 默认使用jdk序列化对象 */
