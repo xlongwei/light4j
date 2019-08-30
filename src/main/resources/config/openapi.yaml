@@ -3,12 +3,36 @@ info:
   version: 1.0.0
   title: Swagger Openapi
 servers:
-  - url: '/openapi'
+  - url: '/'
 paths:
-  /upload:
+  /openapi/token:
+    post:
+      summary: jwt mock token
+      operationId: openapiToken
+      tags:
+        - Apis
+      responses:
+        '200':
+          content:
+            application:/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                    format: int32
+              example:
+                access_token: 'Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTg4MjUwNjM1NiwianRpIjoiQTlaUHVjM3RsS1BoWmM0RnpzTlJjQSIsImlhdCI6MTU2NzE0NjM1NiwibmJmIjoxNTY3MTQ2MjM2LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6ImFkbWluIn0.Jb89PTAOY7zDQBUpLS-5L9iDz28__fBUhXgmXqjXByiu6HG1sSemHHs-C0n-ZFUH4Tn3yfVbcHndSjNtVQ__gZMmpKi4PCg7NTiSo7TZZmVYI9uinQEdnDlFT2YA97AL6jBCGJW2Ol6q-odSajpCdoMfOh9KM2yXKQPqr95P5v4Du7L-MNL8dW7evfa0gBpGA2FF4Sr4txerS_SXJg3ED4_px_WbbkqZYpzo6_MupNK9nfJVG7ycP50r21-HMrSnBR7pUN1JvF8mxpfmcQi8j0W4TiYFZV2PKV2AGqsJ9d4IuPu--3YHNpevG3Pv78982o6qK22o_4h4Z8VFzr_NUQ'
+                token_type: 'bearer'
+                expires_in: 600
+  /openapi/upload:
     post:
       summary: post a file to upload
-      operationId: uploadPost
+      operationId: openapiUpload
       tags: 
         - Apis
       requestBody:
@@ -39,29 +63,10 @@ paths:
                     type: string
               example:
                 - code: 0
-                  url: '#/servers/url'
-        default:
-          description: upload fail
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                  url: 'http://localhost:8081/uploads/openapi/1167322814205558785.png'
 components:
   securitySchemes:
     api_key:
       type: apiKey
       name: Authorization
       in: header
-      
-  schemas:
-    Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string

@@ -2,6 +2,7 @@ package com.xlongwei.light4j.openapi.extend;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -13,9 +14,12 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.cache.MemoryConstrainedCacheManager;
 import org.apache.shiro.mgt.DefaultSecurityManager;
+import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
+import org.apache.shiro.mgt.DefaultSubjectDAO;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.subject.SubjectContext;
 import org.apache.shiro.util.AntPathMatcher;
 import org.apache.shiro.util.CollectionUtils;
 import org.apache.shiro.util.StringUtils;
@@ -25,8 +29,10 @@ import com.networknt.cors.CorsUtil;
 import com.networknt.security.JwtHelper;
 import com.networknt.utility.Constants;
 import com.xlongwei.light4j.util.RedisConfig;
+import com.xlongwei.light4j.util.ShiroUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.core.util.CharUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +46,18 @@ import lombok.extern.slf4j.Slf4j;
 public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	
 	public MyJwtShiroHandler() {
-		DefaultSecurityManager securityManager = new DefaultSecurityManager();
+		DefaultSecurityManager securityManager = new DefaultSecurityManager() {
+			@Override
+			protected SubjectContext createSubjectContext() {
+				SubjectContext subjectContext = super.createSubjectContext();
+				subjectContext.setSessionCreationEnabled(false);
+				return subjectContext;
+			}
+		};
+		DefaultSubjectDAO subjectDao = (DefaultSubjectDAO)securityManager.getSubjectDAO();
+		DefaultSessionStorageEvaluator dsse = (DefaultSessionStorageEvaluator)subjectDao.getSessionStorageEvaluator();
+		dsse.setSessionStorageEnabled(false);
+		
 		SecurityUtils.setSecurityManager(securityManager);
 		securityManager.setRealm(new JwtAuthenticationRealm());
 		securityManager.setCacheManager(new MemoryConstrainedCacheManager());
@@ -55,7 +72,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	        subject.login(new JwtAuthenticationToken(jwt));
 	        try{
 	        	String path = exchange.getRequestPath();
-	        	if(path.lastIndexOf('.') > -1) {
+	        	if(path.lastIndexOf(CharUtil.DOT) > -1) {
 	        		path = path.substring(0, path.lastIndexOf('.'));
 	        	}
 	        	Map<String, String> urls = RedisConfig.hgetAll(RedisConfig.CACHE, "shiro.urls");
@@ -77,7 +94,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 		}
 		AntPathMatcher antPathMatcher = new AntPathMatcher();
 		urls.forEach((antPath, rolesPermsList) -> {
-			if(antPathMatcher.matches(antPath, path)) {
+			if(antPathMatcher.matchStart(antPath, path)) {
 				//roles[admin,user], perms[file:edit]
 				log.info("path: {}, matcher: {}, rolesPerms: {}", path, antPath, rolesPermsList);
 				String[] rolesPermsArray = StringUtils.split(rolesPermsList, StringUtils.DEFAULT_DELIMITER_CHAR, '[', ']', true, true);
@@ -88,9 +105,8 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 		});
 	}
 	
-	//roles["admin,user","client"] 校验角色：(admin and user) or client
-	//perms[openapi:upload:*,"service:upload:upload,temp"] 校验权限：openapi:upload:* or service:upload:upload,temp
 	private void checkRolesPerms(Subject subject, String rolesPerms) {
+		//roles["admin,user","client"] 校验角色：(admin and user) or client
 		String roles = StringUtil.getPatternString(rolesPerms, "roles\\[(.*)\\]");
 		if(StringUtil.hasLength(roles)) {
 			String[] roleArray = StringUtils.split(roles, StringUtils.DEFAULT_DELIMITER_CHAR, '"', '"', true, true);
@@ -105,7 +121,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 				throw new AuthorizationException();
 			}else {
 				String role = roleArray[0];
-				if(role.indexOf('"') == -1) {
+				if(role.indexOf(CharUtil.DOUBLE_QUOTES) == -1) {
 					subject.checkRole(role);
 				}else {
 					subject.checkRoles(role.substring(0, role.length()-1).split(","));
@@ -113,6 +129,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 				return;
 			}
 		}
+		//perms[openapi:upload:*,"service:upload:upload,temp"] 校验权限：openapi:upload:* or service:upload:upload,temp
 		String perms = StringUtil.getPatternString(rolesPerms, "perms\\[(.*)\\]");
 		if(StringUtil.hasLength(perms)) {
 			String[] permArray = StringUtils.split(perms, StringUtils.DEFAULT_DELIMITER_CHAR, '"', '"', true, true);
@@ -128,11 +145,10 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 				throw new AuthorizationException();
 			}else {
 				String perm = permArray[0];
-				if(perm.indexOf('"') == -1) {
-					subject.checkPermission(perm);
-				}else {
-					subject.checkPermissions(perm.substring(0, perm.length()-1).split(","));
+				if(perm.indexOf(CharUtil.DOUBLE_QUOTES) > -1) {
+					perm = perm.substring(0, perm.length()-1);
 				}
+				subject.checkPermission(perm);
 				return;
 			}
 		}
@@ -167,10 +183,12 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	        try{
 	        	String jwt = (String)principals.getPrimaryPrincipal();
 	        	JwtClaims claims = JwtHelper.verifyJwt(jwt, true, true);
-	        	String userId = claims.getStringClaimValue(Constants.CLIENT_ID_STRING);
+	        	String userId = claims.getStringClaimValue(Constants.USER_ID_STRING);
 	        	//这里可以自定义用户的角色和权限列表
-	        	authz.setRoles(CollectionUtils.asSet("admin"));
-	        	authz.setStringPermissions(CollectionUtils.asSet("*:*:*"));
+	        	Set<String> roles = ShiroUtil.getRoles(userId);
+	        	Set<String> perms = ShiroUtil.getPerms(roles);
+	        	authz.setRoles(roles);
+	        	authz.setStringPermissions(perms);
 	        	log.info("userId: {}, roles: {}, perms: {}", userId, authz.getRoles(), authz.getStringPermissions());
 	        }catch(Exception e) {
 	        	log.info("authorize ex: {}", e.getMessage());

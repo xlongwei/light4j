@@ -7,10 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.jose4j.jwt.JwtClaims;
 
 import com.networknt.security.JwtIssuer;
+import com.networknt.utility.Constants;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.ImageUtil;
 import com.xlongwei.light4j.util.RedisCache;
+import com.xlongwei.light4j.util.ShiroUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
 import cn.hutool.captcha.CaptchaUtil;
@@ -43,15 +45,20 @@ public class LayuiHandler extends AbstractHandler {
 	}
 	
 	public void login(HttpServerExchange exchange) throws Exception {
-		boolean valid = checkCaptcha(exchange);
+		boolean captchaOk = checkCaptcha(exchange);
+		
+		String username = HandlerUtil.getParam(exchange, "username");
+		String password = HandlerUtil.getParam(exchange, "password");
+		String checkPassword = ShiroUtil.getPassword(username);
+		boolean passwordOk = StrUtil.equals(password, checkPassword);
 		
 		HashMap<String, Object> map = MapUtil.newHashMap();
-		map.put("code", valid ? 0 : 1);
-		map.put("msg", valid ? StrUtil.EMPTY : "验证码错误");
+		map.put("code", captchaOk&&passwordOk ? 0 : 1);
+		map.put("msg", !captchaOk ? "验证码错误"+RedisCache.get(ImageUtil.attr, HandlerUtil.getParam(exchange, "v")) : (!passwordOk ? "密码错误"+checkPassword : StrUtil.EMPTY));
 		
-		if(valid) {
+		if(captchaOk&&passwordOk) {
 			JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
-			claims.setClaim("user_id", "openapi");
+			claims.setClaim(Constants.USER_ID_STRING, username);
 			String accessToken = JwtIssuer.getJwt(claims);
 			//swagger认证时需要Bearer token
 			String bearerToken = bearer + accessToken;

@@ -12,6 +12,7 @@ handlers:
   - com.networknt.specification.SpecDisplayHandler@spec
   - com.networknt.specification.SpecSwaggerUIHandler@swaggerui
   - com.xlongwei.light4j.openapi.OpenapiHandler@openapi
+  - com.networknt.security.JwtMockHandler@jwtmock
 
 chains:
   openapi:
@@ -49,6 +50,10 @@ paths:
     method: 'get'
     exec:
       - swaggerui
+  - path: '/openapi/token'
+    method: 'POST'
+    exec:
+      - jwtmock
   - source: com.xlongwei.light4j.openapi.OpenapiHandler$OpenapiEndpointSource
     exec:
       - openapi

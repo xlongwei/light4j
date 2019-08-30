@@ -60,10 +60,10 @@ keystore(){
 	else
 	    cert=/soft/cert
 	fi
-	openssl pkcs12 -export -in $cert/xlongwei.pem -inkey $cert/xlongwei.key -name xlongwei.com -out $cert/xlongwei.p12
-	keytool -delete -alias xlongwei.com -keystore $dir/server.keystore -storepass password
+	openssl pkcs12 -export -in $cert/xlongwei.pem -inkey $cert/xlongwei.key -name server -out $cert/xlongwei.p12
+	keytool -delete -alias server -keystore $dir/server.keystore -storepass password
 	keytool -importkeystore -deststorepass password -destkeystore $dir/server.keystore -srckeystore $cert/xlongwei.p12 -srcstoretype PKCS12
-	keytool -export -alias xlongwei.com -keystore $dir/server.keystore -storepass password -rfc -file $dir/server.crt
+	keytool -export -alias server -keystore $dir/server.keystore -storepass password -rfc -file $dir/server.crt
 }
 
 if [ $# -eq 0 ]; then 
