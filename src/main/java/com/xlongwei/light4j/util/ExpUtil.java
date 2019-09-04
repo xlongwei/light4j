@@ -82,7 +82,7 @@ public class ExpUtil {
 		addOperator("/", 2, OperatorTypes.DIVIDE);
 		addOperator("%", 2, OperatorTypes.MOD);
 		addOperator("^", 3, OperatorTypes.POWER);
-		addOperator("N", 4, OperatorTypes.NEGATIVE);
+		//addOperator("N", 4, OperatorTypes.NEGATIVE);
 		
 		// 添加函数，(函数名，参数个数，类型)
 		addFunction("sin", 1, FunctionTypes.SIN);
@@ -229,7 +229,8 @@ public class ExpUtil {
 				}
 				while ((++i < exp.length()) && ((Character.isLetter(c=exp.charAt(i))) || (Character.isDigit(c))));
 				String function = operator.toString();
-				if (functionParams.containsKey(operator.toString())) {
+				if (functionParams.containsKey(operator.toString().toLowerCase())) {
+					function = function.toLowerCase();
 					lastTokenType = checkFunction(lastTokenType, c);
 					i++; operators.push(function);
 					int params = functionParams.get(function);
@@ -259,8 +260,8 @@ public class ExpUtil {
 					// 计算函数
 					computeFunction();
 					lastTokenType = TokenTypes.RIGHTP;
-				} else if (constants.containsKey(function) && (!"e".equals(function) ? true : carriage != Carriage.HEX)) {
-					operands.push(constants.get(function));
+				} else if ((context!=null && context.containsKey(function)) || (constants.containsKey(function.toLowerCase()) && (!"e".equals(function.toLowerCase()) ? true : carriage != Carriage.HEX))) {
+					operands.push(context!=null && context.containsKey(function) ? context.get(function) : constants.get(function.toLowerCase()));
 					i--; lastTokenType = TokenTypes.NUMBER;
 				} else if ((carriage == Carriage.HEX) && isHexNumber(function)) {
 					operands.push(Integer.parseInt(function, radix.get(carriage)));
@@ -438,6 +439,18 @@ public class ExpUtil {
 	
 	public void setExp(String exp) {
 		this.exp = exp;
+	}
+	
+	public ExpUtil context(String name, Number value) {
+		if(context == null) {
+			context = new HashMap<>(4);
+		}
+		context.put(name, value);
+		return this;
+	}
+	
+	public static ExpUtil exp(String exp) {
+		return new ExpUtil(exp);
 	}
 	
 	/**
@@ -669,7 +682,7 @@ public class ExpUtil {
 	 *            源表达式
 	 */
 	private String modify(String exp) {
-		exp = StringUtil.toDBC(exp).toLowerCase();
+		exp = StringUtil.toDBC(exp);
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < exp.length(); i++) {
 			if (!Character.isWhitespace(exp.charAt(i))) {
@@ -684,6 +697,7 @@ public class ExpUtil {
 	private Stack<Number>	operands	= new Stack<Number>();
 	private Stack<String>	operators	= new Stack<String>();
 	private Number			result		= null;
+	private Map<String, Number> context = null;
 																
 	public enum Carriage {
 		/**
