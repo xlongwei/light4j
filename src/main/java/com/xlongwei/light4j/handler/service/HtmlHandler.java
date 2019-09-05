@@ -1,6 +1,5 @@
 package com.xlongwei.light4j.handler.service;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +30,7 @@ import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.ObjectPool;
 import io.undertow.util.PooledObject;
@@ -254,7 +254,7 @@ public class HtmlHandler extends AbstractHandler {
 						if(script!=null) {
 							try{
 								result = script.eval(bindings);
-								HandlerUtil.setResp(exchange, Collections.singletonMap("result", result));
+								HandlerUtil.setResp(exchange, MapUtil.of("result", result));
 							}catch(Exception e) {
 								log.info("fail to eval js, ex: {}", e.getMessage());
 								HandlerUtil.setResp(exchange, StringUtil.params("error", e.getMessage()));
@@ -265,7 +265,7 @@ public class HtmlHandler extends AbstractHandler {
 					try(PooledObject<ScriptEngine> pooledObject = POOL.allocate()){
 						ScriptEngine se = pooledObject.getObject();
 						result = se.eval(js, bindings);
-						HandlerUtil.setResp(exchange, Collections.singletonMap("result", result));
+						HandlerUtil.setResp(exchange, MapUtil.of("result", result));
 						if(jskey!=null) {
 							CompiledScript script = ((Compilable)se).compile(js);
 							SCRIPTS.put(jskey, script);

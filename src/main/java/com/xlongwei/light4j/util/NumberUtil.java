@@ -2,6 +2,7 @@ package com.xlongwei.light4j.util;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.networknt.utility.StringUtils;
@@ -231,6 +232,20 @@ public class NumberUtil {
 	public static String parseExp(String exp) {
 		try {
 			return new ExpUtil().parse(exp).getResult().toString();
+		} catch (Exception e) {
+			log.warn("fail to parse exp: {}, ex: {}", exp, e.getMessage());
+			return null;
+		}
+	}
+	
+	/** 计算表达式的值 */
+	public static String parseExp(String exp, Map<String, Number> context) {
+		try {
+			ExpUtil expUtil = ExpUtil.exp(exp);
+			if(context!=null && context.size()>0) {
+				context.forEach((k, v) -> expUtil.context(k, v));
+			}
+			return expUtil.parse().getResult().toString();
 		} catch (Exception e) {
 			log.warn("fail to parse exp: {}, ex: {}", exp, e.getMessage());
 			return null;

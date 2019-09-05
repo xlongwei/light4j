@@ -8,6 +8,7 @@ import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 
 /**
@@ -30,7 +31,18 @@ public class MoneyHandler extends AbstractHandler {
 	
 	public void exp(HttpServerExchange exchange) throws Exception {
 		String exp = HandlerUtil.getParam(exchange, "exp");
-		String result = NumberUtil.parseExp(exp);
+		Map<String, Number> context = MapUtil.newHashMap();
+		HandlerUtil.getParamNames(exchange).stream().forEach(paramName -> {
+			String paramValue = HandlerUtil.getParam(exchange, paramName);
+			Number number = StringUtil.isNumbers(paramValue) ? NumberUtil.parseInt(paramValue, null) : null;
+			if(number == null && StringUtil.isDecimal(paramValue)) {
+				number = NumberUtil.parseDouble(paramValue, null);
+			}
+			if(number != null) {
+				context.put(paramName, number);
+			}
+		});
+		String result = NumberUtil.parseExp(exp, context);
 		HandlerUtil.setResp(exchange, StringUtil.params("result", result));
 	}
 	

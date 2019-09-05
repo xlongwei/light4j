@@ -2,10 +2,12 @@ package com.xlongwei.light4j.util;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.codec.CharEncoding;
 import org.jose4j.json.internal.json_simple.JSONObject;
@@ -181,6 +183,12 @@ public class HandlerUtil {
 	/** 获取正文字符串 */
 	public static String getBodyString(HttpServerExchange exchange) {
 		return getObject(exchange, BODYSTRING, String.class);
+	}
+	
+	/** 获取请求参数名集合 */
+	public static Set<String> getParamNames(HttpServerExchange exchange) {
+		Map<String, Object> body = exchange.getAttachment(BODY);
+		return body!=null ? body.keySet() : Collections.emptySet();
 	}
 	
 	/**
