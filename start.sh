@@ -65,8 +65,8 @@ keystore(){
 	keytool -delete -alias server -keystore $dir/server.keystore -storepass password
 	keytool -importkeystore -deststorepass password -destkeystore $dir/server.keystore -srckeystore $cert/xlongwei.p12 -srcstoretype PKCS12
 	keytool -export -alias server -keystore $dir/server.keystore -storepass password -rfc -file $dir/server.crt
-	keytool -delete -alias server -keystore $dir/client.keystore -storepass password
-	keytool -import -file $cert/xlongwei.pem -alias server -keystore client.truststore -storepass password
+	keytool -delete -alias server -keystore $dir/client.truststore -storepass password
+	keytool -import -file $cert/xlongwei.pem -alias server -keystore $dir/client.truststore -storepass password
 }
 
 if [ $# -eq 0 ]; then 
