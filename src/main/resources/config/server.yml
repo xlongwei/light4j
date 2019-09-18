@@ -6,4 +6,7 @@ httpsPort: 8443
 enableHttps: ${enableHttps:false}
 keystoreName: server.keystore
 serviceId: com.xlongwei.light4j
-buildNumber: 3.0.1
+enableRegistry: ${enableRegistry:false}
+dynamicPort: ${dynamicPort:false}
+minPort: 12400
+maxPort: 12500

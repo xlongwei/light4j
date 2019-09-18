@@ -31,7 +31,7 @@
         <version.poi>3.17</version.poi>
         <version.itext>2.0.8.1</version.itext>
         <version.httpmime>4.5.2</version.httpmime>
-        <version.fastjson>1.2.58</version.fastjson>
+        <version.fastjson>1.2.60</version.fastjson>
         <version.jodconverter>2.2.1</version.jodconverter>
         <version.zxing>3.2.1</version.zxing>
         <version.vcard>0.10.0</version.vcard>
@@ -312,6 +312,11 @@
             <groupId>commons-dbutils</groupId>
             <artifactId>commons-dbutils</artifactId>
             <version>${version.dbutils}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.3</version>
         </dependency>
         <dependency>
         	<groupId>commons-io</groupId>

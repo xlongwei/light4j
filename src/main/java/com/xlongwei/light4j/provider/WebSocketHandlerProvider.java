@@ -14,8 +14,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListenerAdapter;
 
+import com.google.common.base.Joiner;
 import com.networknt.handler.HandlerProvider;
 import com.xlongwei.light4j.util.DateUtil;
+import com.xlongwei.light4j.util.ExecUtil;
 import com.xlongwei.light4j.util.FileUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.NumberUtil;
@@ -25,6 +27,7 @@ import com.xlongwei.light4j.util.TaskUtil;
 import com.xlongwei.light4j.util.TaskUtil.Callback;
 import com.xlongwei.light4j.util.UploadUtil;
 
+import cn.hutool.core.collection.CollUtil;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.websockets.WebSocketConnectionCallback;
@@ -43,7 +46,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class WebSocketHandlerProvider implements HandlerProvider {
-	private final String key = "ws.chat";
+	private final String key = "ws.chat", searchPattern = "search\\s+(.+)";
 	private final int length = 18;
     @Override
     public HttpHandler getHandler() {
@@ -61,12 +64,14 @@ public class WebSocketHandlerProvider implements HandlerProvider {
             	private String muteKey = "ws.chat.mute", muteCmd = "mute", historyCmd = "history";
                 @Override
                 protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
-                	String txt = message.getData();
+                	String txt = message.getData(), search = null;
                     String msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), txt);
                     if(!mute) {
                     	channel.getPeerConnections().parallelStream().forEach(c -> WebSockets.sendText(msg, c, null));
                     }else if(StringUtil.isUrl(txt)) {
                     	download(txt, channel);
+                    }else if(StringUtil.hasLength(search = StringUtil.getPatternString(txt, searchPattern))) {
+                    	search(search, channel);
                     }
                     log.info(msg);
                     if(StringUtil.firstNotBlank(RedisConfig.get(muteKey), muteCmd).equals(txt)) {
@@ -140,6 +145,17 @@ public class WebSocketHandlerProvider implements HandlerProvider {
 				}
         	});
         	TaskUtil.scheduleAtFixedRate(notice, 5, 10, TimeUnit.SECONDS);
+        }
+        
+        private void search(final String search, final WebSocketChannel channel) {
+        	String txt = "search: "+search;
+        	String msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), txt);
+        	WebSockets.sendText(msg, channel, null);
+        	String logfile = StringUtil.firstNotBlank(RedisConfig.get("logserver.file"), "logs/light4j.log");
+        	List<String> list = ExecUtil.list(FilenameUtils.getFullPathNoEndSeparator(logfile), search);
+        	txt = CollUtil.isEmpty(list) ? "no results" : Joiner.on("<br>").join(list);
+        	msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), txt);
+        	WebSockets.sendText(msg, channel, null);
         }
     };
     
