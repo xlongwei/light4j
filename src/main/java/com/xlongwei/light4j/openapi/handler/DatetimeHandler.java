@@ -43,6 +43,10 @@ public class DatetimeHandler extends AbstractHandler {
 	@Override
 	@SuppressWarnings({ "unchecked" })
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
+		if(Server.getServerConfig().isEnableRegistry()==false) {
+			//enableRegistry=false时可以没有consul，此时可避免自动重试连接consul
+			return;
+		}
 		List<URI> services = cluster.services("https", serviceId, tag);
 		for(URI service : services) {
 			try {
