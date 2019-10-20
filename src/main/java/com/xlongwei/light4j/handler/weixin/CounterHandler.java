@@ -12,9 +12,11 @@ import org.apache.commons.lang3.time.DateUtils;
 
 import com.xlongwei.light4j.util.AdtUtil.PairList;
 import com.xlongwei.light4j.util.AdtUtil.PairList.PriorityPairList.PriorityComparator;
+import com.xlongwei.light4j.handler.ServiceHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
+import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
@@ -28,7 +30,7 @@ import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextH
 public class CounterHandler extends AbstractTextHandler {
 
 	private static final String TAG = "统计";
-	private static final String RELOAD = "reload";
+	private static final String RELOAD = "reload", SERVICE_COUNT = "serviceCount";
 
 	@Override
 	public String handle(String content) {
@@ -67,6 +69,10 @@ public class CounterHandler extends AbstractTextHandler {
 			}else {
 				return countDays(cmd);
 			} 
+		}else if(content.startsWith(SERVICE_COUNT)) {
+			boolean serviceCount = NumberUtil.parseBoolean(content.substring(SERVICE_COUNT.length()), true);
+			ServiceHandler.serviceCount(serviceCount);
+			return String.valueOf(serviceCount);
 		}
 		return null;
 	}

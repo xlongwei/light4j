@@ -9,14 +9,12 @@ import com.xlongwei.light4j.util.WeixinUtil.AbstractMessage;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessage.TextMessage;
 
 import io.undertow.server.HttpServerExchange;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * weixin handler
  * @author xlongwei
  *
  */
-@Slf4j
 public class WeixinHandler extends AbstractHandler {
 
 	public void chat(HttpServerExchange exchange) throws Exception {
@@ -28,7 +26,6 @@ public class WeixinHandler extends AbstractHandler {
 		TextMessage textMsg = new TextMessage();
 		textMsg.setContent(text);
 		AbstractMessage dispatch = WeixinUtil.dispatch(textMsg);
-		log.info("weixin chat text: {}, resp: {}", text, dispatch);
 		if(dispatch!=null && dispatch instanceof TextMessage) {
 			text = ((TextMessage)dispatch).getContent();
 			HandlerUtil.setResp(exchange, StringUtil.params("text", text));
