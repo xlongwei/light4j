@@ -42,6 +42,7 @@ public class IpHandler extends AbstractHandler {
 					map.put("state", trim(split[idx++]));
 					map.put("city", trim(split[idx++]));
 					map.put("isp", trim(split[idx++]));
+					map.put("region", StringUtil.join(map.values(), null, null, null));
 				}
 			}
 			HandlerUtil.setResp(exchange, map);
