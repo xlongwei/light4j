@@ -11,7 +11,6 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
@@ -23,15 +22,11 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.spec.EncodedKeySpec;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Enumeration;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
@@ -51,12 +46,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class RsaUtil {
-	private static String keyStoreType = "PKCS12";
-	private static String certificateFactoryAlgorithm = "X.509";
-	private static String rsa = "RSA";
-	private static String rsaSign = "SHA1withRSA";//MD5WITHRSA SHA512withRSA
-	private static String rsaCipher = "RSA/None/PKCS1Padding";//RSA/None/NoPadding重复密文 RSA/None/PKCS1Padding不重复密文（有随机数填充）
-	private static int keySize = 1024;//2048 为提高保密强度要求512以上，为支持加密解密要整除8，RSA比较慢建议对称加密数据+RSA加密密码或签名
+	private static final String KEY_STORE_TYPE = "PKCS12";
+	private static final String CERTIFICATE_FACTORY_ALGORITHM = "X.509";
+	private static final String RSA = "RSA";
+	private static final String RSA_SIGN = "SHA1withRSA";
+	private static final String RSA_CIPHER = "RSA/None/PKCS1Padding";
+	private static final int KEY_SIZE = 1024;
 	
 	private static boolean bouncyCastleProviderAvailable = false;
 	private static String classBouncyCastleProvider = "org.bouncycastle.jce.provider.BouncyCastleProvider";
@@ -64,10 +59,10 @@ public class RsaUtil {
 	static {
 		try {
 			Class<?> clazz = Class.forName(classBouncyCastleProvider);
-			Provider bouncyCastleProvider = (Provider)clazz.newInstance();
+			Provider bouncyCastleProvider = (Provider)clazz.getConstructor().newInstance();
 			Security.addProvider(bouncyCastleProvider);
 			bouncyCastleProviderAvailable = true;
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+		} catch (Exception e) {
 			log.warn("fail to Security.addProvider(BC): {}", e.getMessage());
 		}
 	}
@@ -77,7 +72,7 @@ public class RsaUtil {
 	 */
 	public static PrivateKey getPrivateKey(InputStream is, String pwd) {
 		try {
-			KeyStore ks = KeyStore.getInstance(keyStoreType);
+			KeyStore ks = KeyStore.getInstance(KEY_STORE_TYPE);
 			char[] ps = pwd!=null ? pwd.toCharArray() : null;
 			ks.load(is, ps);
 			Enumeration<String> as = ks.aliases();
@@ -93,7 +88,7 @@ public class RsaUtil {
 	 */
 	public static PublicKey getPublicKey(InputStream is) {
 		try {
-			CertificateFactory cf = CertificateFactory.getInstance(certificateFactoryAlgorithm);
+			CertificateFactory cf = CertificateFactory.getInstance(CERTIFICATE_FACTORY_ALGORITHM);
 			Certificate c = cf.generateCertificate(is);
 			return c.getPublicKey();
 		} catch (CertificateException e) {
@@ -109,9 +104,9 @@ public class RsaUtil {
 		try {
 			byte[] bs = Base64.decodeBase64(privateKey);
 			EncodedKeySpec eks = new PKCS8EncodedKeySpec(bs);
-			KeyFactory kf = KeyFactory.getInstance(rsa);
+			KeyFactory kf = KeyFactory.getInstance(RSA);
 			return kf.generatePrivate(eks);
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+		} catch (Exception e) {
 			log.warn("fail to getPrivateKey from String: {}", e.getMessage());
 		}
 		return null;
@@ -123,10 +118,10 @@ public class RsaUtil {
 	public static PublicKey getPublicKey(String publicKey) {
 		try {
 			byte[] bs = Base64.decodeBase64(publicKey);
-			KeyFactory kf = KeyFactory.getInstance(rsa);
+			KeyFactory kf = KeyFactory.getInstance(RSA);
 			EncodedKeySpec eks = new X509EncodedKeySpec(bs);
 			return kf.generatePublic(eks);
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+		} catch (Exception e) {
 			log.warn("fail to getPublicKey from String: {}", e.getMessage());
 		}
 		return null;
@@ -145,8 +140,8 @@ public class RsaUtil {
 	 */
 	public static KeyPair getKeyPair() {
 		try {
-			KeyPairGenerator kpg = KeyPairGenerator.getInstance(rsa);
-			kpg.initialize(keySize);
+			KeyPairGenerator kpg = KeyPairGenerator.getInstance(RSA);
+			kpg.initialize(KEY_SIZE);
 			return kpg.generateKeyPair();
 		} catch (NoSuchAlgorithmException e) {
 			log.warn("fail to getKeyPair: {}", e.getMessage());
@@ -171,7 +166,7 @@ public class RsaUtil {
 	 */
 	public static String sign(PrivateKey privateKey, String data) {
 		try {
-			Signature s = Signature.getInstance(rsaSign);
+			Signature s = Signature.getInstance(RSA_SIGN);
 			s.initSign(privateKey);
 			s.update(data.getBytes(Charsets.UTF_8));
 			return Base64.encodeBase64String(s.sign());
@@ -186,7 +181,7 @@ public class RsaUtil {
 	 */
 	public static boolean verify(PublicKey publicKey, String data, String signature) {
 		try {
-			Signature s = Signature.getInstance(rsaSign);
+			Signature s = Signature.getInstance(RSA_SIGN);
 			s.initVerify(publicKey);
 			s.update(data.getBytes(Charsets.UTF_8));
 			return s.verify(Base64.decodeBase64(signature));
@@ -201,10 +196,11 @@ public class RsaUtil {
 	 */
 	public static String encrypt(PublicKey publicKey, String data) {
 		try {
-			Cipher c = bouncyCastleProviderAvailable ? Cipher.getInstance(rsaCipher, "BC") : Cipher.getInstance(rsaCipher);
+			Cipher c = bouncyCastleProviderAvailable ? Cipher.getInstance(RSA_CIPHER, "BC") : Cipher.getInstance(RSA_CIPHER);
 			c.init(Cipher.ENCRYPT_MODE, publicKey);
 			byte[] bs = data.getBytes(Charsets.UTF_8);
-			int bufferSize = keySize/8 - 11;//1024限制117字节 2048限制245字节
+			//1024限制117字节 2048限制245字节
+			int bufferSize = KEY_SIZE/8 - 11;
 			byte[] buffer = new byte[bufferSize];
 			int position = 0;
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -212,13 +208,14 @@ public class RsaUtil {
 				int read = Math.min(bufferSize, bs.length-position);
 				System.arraycopy(bs, position, buffer, 0, read);
 				c.update(buffer, 0, read);
-				byte[] cs = c.doFinal();//加密结果全是256字节
+				//加密结果全是256字节
+				byte[] cs = c.doFinal();
 				baos.write(cs);
 				position+=read;
 			}while(position<bs.length);
 			byte[] bss = baos.toByteArray();
 			return Base64.encodeBase64String(bss);
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchProviderException | IOException e) {
+		} catch (Exception e) {
 			log.warn("fail to encrypt: {}", e.getMessage());
 		}
 		return null;
@@ -229,10 +226,11 @@ public class RsaUtil {
 	 */
 	public static String decrypt(PrivateKey privateKey, String data) {
 		try {
-			Cipher c = bouncyCastleProviderAvailable ? Cipher.getInstance(rsaCipher, "BC") : Cipher.getInstance(rsaCipher);
+			Cipher c = bouncyCastleProviderAvailable ? Cipher.getInstance(RSA_CIPHER, "BC") : Cipher.getInstance(RSA_CIPHER);
 			c.init(Cipher.DECRYPT_MODE, privateKey);
 			byte[] bs = Base64.decodeBase64(data);
-			int bufferSize = keySize/8;//密文长度等于密钥长度
+			//密文长度等于密钥长度
+			int bufferSize = KEY_SIZE/8;
 			byte[] buffer = new byte[bufferSize];
 			int position = 0;
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -246,7 +244,7 @@ public class RsaUtil {
 			}while(position<bs.length);
 			byte[] bss = baos.toByteArray();
 			return StringUtils.newStringUtf8(bss);
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchProviderException | IOException e) {
+		} catch (Exception e) {
 			log.warn("fail to decrypt: {}", e.getMessage());
 		}
 		return null;

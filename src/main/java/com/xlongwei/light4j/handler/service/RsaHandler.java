@@ -15,6 +15,11 @@ import com.xlongwei.light4j.util.RsaUtil;
 import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 
+/**
+ * rsa handler
+ * @author xlongwei
+ *
+ */
 public class RsaHandler extends AbstractHandler {
 
 	private static final String PUBLIC_KEY = "publicKey";
@@ -47,7 +52,7 @@ public class RsaHandler extends AbstractHandler {
 		map.put(PRIVATE_CACHE_KEY, RSA_PRIKEY+IdWorker.getId());
 		RedisConfig.set(map.get(PUBLIC_CACHE_KEY), publicKey);
 		RedisConfig.set(map.get(PRIVATE_CACHE_KEY), privateKey);
-		int expire = (int)TimeUnit.DAYS.toSeconds(30);//缓存30天
+		int expire = (int)TimeUnit.DAYS.toSeconds(30);
 		RedisConfig.expire(RedisConfig.CACHE, map.get(PUBLIC_CACHE_KEY), expire);
 		RedisConfig.expire(RedisConfig.CACHE, map.get(PRIVATE_CACHE_KEY), expire);
 		HandlerUtil.setResp(exchange, map);
