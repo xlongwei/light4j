@@ -1,27 +1,57 @@
+#!/bin/sh
+
+daemon=true
+appname=light4j
+jarfile=target/light4j.jar
+[ ! -e "$jarfile" ] && jarfile=light4j.jar
+JVM_OPS="-Xmx384m -Xss228k"
+JVM_OPS="$JVM_OPS -Dlogserver -DcontextName=light4j"
+#ENV_OPS="PATH=/usr/java/jdk1.8.0_161/bin:$PATH"
+JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
+#JVM_OPS="$JVM_OPS -Dredis.configDb=xlongwei:6379:1"
+#JVM_OPS="$JVM_OPS -Dredis.configDbs=xlongwei:6379:3-7"
+#JVM_OPS="$JVM_OPS -Dsoffice.hosts=xlongwei:8100-8102:true"
+#JVM_OPS="$JVM_OPS -Dupload.url=http://ip/uploads/"
+#ENV_OPS="$ENV_OPS enableHttp=false httpPort=8080"
+#ENV_OPS="$ENV_OPS enableHttps=true httpsPort=8443"
+#ENV_OPS="$ENV_OPS enableRegistry=true STATUS_HOST_IP=api.xlongwei.com"
+
 usage(){
-    echo "Usage: sh start.sh status | start | stop | restart | rebuild | refresh | package | build | keystore" 
+    echo "Usage: start.sh ( commands ... )"
+    echo "commands: "
+    echo "  status      check the running status"
+    echo "  start       start $appname"
+    echo "  stop        stop $appname"
+    echo "  restart     stop && start"
+    echo "  clean       clean target"
+    echo "  jar         build $jarfile"
+    echo "  jars        copy dependencies to target"
+    echo "  package     jar && jars"
+    echo "  rebuild     stop && jar && start"
+    echo "  refresh     stop && clean && jar && jars && start"
+    echo "  deploy      package fat-jar $jarfile"
+    echo "  keystore    prepare keystore、crt、trustore"
 }
 
 status(){
-    PIDS=`ps -ef | grep java | grep "light4j-3.0.1.jar" |awk '{print $2}'`
+    PIDS=`ps -ef | grep java | grep "$jarfile" |awk '{print $2}'`
 
 	if [ -z "$PIDS" ]; then
-	    echo "light4j is not running!"
+	    echo "$appname is not running!"
 	else
-		echo -e "Stopping light4j ..."
 		for PID in $PIDS ; do
-		    echo "light4j has pid: $PID!"
+		    echo "$appname has pid: $PID!"
 		done
 	fi
 }
 
 stop(){
-    PIDS=`ps -ef | grep java | grep "light4j-3.0.1.jar" |awk '{print $2}'`
+    PIDS=`ps -ef | grep java | grep "$jarfile" |awk '{print $2}'`
 
 	if [ -z "$PIDS" ]; then
-	    echo "light4j is not running!"
+	    echo "$appname is not running!"
 	else
-		echo -e "Stopping light4j ..."
+		echo -e "Stopping $appname ..."
 		for PID in $PIDS ; do
 			echo -e "kill $PID"
 		    kill $PID > /dev/null 2>&1
@@ -30,28 +60,30 @@ stop(){
 }
 
 clean(){
-    echo "clean light4j ..."
 	mvn clean
 }
 
 jar(){
-	echo "compile light4j ..."
 	mvn compile jar:jar
 }
 
-dependency(){
-	echo "copy dependencies ..."
+jars(){
 	mvn dependency:copy-dependencies -DoutputDirectory=target
 }
 
+deploy(){
+	mvn package -Prelease -Dmaven.javadoc.skip=true
+}
+
 start(){
-	echo "starting light4j ..."
-	JVM_OPS="-server -Xmx384m -Xss228k -Djava.awt.headless=true"
-	#setsid java $JVM_OPS -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
-	setsid java $JVM_OPS -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -cp target/light4j-3.0.1.jar com.xlongwei.light4j.Servers >> /dev/null 2>&1 &
-	#env enableRegistry=true STATUS_HOST_IP=api.xlongwei.com setsid java $JVM_OPS -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -cp target/light4j-3.0.1.jar com.xlongwei.light4j.Servers >> /dev/null 2>&1 &
-	#echo "starting light4j https ..."
-	#env enableHttps=true setsid java $JVM_OPS -Dlight4j.directory=/soft/softwares/library/ -Dlogserver -jar target/light4j-3.0.1.jar >> /dev/null 2>&1 &
+	echo "starting $appname ..."
+	JVM_OPS="-server -Djava.awt.headless=true $JVM_OPS"
+	#env $ENV_OPS java $JVM_OPS -jar target/light4j-3.0.1.jar 2>&1
+	if [ "$daemon" = "true" ]; then
+		env $ENV_OPS setsid java $JVM_OPS -cp $jarfile com.xlongwei.light4j.Servers >> /dev/null 2>&1 &
+	else
+		env $ENV_OPS java $JVM_OPS -cp $jarfile com.xlongwei.light4j.Servers 2>&1
+	fi
 }
 
 keystore(){
@@ -70,17 +102,20 @@ keystore(){
 }
 
 if [ $# -eq 0 ]; then 
-    usage && stop && start
+    usage
 else
 	case $1 in
 	status) status ;;
 	start) start ;;
 	stop) stop ;;
-	build) jar ;;
-	package) jar && dependency ;;
+	clean) clean ;;
+	jar) jar ;;
+	jars) jars ;;
+	package) jar && jars ;;
 	restart) stop && start ;;
 	rebuild) stop && jar && start ;;
-	refresh) stop && clean && jar && dependency && start ;;
+	refresh) stop && clean && jar && jars && start ;;
+	deploy) deploy ;;
 	keystore) keystore $@;;
 	*) usage ;;
 	esac

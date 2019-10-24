@@ -70,9 +70,14 @@ public class CounterHandler extends AbstractTextHandler {
 				return countDays(cmd);
 			} 
 		}else if(content.startsWith(SERVICE_COUNT)) {
-			boolean serviceCount = NumberUtil.parseBoolean(content.substring(SERVICE_COUNT.length()), true);
-			ServiceHandler.serviceCount(serviceCount);
-			return String.valueOf(serviceCount);
+			content = content.substring(SERVICE_COUNT.length());
+			if(StringUtil.hasLength(content)) {
+				Boolean b = NumberUtil.parseBoolean(content, null);
+				if(b!=null) {
+					ServiceHandler.serviceCount(b.booleanValue());
+				}
+			}
+			return String.valueOf(ServiceHandler.serviceCount);
 		}
 		return null;
 	}

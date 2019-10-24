@@ -1,25 +1,30 @@
 # light4j
 
-#### 介绍
-基于light-4j微服务框架的个人应用
+#### 项目简介
+使用light-4j构建的微服务接口应用
 
-#### 软件架构
-软件架构说明
+#### 本地测试
+1. 项目构建：sh start.sh package
+2. 启动缓存：redis-server
+3. 运行项目：start.bat
+4. 测试访问：[logs](http://localhost:8080/ws/logs.html)，[datetime](http://localhost:8080/service/datetime.json)
 
+#### 线上部署
+1. 项目打包：sh start.sh deploy
+2. 提取脚本：jar xvf light4j.jar start.sh
+3. 运行服务：sh start.sh start
 
-#### 安装教程
+#### 配置说明
+vi start.sh
 
-1. 调试运行主类：运行redis-server，调试com.networknt.server.Server，自定义：-Dupload.save=H:/works/itecheast/Servers/uploads/
-2. 部署打包命令：mvn package -P release -Dmaven.javadoc.skip=true
-3. 服务运行命令：mvn exec:java -P release，jar -jar target/light4j-3.0.1.jar
+1. -Dredis.configDb，配置redis地址
+2. -Dlight4j.directory，可以从light4j.yml里面的网址下载文件
+3. -Dlogserver，在/etc/hosts配置logserver地址
+4. contextName=light4j，修改应用的日志上下文
+5. https、registry可自行研究，sh start.sh keystore转换密钥为相关文件
 
-#### 使用说明
+#### 其他说明
 
-1. 依赖jar列表：mvn dependency:build-classpath -Dmdep.outputFile=cp.txt -Dmdep.includeScope=runtime
-2. 依赖jar列表：mvn -q exec:exec -Dexec.executable=echo -Dexec.args="%classpath"
-3. 服务运行命令：mvn -q exec:java -Dexec.mainClass="com.networknt.server.Server"
-4. 使用postman：使用Import Collection功能导入postman.json，测试已有接口
-
-#### 参与贡献
-
-1. 搜索jar包：https://mvnrepository.com/
+1. WeixinHandler支持响应微信公众号消息，关注xlongwei试试[help](https://api.xlongwei.com/service/weixin/chat.json?text=help)
+2. LayuiHandler和openapi支持前后端分离，参考[admin](http://layui.xlongwei.com/admin/)
+3. WebSocketHandlerProvider支持web socket消息，参考[chat](https://api.xlongwei.com:8443/ws/chat.html)

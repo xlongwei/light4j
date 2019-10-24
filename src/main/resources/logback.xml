@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration scan="false" scanPeriod="5 seconds" debug="false">
-    <contextName>light4j</contextName>
-    <property name="logFile" value="logs/light4j.log"/>
+    <contextName>${contextName:-light4j}</contextName>
+    <property name="logLevel" value="${logLevel:-INFO}"/>
     <property name="logPattern" value="%cn %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{0}:%L %msg%n"/>
     
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -26,7 +26,7 @@
 	    <then>
 		    <if condition='property("logfile").isEmpty()'>
 			    <then>
-				    <property name="logfile" value="${logFile}"/>
+				    <property name="logfile" value="logs/light4j.log"/>
 			    </then>
 		    </if>
 		    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -44,17 +44,21 @@
 	    </then>
     </if>
 
-	<root level="info">
-		<appender-ref ref="STDOUT" />
+	<root level="${logLevel}">
 		<if condition='isDefined("logserver")'>
 		    <then>
 				<appender-ref ref="SOCKET" />
-		    </then>		
-		</if>
-		<if condition='isDefined("logfile")'>
-		    <then>
-				<appender-ref ref="ASYNC_FILE" />
-		    </then>		
+		    </then>
+		    <else>
+				<if condition='isDefined("logfile")'>
+				    <then>
+						<appender-ref ref="ASYNC_FILE" />
+				    </then>
+				    <else>
+						<appender-ref ref="STDOUT" />
+				    </else>
+				</if>
+		    </else>
 		</if>
 	</root>
 </configuration>

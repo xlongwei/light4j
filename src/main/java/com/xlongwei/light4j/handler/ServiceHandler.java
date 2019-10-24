@@ -24,7 +24,6 @@ import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.TokenCounter;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
@@ -41,7 +40,7 @@ public class ServiceHandler implements LightHttpHandler {
 	public static final String BAD_REQUEST = "{\"status\":\"200\", \"error\":\"bad request\"}";
 	private Map<String, AbstractHandler> handlers = new HashMap<>();
 	private static ServiceCounter serviceCounter = new ServiceCounter(64, TimeUnit.SECONDS.toMillis(18));
-	private static boolean serviceCount = true;
+	public static boolean serviceCount = true;
 	
 	public ServiceHandler() {
 		String service = getClass().getPackage().getName()+".service";
@@ -151,14 +150,7 @@ public class ServiceHandler implements LightHttpHandler {
 	public static void serviceCount(boolean serviceCount) {
 		ServiceHandler.serviceCount = serviceCount;
 		LoggerContext lc = (LoggerContext)LoggerFactory.getILoggerFactory();
-		Logger root = lc.getLogger("root");
-		if(serviceCount) {
-			root.setLevel(Level.INFO);
-			log.info("serviceCount: {}", serviceCount);
-		}else {
-			log.info("serviceCount: {}", serviceCount);
-			root.setLevel(Level.OFF);
-		}
+		lc.getLogger("root").setLevel(serviceCount ? Level.INFO : Level.OFF);
 	}
 	/** 统计service调用次数，定时保存到redis */
 	private static class ServiceCounter extends TokenCounter {

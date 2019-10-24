@@ -1,12 +1,12 @@
 ip: 0.0.0.0
-httpPort: 8080
-enableHttp: true
+httpPort: ${httpPort:8080}
+enableHttp: ${enableHttp:true}
 enableHttp2: true
-httpsPort: 8443
+httpsPort: ${httpsPort:8443}
 enableHttps: ${enableHttps:false}
 keystoreName: server.keystore
 serviceId: com.xlongwei.light4j
 enableRegistry: ${enableRegistry:false}
 dynamicPort: ${dynamicPort:false}
-minPort: 12400
-maxPort: 12500
+minPort: ${minPort:12400}
+maxPort: ${maxPort:12500}
