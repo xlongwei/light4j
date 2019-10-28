@@ -53,13 +53,17 @@ public class ZxingUtil {
 	}
 	
 	public static byte[] encode(String content, int size, String logo, Color forground, Color background) {
+		byte[] ret = null;
 		for(ErrorCorrectionLevel level : levels) {
 			byte[] encode = encode(content, size, logo, forground, background, level);
 			if(encode!=null && content.equals(decode(encode))) {
 				return encode;
 			}
+			if(encode!=null && ret==null) {
+				ret=encode;
+			}
 		}
-		return null;
+		return ret;
 	}
 	
 	public static byte[] encode(String content, int size, String logo, Color forground, Color background, ErrorCorrectionLevel level) {

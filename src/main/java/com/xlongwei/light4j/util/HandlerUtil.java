@@ -275,4 +275,18 @@ public class HandlerUtil {
         	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, Headers.AUTHORIZATION_STRING);
         }	
 	}
+	
+	public static String getIp(HttpServerExchange exchange) {
+		String[] ipHeaders = {"HTTP_X_FORWARDED_FOR","HTTP_CLIENT_IP","WL-Proxy-Client-IP","Proxy-Client-IP","X-Forwarded-For","X-Real-IP"};
+		HeaderMap requestHeaders = exchange.getRequestHeaders();
+		for(String ipHeader : ipHeaders) {
+			String ipValue = requestHeaders.getFirst(ipHeader);
+			if(!StringUtil.isBlank(ipValue) && !"unknown".equalsIgnoreCase(ipValue)) {
+				int common = ipValue.indexOf(',');
+				if(common > -1) ipValue = ipValue.substring(0, common);//clientip,proxy1,proxy2
+				if(StringUtil.isIp(ipValue) && !"127.0.0.1".equals(ipValue)) return ipValue;
+			}
+		}
+		return exchange.getSourceAddress().getAddress().getHostAddress();
+	}
 }

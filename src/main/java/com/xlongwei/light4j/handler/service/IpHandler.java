@@ -23,37 +23,42 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class IpHandler extends AbstractHandler {
-	DbSearcher dbSearcher = null;
+	static DbSearcher dbSearcher = null;
 
 	public void region(HttpServerExchange exchange) throws Exception {
 		String ip = HandlerUtil.getParam(exchange, "ip");
-		if(StringUtil.hasLength(ip) && Util.isIpAddress(ip)) {
-			initDbSearcher();
-			DataBlock dataBlock = dbSearcher.memorySearch(ip);
-			Map<String, String> map = new LinkedHashMap<>(4);
-			if(dataBlock != null) {
-				//国家，区域，省份，城市，运营商
-				String region = dataBlock.getRegion();
-				if(StringUtil.hasLength(region)) {
-					String[] split = region.split("[|]", 5);
-					int idx = 0;
-					map.put("country", trim(split[idx++]));
-					map.put("area", trim(split[idx++]));
-					map.put("state", trim(split[idx++]));
-					map.put("city", trim(split[idx++]));
-					map.put("isp", trim(split[idx++]));
-					map.put("region", StringUtil.join(map.values(), null, null, null));
+		boolean addIp = false;
+		if(StringUtil.isBlank(ip)) {
+			ip = HandlerUtil.getIp(exchange);
+			addIp = true;
+		}
+		DataBlock dataBlock = search(ip);
+		if(dataBlock != null) {
+			//国家，区域，省份，城市，运营商
+			String region = dataBlock.getRegion();
+			if(StringUtil.hasLength(region)) {
+				Map<String, String> map = new LinkedHashMap<>(4);
+				String[] split = region.split("[|]", 5);
+				int idx = 0;
+				map.put("country", zeroToEmpty(split[idx++]));
+				map.put("area", zeroToEmpty(split[idx++]));
+				map.put("state", zeroToEmpty(split[idx++]));
+				map.put("city", zeroToEmpty(split[idx++]));
+				map.put("isp", zeroToEmpty(split[idx++]));
+				map.put("region", StringUtil.join(map.values(), null, null, null));
+				if(addIp) {
+					map.put("ip", ip);
 				}
+				HandlerUtil.setResp(exchange, map);
 			}
-			HandlerUtil.setResp(exchange, map);
 		}
 	}
 	
-	private String trim(String value) {
+	public static String zeroToEmpty(String value) {
 		return "0".equals(value) ? "" : value;
 	}
 	
-	private void initDbSearcher() {
+	public static DbSearcher dbSearcher() {
 		if(dbSearcher == null) {
 			try {
 				DbConfig config = new DbConfig();
@@ -63,5 +68,17 @@ public class IpHandler extends AbstractHandler {
 				log.warn("fail to init DbSearcher: {}", e.getMessage());
 			}
 		}
+		return dbSearcher;
+	}
+	
+	public static DataBlock search(String ip) {
+		if(StringUtil.hasLength(ip) && Util.isIpAddress(ip)) {
+			try{
+				return dbSearcher().memorySearch(ip);
+			}catch(Exception e) {
+				log.warn("fail to search ip: {}, ex: {}", ip, e.getMessage());
+			}
+		}
+		return null;
 	}
 }

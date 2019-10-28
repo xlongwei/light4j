@@ -5,6 +5,41 @@ info:
 servers:
   - url: '/'
 paths:
+  /service/ip/region:
+    get:
+      summary: get ip region
+      operationId: getIpRegion
+      tags:
+        - Apis
+      parameters:
+        - name: ip
+          in: query
+          description: optional ip address
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  country:
+                    type: string
+                  area:
+                    type: string
+                  state:
+                    type: string
+                  city:
+                    type: string
+                  isp:
+                    type: string
+                  region:
+                    type: string
+                  ip:
+                    type: string
+              example:
+                region: '中国四川省成都市电信'
   /openapi/token:
     post:
       summary: jwt mock token
@@ -14,7 +49,7 @@ paths:
       responses:
         '200':
           content:
-            application:/json:
+            application/json:
               schema:
                 type: object
                 properties:
@@ -62,8 +97,8 @@ paths:
                   url:
                     type: string
               example:
-                - code: 0
-                  url: 'http://localhost:8081/uploads/openapi/1167322814205558785.png'
+                code: 0
+                url: 'http://localhost:8081/uploads/openapi/1167322814205558785.png'
 components:
   securitySchemes:
     api_key:
