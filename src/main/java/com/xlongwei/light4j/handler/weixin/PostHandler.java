@@ -55,7 +55,7 @@ public class PostHandler extends AbstractTextHandler {
 	private String post(String code) {
 		HashSet<String> cities = PostUtil.posts.getR(code);
 		if(CollectionUtils.isNotEmpty(cities)) {
-			return new StringBuilder("邮编：").append(code).append("，城市：\n").append(StringUtil.join(cities, null, null, "\n")).toString();
+			return new StringBuilder("邮编：").append(StringUtil.join(cities, null, null, null)).toString();
 		}
 		String area = StringUtil.join(IdCardUtil.areas(code), null, null, null);;
 		if(StringUtil.hasLength(area)) {

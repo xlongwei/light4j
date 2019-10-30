@@ -133,7 +133,7 @@ public class MobileHandler extends AbstractHandler {
 			map.put("zipCode", infoSegments[2]);
 			map.put("areaCode", infoSegments[3]);
 			map.put("isp", NUMBER_TYPE[Integer.parseInt(infoSegments[4])]);
-			map.put("region", map.get("province")+map.get("city")+map.get("isp"));
+			map.put("region", (infoSegments[0].equals(infoSegments[1]) ? infoSegments[0] : infoSegments[0]+infoSegments[1])+map.get("isp"));
 			return map;
 		}
 		return Collections.emptyMap();

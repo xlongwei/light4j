@@ -1,18 +1,20 @@
 package com.xlongwei.light4j.util;
 
-import java.io.File;
+import java.io.BufferedInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.sax.handler.RowHandler;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * plate util
  * @author xlongwei
  * @date 2019-10-30
  */
+@Slf4j
 public class PlateUtil {
 	
 	/** 搜索城市或车牌 */
@@ -58,12 +60,18 @@ public class PlateUtil {
 	static final int PLATE_PREFIX_LENGTH = 2;
 	static final String YUN_A_V = "云A-?V[0-9A-Z]{0,4}";
 	static {
-		File file = new File(ConfigUtil.DIRECTORY+"chepaihao.xlsx");
-		ExcelUtil.readBySax(file, 0, new RowHandler() {
-			@Override
-			public void handle(int i, int j, List<Object> list) {
-				plates.add(list.toArray(new String[list.size()]));
-			}
-		});
+		try{
+			ExcelUtil.readBySax(new BufferedInputStream(ConfigUtil.stream("chepaihao.xlsx")), 0, new RowHandler() {
+				@Override
+				public void handle(int i, int j, List<Object> list) {
+					if(j > 0) {
+						plates.add(list.toArray(new String[list.size()]));
+					}
+				}
+			});
+			log.info("chepaihao loaded, record={}", plates.size());
+		}catch(Exception e) {
+			log.warn("fail to init chepaihao: {}", e.getMessage());
+		}
 	}
 }
