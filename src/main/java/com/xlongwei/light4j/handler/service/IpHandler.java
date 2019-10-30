@@ -58,23 +58,20 @@ public class IpHandler extends AbstractHandler {
 		return "0".equals(value) ? "" : value;
 	}
 	
-	public static DbSearcher dbSearcher() {
-		if(dbSearcher == null) {
-			try {
-				DbConfig config = new DbConfig();
-				String dbFile = ConfigUtil.DIRECTORY + "ip2region.db";
-	            dbSearcher = new DbSearcher(config, dbFile);
-			}catch(Exception e) {
-				log.warn("fail to init DbSearcher: {}", e.getMessage());
-			}
+	static {
+		try {
+			DbConfig config = new DbConfig();
+			String dbFile = ConfigUtil.DIRECTORY + "ip2region.db";
+            dbSearcher = new DbSearcher(config, dbFile);
+		}catch(Exception e) {
+			log.warn("fail to init DbSearcher: {}", e.getMessage());
 		}
-		return dbSearcher;
 	}
 	
-	public static DataBlock search(String ip) {
+	public static synchronized DataBlock search(String ip) {
 		if(StringUtil.hasLength(ip) && Util.isIpAddress(ip)) {
 			try{
-				return dbSearcher().memorySearch(ip);
+				return dbSearcher.memorySearch(ip);
 			}catch(Exception e) {
 				log.warn("fail to search ip: {}, ex: {}", ip, e.getMessage());
 			}
