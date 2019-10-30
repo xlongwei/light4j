@@ -1,5 +1,6 @@
 package com.xlongwei.light4j.handler.service;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,25 +34,12 @@ public class IpHandler extends AbstractHandler {
 			ip = HandlerUtil.getIp(exchange);
 			addIp = true;
 		}
-		DataBlock dataBlock = search(ip);
-		if(dataBlock != null) {
-			//国家，区域，省份，城市，运营商
-			String region = dataBlock.getRegion();
-			if(StringUtil.hasLength(region)) {
-				Map<String, String> map = new LinkedHashMap<>(4);
-				String[] split = region.split("[|]", 5);
-				int idx = 0;
-				map.put("country", zeroToEmpty(split[idx++]));
-				map.put("area", zeroToEmpty(split[idx++]));
-				map.put("state", zeroToEmpty(split[idx++]));
-				map.put("city", zeroToEmpty(split[idx++]));
-				map.put("isp", zeroToEmpty(split[idx++]));
-				map.put("region", StringUtil.join(map.values(), null, null, null));
-				if(addIp) {
-					map.put("ip", ip);
-				}
-				HandlerUtil.setResp(exchange, map);
+		Map<String, String> map = searchToMap(ip);
+		if(MapUtil.isNotEmpty(map)) {
+			if(addIp) {
+				map.put("ip", ip);
 			}
+			HandlerUtil.setResp(exchange, map);
 		}
 	}
 	
@@ -77,5 +66,26 @@ public class IpHandler extends AbstractHandler {
 			}
 		}
 		return null;
+	}
+	
+	public static synchronized Map<String, String> searchToMap(String ip) {
+		DataBlock dataBlock = search(ip);
+		if(dataBlock != null) {
+			//国家，区域，省份，城市，运营商
+			String region = dataBlock.getRegion();
+			if(StringUtil.hasLength(region)) {
+				Map<String, String> map = new LinkedHashMap<>(8);
+				String[] split = region.split("[|]", 5);
+				int idx = 0;
+				map.put("country", zeroToEmpty(split[idx++]));
+				map.put("area", zeroToEmpty(split[idx++]));
+				map.put("state", zeroToEmpty(split[idx++]));
+				map.put("city", zeroToEmpty(split[idx++]));
+				map.put("isp", zeroToEmpty(split[idx++]));
+				map.put("region", StringUtil.join(map.values(), null, null, null));
+				return map;
+			}
+		}
+		return Collections.emptyMap();
 	}
 }

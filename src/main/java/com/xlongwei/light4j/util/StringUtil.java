@@ -1270,12 +1270,12 @@ public class StringUtil {
 	private static char[] GT_ENCODE = "&gt;".toCharArray();
 	private static String urlPatternString = "^([hH][tT][tT][pP]([sS]?)|[fF][tT][pP]|[fF][iI][lL][eE]):\\/\\/(\\S+\\.)+\\S{2,}$";
 	private static String emailPatternString = "\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*";
-	private static final String mobilePatternString = "^1(3[0-9]|4[5-9]|5[0-35-9]|6[2567]|7[0-9]|8[0-9]|9[1389])[0-9]{8}$";
+	private static String mobilePatternString = "^1(3[0-9]|4[5-9]|5[0-35-9]|6[2567]|7[0-9]|8[0-9]|9[1389])[0-9]{8}$";
 	private static Pattern tagPattern = Pattern.compile("\\{(\\w+)\\}");
 	private static Pattern urlPattern = Pattern.compile(urlPatternString, Pattern.CASE_INSENSITIVE);
 	private static Pattern emailPattern = Pattern.compile(emailPatternString, Pattern.CASE_INSENSITIVE);
 	private static Pattern mobilePattern = Pattern.compile(mobilePatternString);
-	private static final Pattern mobile1 = Pattern.compile("^1(3[5-9]|4[78]|5[0-27-9]|65|7[28]|8[2-478]|98)\\d{8}$|^(134[0-8]|170[356])\\d{7}$"),
+	private static Pattern mobile1 = Pattern.compile("^1(3[5-9]|4[78]|5[0-27-9]|65|7[28]|8[2-478]|98)\\d{8}$|^(134[0-8]|170[356])\\d{7}$"),
 			mobile2 = Pattern.compile("^1(3[012]|4[56]|5[56]|6[67]|7[156]|8[56])\\d{8}$|^170[47-9]\\d{7}$"),
 			mobile3 = Pattern.compile("^1(33|49|53|62|7[347]|8[019]|9[139])\\d{8}$|^(1349|170[0-2])\\d{7}$");
 	private static Pattern telPattern = Pattern.compile("(\\d{3,4}-?)?\\d{7,8}");

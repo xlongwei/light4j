@@ -283,8 +283,13 @@ public class HandlerUtil {
 			String ipValue = requestHeaders.getFirst(ipHeader);
 			if(!StringUtil.isBlank(ipValue) && !"unknown".equalsIgnoreCase(ipValue)) {
 				int common = ipValue.indexOf(',');
-				if(common > -1) ipValue = ipValue.substring(0, common);//clientip,proxy1,proxy2
-				if(StringUtil.isIp(ipValue) && !"127.0.0.1".equals(ipValue)) return ipValue;
+				if(common > -1) {
+					//clientip,proxy1,proxy2
+					ipValue = ipValue.substring(0, common);
+				}
+				if(StringUtil.isIp(ipValue) && !"127.0.0.1".equals(ipValue)) {
+					return ipValue;
+				}
 			}
 		}
 		return exchange.getSourceAddress().getAddress().getHostAddress();

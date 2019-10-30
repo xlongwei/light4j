@@ -7,9 +7,12 @@ import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.IdCardUtil;
 import com.xlongwei.light4j.util.ImageUtil;
+import com.xlongwei.light4j.util.NumberUtil;
+import com.xlongwei.light4j.util.PlateUtil;
 import com.xlongwei.light4j.util.RedisCache;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 
 /**
@@ -34,14 +37,38 @@ public class ValidateHandler extends AbstractHandler {
 			switch(type) {
 			case "numbers": valid = StringUtil.isNumbers(value); break;
 			case "decimal": valid = StringUtil.isDecimal(value); break;
-			case "money": valid = StringUtil.isMoney(value); break;
+			case "money": {
+				valid = StringUtil.isMoney(value);
+				if(valid) {
+					String daxie = NumberUtil.daxie(value);
+					map.put("daxie", daxie);
+				}
+				break;
+			}
 			case "identifier": valid = StringUtil.isIdentifier(value); break;
 			case "chinese": valid = StringUtil.isChinese(value); break;
 			case "email": valid = StringUtil.isEmail(value); break;
 			case "tel": valid = StringUtil.isTel(value); break;
-			case "mobile": valid = StringUtil.isMobile(value); map.put("type", String.valueOf(StringUtil.getMobileType(value))); break;
+			case "mobile": {
+				valid = StringUtil.isMobile(value);
+				map.put("type", String.valueOf(StringUtil.getMobileType(value)));
+				Map<String, String> searchToMap = MobileHandler.searchToMap(value);
+				if(MapUtil.isNotEmpty(searchToMap)) {
+					map.putAll(searchToMap);
+				}
+				break;
+			}
 			case "barcode": valid = StringUtil.isBarcode(value); break;
-			case "ip": valid = StringUtil.isIp(value); break;
+			case "ip": {
+				valid = StringUtil.isIp(value);
+				if(valid) {
+					Map<String, String> searchToMap = IpHandler.searchToMap(value);
+					if(MapUtil.isNotEmpty(searchToMap)) {
+						map.putAll(searchToMap);
+					}
+				}
+				break;
+			}
 			case "url": valid = StringUtil.isUrl(value); break;
 			case "idArea": valid = IdCardUtil.areas.containsKey(value); map.put("area", StringUtil.join(IdCardUtil.areas(value), null, null, null)); break;
 			case "idNumber": {
@@ -74,7 +101,14 @@ public class ValidateHandler extends AbstractHandler {
 			case "businessNo": valid = StringUtil.isBusinessNo(value); break;
 			case "organizationCode": valid = StringUtil.isOrganizationCode(value); break;
 			case "taxRegistrationNo": valid = StringUtil.isTaxRegistrationNo(value); break;
-			case "plateNumber": valid = StringUtil.isPlateNumber(value); break;
+			case "plateNumber": {
+				valid = StringUtil.isPlateNumber(value);
+				String text = PlateUtil.search(value);
+				if(text != null) {
+					map.put("text", text);
+				}
+				break;
+			}
 			case "bankCardNumber": valid = StringUtil.isBankCardNumber(value); break;
 			case "checkcode": {
 				String sid = HandlerUtil.getParam(exchange, "sid");

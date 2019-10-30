@@ -33,6 +33,8 @@
         <version.httpmime>4.5.2</version.httpmime>
         <version.fastjson>1.2.60</version.fastjson>
         <version.jodconverter>2.2.1</version.jodconverter>
+        <version.jodreports>2.4.0</version.jodreports>
+        <version.xom>1.2.5</version.xom>
         <version.zxing>3.2.1</version.zxing>
         <version.vcard>0.10.0</version.vcard>
         <version.easyexcel>1.1.2-beta5</version.easyexcel>
@@ -275,6 +277,16 @@
 		  <artifactId>jodconverter</artifactId>
 		  <version>${version.jodconverter}</version>
 		</dependency>
+		<dependency>
+		   <groupId>net.sf.jodreports</groupId>
+		   <artifactId>jodreports</artifactId>
+		   <version>${version.jodreports}</version>
+		</dependency>
+		<dependency>
+		  <groupId>xom</groupId>
+		  <artifactId>xom</artifactId>
+		  <version>${version.xom}</version>
+		</dependency>		
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
