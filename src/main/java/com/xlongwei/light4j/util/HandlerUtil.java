@@ -17,6 +17,7 @@ import com.networknt.utility.StringUtils;
 import com.networknt.utility.Util;
 import com.xlongwei.light4j.handler.ServiceHandler;
 
+import cn.hutool.core.util.CharsetUtil;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
 import io.undertow.server.HttpServerExchange;
@@ -126,6 +127,10 @@ public class HandlerUtil {
 		            		body.put(name, formValue.isFileItem() ? formValue : formValue.getValue());
 		            	}
 		            }
+		        }else {
+		        	InputStream inputStream = exchange.getInputStream();
+					String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
+		        	body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, CharsetUtil.UTF_8));
 		        }
 			}else if(StringUtils.isBlank(contentType) || StringUtil.containsOneOfIgnoreCase(contentType, TEXT, JSON, XML)) {
 				InputStream inputStream = exchange.getInputStream();
@@ -134,6 +139,8 @@ public class HandlerUtil {
 					Map<String, Object> bodyMap = ConfigUtil.stringMapObject(string);
 					if(bodyMap!=null && bodyMap.size()>0) {
 						body.putAll(bodyMap);
+					}else {
+						body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, CharsetUtil.UTF_8));
 					}
 					body.put(BODYSTRING, string);
 				}
@@ -276,6 +283,7 @@ public class HandlerUtil {
         }	
 	}
 	
+	/** 获取真实IP地址 */
 	public static String getIp(HttpServerExchange exchange) {
 		String[] ipHeaders = {"HTTP_X_FORWARDED_FOR","HTTP_CLIENT_IP","WL-Proxy-Client-IP","Proxy-Client-IP","X-Forwarded-For","X-Real-IP"};
 		HeaderMap requestHeaders = exchange.getRequestHeaders();

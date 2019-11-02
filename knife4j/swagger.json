@@ -1,0 +1,233 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "api swagger doc",
+        "version": "1.0",
+        "title": "Swagger-Bootstrap-UI",
+        "termsOfService": "https://api.xlongwei.com/",
+        "contact": {
+            "name": "admin@xlongwei.com"
+        }
+    },
+    "host": "",
+    "basePath": "/",
+    "tags": [{
+        "name": "service",
+        "description": "ServiceHandler"
+    }, {
+        "name": "openapi",
+        "description": "OpenapiHandler"
+    }],
+    "paths": {
+        "/service/datetime.json": {
+            "get": {
+                "tags": ["service"],
+                "summary": "获取当前时间",
+                "description": "获取当前时间",
+                "operationId": "datetime",
+                "produces": ["*/*"],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "originalRef": "datetime",
+                            "$ref": "#/definitions/datetime"
+                        }
+                    }
+                },
+                "deprecated": false
+            }
+        },
+        "/service/ip/region.json": {
+            "post": {
+                "tags": ["service"],
+                "summary": "IP地址查询",
+                "description": "IP地址查询",
+                "operationId": "ipRegionGet",
+                "produces": ["application/json"],
+                "parameters": [{
+                    "name": "ip",
+                    "in": "query",
+                    "description": "IP地址",
+                    "required": false,
+                    "type": "string",
+                    "x-example": "121.12.21.23"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "originalRef": "IpRegion",
+                            "$ref": "#/definitions/IpRegion"
+                        }
+                    }
+                }
+            }
+        },
+        "/service/mobile.json": {
+            "get": {
+                "tags": ["service"],
+                "summary": "手机归属查询",
+                "description": "手机归属查询",
+                "operationId": "mobileRegionGet",
+                "produces": ["application/json"],
+                "parameters": [{
+                    "name": "mobile",
+                    "in": "query",
+                    "description": "手机号",
+                    "required": true,
+                    "type": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "originalRef": "MobileRegion",
+                            "$ref": "#/definitions/MobileRegion"
+                        }
+                    }
+                }
+            }
+        },
+        "/openapi/datetime.json": {
+            "get": {
+                "tags": ["openapi"],
+                "summary": "获取当前时间",
+                "description": "获取当前时间",
+                "operationId": "datetimeAuth",
+                "produces": ["*/*"],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "originalRef": "BadRequest",
+                            "$ref": "#/definitions/BadRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [{
+                    "BearerToken": ["global"]
+                }],
+                "deprecated": false
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerToken": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    },
+    "definitions": {
+        "BadRequest": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "200"
+                },
+                "error": {
+                    "type": "string",
+                    "example": "bad request"
+                }
+            },
+            "title": "BadRequest"
+        },
+        "datetime": {
+            "type": "object",
+            "properties": {
+                "datetime": {
+                    "type": "string",
+                    "description": "当前时间"
+                }
+            },
+            "title": "datetime"
+        },
+        "IpRegion": {
+            "type": "object",
+            "title": "ip region",
+            "properties": {
+                "region": {
+                    "type": "string",
+                    "description": "地理位置",
+                    "example": "中国广东省深圳市电信"
+                },
+                "country": {
+                    "type": "string",
+                    "description": "国家",
+                    "example": "中国"
+                },
+                "area": {
+                    "type": "string",
+                    "description": "地区",
+                    "example": ""
+                },
+                "state": {
+                    "type": "string",
+                    "description": "省份",
+                    "example": "广东省"
+                },
+                "city": {
+                    "type": "string",
+                    "description": "城市",
+                    "example": "深圳市"
+                },
+                "isp": {
+                    "type": "string",
+                    "description": "服务商",
+                    "example": "电信"
+                }
+            }
+        },
+        "MobileRegion": {
+            "type": "object",
+            "title": "mobile region",
+            "properties": {
+                "region": {
+                    "type": "string",
+                    "description": "归属地",
+                    "example": "北京移动"
+                },
+                "valid": {
+                    "type": "string",
+                    "description": "是否有效",
+                    "example": "false"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "1移动 2联通 3电信",
+                    "example": "1"
+                },
+                "province": {
+                    "type": "string",
+                    "description": "省份",
+                    "example": "北京"
+                },
+                "city": {
+                    "type": "string",
+                    "description": "城市",
+                    "example": "北京"
+                },
+                "isp": {
+                    "type": "string",
+                    "description": "服务商",
+                    "example": "移动"
+                },
+                "areaCode": {
+                    "type": "string",
+                    "description": "区号",
+                    "example": "010"
+                },
+                "zipCode": {
+                    "type": "string",
+                    "description": "邮编",
+                    "example": "100000"
+                }
+            }
+        }
+    }
+}
