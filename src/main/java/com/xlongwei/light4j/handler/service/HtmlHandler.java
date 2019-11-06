@@ -107,7 +107,7 @@ public class HtmlHandler extends AbstractHandler {
 	public void crawlConfig(HttpServerExchange exchange) throws Exception {
 		String crawl = HandlerUtil.getParam(exchange, "crawl");
 		String config = HandlerUtil.getParamOrBody(exchange, "config");
-		boolean isDemo = StringUtil.hasLength(config) && crawl.startsWith("demo");
+		boolean isDemo = !JsonUtil.isEmpty(config) && crawl.startsWith("demo");
 		if(StringUtil.isBlank(crawl) || (isDemo)) {
 			//demo为演示配置，不允许外部使用
 		}else {
@@ -117,7 +117,7 @@ public class HtmlHandler extends AbstractHandler {
 			if(isClient) {
 				key = key.replace("light4j", userName);
 			}
-			if(StringUtil.isBlank(config)) {
+			if(JsonUtil.isEmpty(config)) {
 				config = RedisConfig.get(key);
 			}else {
 				if(isClient==false) {
@@ -148,7 +148,7 @@ public class HtmlHandler extends AbstractHandler {
 		}
 		String html = HandlerUtil.getParamOrBody(exchange, "html");
 		String url = HandlerUtil.getParam(exchange, "url");
-		if(StringUtil.isBlank(html)) {
+		if(JsonUtil.isEmpty(html)) {
 			boolean isUrl = StringUtil.isUrl(url), isWhite = isUrl&&!isClient&&StringUtil.splitContains(RedisConfig.get("livecode.white-domains"), StringUtil.rootDomain(new HttpURL(url).getHost()));
 			log.info("isUrl: {}, userName: {}, isClient: {}, isWhite: {}", isUrl, userName, isClient, isWhite);
 			boolean clientOrWhite = isClient || isWhite;

@@ -181,6 +181,11 @@ public class JsonUtil {
 		return parse.toJSONString();
 	}
 	
+	/** return true is json is one of: blank, {}, [] */
+	public static boolean isEmpty(String json) {
+		return json==null || (json=json.trim()).length()==0 || "{}".equals(json) || "[]".equals(json);
+	}
+	
 	/** @param isArray true=构建JSONArray false=构建JSONObject */
 	public static JsonBuilder builder(boolean isArray) { return new JsonBuilder(null, isArray); }
 	

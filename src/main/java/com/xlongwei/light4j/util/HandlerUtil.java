@@ -42,6 +42,7 @@ public class HandlerUtil {
 	public static final String MIMETYPE_JSON = MimeMappings.DEFAULT.getMimeType("json"), MIMETYPE_TXT = MimeMappings.DEFAULT.getMimeType("txt");
 	private static final String TEXT = "text", XML = "xml", JSON = "json";
 	private static final String SHOWAPI_USER_ID = "showapi_userId";
+	private static final String ACCESS_CONTROL_ALLOW_HEADERS = Headers.CONTENT_TYPE_STRING + ", " + Headers.WWW_AUTHENTICATE_STRING + ", " + Headers.AUTHORIZATION_STRING;
 	/**
 	 * 请求参数和正文
 	 */
@@ -271,15 +272,13 @@ public class HandlerUtil {
 	public static void setCorsHeaders(HttpServerExchange exchange) {
 		HeaderMap responseHeaders = exchange.getResponseHeaders();
 		responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-		responseHeaders.addAll(CorsHeaders.ACCESS_CONTROL_ALLOW_METHODS, Util.METHODS);
+		responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_METHODS, StringUtil.join(Util.METHODS, null, null, ", "));
 		HeaderMap headers = exchange.getRequestHeaders();
         HeaderValues requestedHeaders = headers.get(CorsHeaders.ACCESS_CONTROL_REQUEST_HEADERS);
         if (requestedHeaders != null && !requestedHeaders.isEmpty()) {
-        	responseHeaders.addAll(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, requestedHeaders);
+        	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, StringUtil.join(requestedHeaders, null, null, ", "));
         } else {
-        	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, Headers.CONTENT_TYPE_STRING);
-        	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, Headers.WWW_AUTHENTICATE_STRING);
-        	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, Headers.AUTHORIZATION_STRING);
+        	responseHeaders.add(CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_HEADERS);
         }	
 	}
 	
