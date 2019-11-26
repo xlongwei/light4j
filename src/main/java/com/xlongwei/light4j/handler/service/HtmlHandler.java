@@ -133,28 +133,43 @@ public class HtmlHandler extends AbstractHandler {
 	}
 	
 	public void crawlData(HttpServerExchange exchange) throws Exception {
-		String crawl = HandlerUtil.getParam(exchange, "crawl");
-		if(StringUtil.isBlank(crawl)) {
-			return;
-		}
+		String crawl = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "crawl"), "temp");
 		String key = "crawler.crawl.light4j-"+crawl;
 		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
-		boolean isClient = ConfigUtil.isClient(userName);
+		boolean isClient = ConfigUtil.isClient(userName), isTemp = "temp".equals(crawl);
 		if(isClient) {
 			key = key.replace("light4j", userName);
 		}
-		if(StringUtil.isBlank(RedisConfig.get(key)) || RedisConfig.ttl(RedisConfig.CACHE, key)>0){
+		String bodyString = HandlerUtil.getBodyString(exchange);
+		String html = HandlerUtil.getParam(exchange, "html");
+		String url = HandlerUtil.getParam(exchange, "url");
+		if(!StringUtil.isBlank(bodyString)) {
+			if(bodyString.contains("<head>")) {
+				if(JsonUtil.isEmpty(html)) {
+					html = bodyString;
+				}
+			}else {
+				if(isTemp) {
+					RedisConfig.set(key, bodyString);
+				}
+			}
+		}
+		if(StringUtil.isBlank(RedisConfig.get(key))) {
 			return;
 		}
-		String html = HandlerUtil.getParamOrBody(exchange, "html");
-		String url = HandlerUtil.getParam(exchange, "url");
 		if(JsonUtil.isEmpty(html)) {
 			boolean isUrl = StringUtil.isUrl(url), isWhite = isUrl&&!isClient&&StringUtil.splitContains(RedisConfig.get("livecode.white-domains"), StringUtil.rootDomain(new HttpURL(url).getHost()));
 			log.info("isUrl: {}, userName: {}, isClient: {}, isWhite: {}", isUrl, userName, isClient, isWhite);
 			boolean clientOrWhite = isClient || isWhite;
 			if(isUrl && clientOrWhite) {
-				final String finalUrl = url;
-				html = RedisConfig.get(HtmlUtil.cache, url, () -> HtmlUtil.get(finalUrl));
+				html = RedisConfig.get(HtmlUtil.cache, url);
+				if(isTemp || JsonUtil.isEmpty(html)) {
+					html = HtmlUtil.get(url);
+					if(JsonUtil.isEmpty(html)) {
+						return;
+					}
+					RedisConfig.set(HtmlUtil.cache, url, html);
+				}
 			}else {
 				return;
 			}
@@ -163,7 +178,7 @@ public class HtmlHandler extends AbstractHandler {
 			RedisConfig.set(HtmlUtil.cache, url, html);
 		}
 		String service = StringUtil.firstNotBlank(RedisConfig.get("crawler.crawl.ourjs"), "http://localhost:8055")+"/crawl.json";
-		String resp = HtmlUtil.get(service+"?url=html:"+url+"&step=property:"+key);
+		String resp = HtmlUtil.get(service+"?url=html:"+url.replace("?", "%3F").replace("=", "%3D").replace("&", "%26")+"&step=property:"+key);
 		log.info("crawl data resp: {}", resp);
 		Map<String, Object> map = new HashMap<>(4);
 		map.put("crawl", crawl);
