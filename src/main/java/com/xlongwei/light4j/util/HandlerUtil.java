@@ -140,7 +140,7 @@ public class HandlerUtil {
 					Map<String, Object> bodyMap = ConfigUtil.stringMapObject(string);
 					if(bodyMap!=null && bodyMap.size()>0) {
 						body.putAll(bodyMap);
-					}else {
+					}else if(string.indexOf('=')>0){
 						body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, CharsetUtil.UTF_8));
 					}
 					body.put(BODYSTRING, string);

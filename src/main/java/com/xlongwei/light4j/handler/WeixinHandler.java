@@ -37,32 +37,31 @@ public class WeixinHandler implements LightHttpHandler {
         }
 		HandlerUtil.parseBody(exchange);
 		String echostr = HandlerUtil.getParam(exchange, "echostr");
+		String timestamp = HandlerUtil.getParam(exchange, "timestamp");
+		String nonce = HandlerUtil.getParam(exchange, "nonce");
 		if(!StringUtil.isBlank(echostr)) {
 			String signature = HandlerUtil.getParam(exchange, "signature");
-			String timestamp = HandlerUtil.getParam(exchange, "timestamp");
-			String nonce = HandlerUtil.getParam(exchange, "nonce");
 			String token = HandlerUtil.getParam(exchange, "token");
 			String response = WeixinUtil.checkSignature(signature, timestamp, nonce, token) ? echostr : "";
 			exchange.getResponseSender().send(response);
+			log.info("echostr: {}, timestamp: {}, nonce: {}, signature: {}, token: {}", echostr, timestamp, nonce, signature, token);
 		}else {
-			String xml = HandlerUtil.getParam(exchange, HandlerUtil.BODYSTRING);
-			String timestamp = HandlerUtil.getParam(exchange, "timestamp");
-			String nonce = HandlerUtil.getParam(exchange, "nonce");
+			String xml = HandlerUtil.getBodyString(exchange);
 			boolean aes = "aes".equals(HandlerUtil.getParam(exchange, "encrypt_type"));
-			log.info(xml);
+			log.info("timestamp: {}, nonce: {}, aes: {}", timestamp, nonce, aes);
 			if(aes) {
 				String msgSignature = HandlerUtil.getParam(exchange, "msg_signature");
 				String decrypt = WeixinUtil.decrypt(WeixinUtil.appid, msgSignature, timestamp, nonce, xml);
-				log.info("decrypt: "+decrypt);
+				log.info("msg_signature: {}, decrypt: {}", msgSignature, decrypt);
 				xml = decrypt;
 			}
 			AbstractMessage msg = StringUtil.isBlank(xml) ? null : AbstractMessage.fromXML(xml);
 			msg = msg == null ? null : WeixinUtil.dispatch(msg);
 			xml = msg !=null ? msg.toXML() : "";
-			log.info(xml);
+			log.info("response: {}", xml);
 			if(aes && !StringUtil.isBlank(xml)) {
 				String encrypt = WeixinUtil.encrypt(WeixinUtil.appid, xml, timestamp, nonce);
-				log.info("encrypt: "+encrypt);
+				log.info("encrypt: {}", encrypt);
 				xml = encrypt;
 			}
 			exchange.getResponseSender().send(xml);
