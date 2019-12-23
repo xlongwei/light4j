@@ -4,7 +4,7 @@ daemon=true
 appname=light4j
 jarfile=target/light4j.jar
 [ ! -e "$jarfile" ] && jarfile=light4j.jar
-JVM_OPS="-Xmx384m -Xss228k"
+JVM_OPS="-Xmx196m -Xms196m -XX:NewSize=100m -XX:MaxNewSize=100m -Xss228k"
 JVM_OPS="$JVM_OPS -Dlogserver -DcontextName=light4j"
 #ENV_OPS="PATH=/usr/java/jdk1.8.0_161/bin:$PATH"
 JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
