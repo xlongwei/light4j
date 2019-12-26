@@ -13,7 +13,8 @@ JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
 #JVM_OPS="$JVM_OPS -Dsoffice.hosts=xlongwei:8100-8102:true"
 #JVM_OPS="$JVM_OPS -Dupload.url=http://ip/uploads/"
 #ENV_OPS="$ENV_OPS enableHttp=false httpPort=8080"
-#ENV_OPS="$ENV_OPS enableHttps=true httpsPort=8443"
+ENV_OPS="$ENV_OPS enableHttps=true httpsPort=8443"
+#ENV_OPS="$ENV_OPS workerThreads=18"
 #ENV_OPS="$ENV_OPS enableRegistry=true STATUS_HOST_IP=api.xlongwei.com"
 
 usage(){
@@ -80,9 +81,9 @@ start(){
 	JVM_OPS="-server -Djava.awt.headless=true $JVM_OPS"
 	#env $ENV_OPS java $JVM_OPS -jar target/light4j-3.0.1.jar 2>&1
 	if [ "$daemon" = "true" ]; then
-		env $ENV_OPS setsid java $JVM_OPS -cp $jarfile com.xlongwei.light4j.Servers >> /dev/null 2>&1 &
+		env $ENV_OPS setsid java $JVM_OPS -cp $jarfile com.networknt.server.Servers >> /dev/null 2>&1 &
 	else
-		env $ENV_OPS java $JVM_OPS -cp $jarfile com.xlongwei.light4j.Servers 2>&1
+		env $ENV_OPS java $JVM_OPS -cp $jarfile com.networknt.server.Servers 2>&1
 	fi
 }
 
