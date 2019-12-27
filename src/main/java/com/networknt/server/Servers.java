@@ -70,11 +70,9 @@ public class Servers {
 
     static final String STATUS_HOST_IP = "STATUS_HOST_IP";
 
-    // service_id in slf4j MDC
     static final String SID = "sId";
 
-    @Deprecated //use getServerConfig() method instead
-    public static ServerConfig config = getServerConfig(); // there are a lot of users are using the static variable in their code.
+    public static ServerConfig config = getServerConfig();
 
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
     /** a list of service ids populated by startup hooks that want to register to the service registry */
@@ -144,8 +142,9 @@ public class Servers {
 
         // add startup hooks here.
         StartupHookProvider[] startupHookProviders = SingletonServiceFactory.getBeans(StartupHookProvider.class);
-        if (startupHookProviders != null)
-            Arrays.stream(startupHookProviders).forEach(s -> s.onStartup());
+        if (startupHookProviders != null) {
+			Arrays.stream(startupHookProviders).forEach(s -> s.onStartup());
+		}
 
         // For backwards compatibility, check if a handler.yml has been included. If
         // not, default to original configuration.
@@ -207,98 +206,87 @@ public class Servers {
         try {
             Undertow.Builder builder = Undertow.builder();
             if (serverConfig.enableHttps) {
-//                port = port < 0 ? serverConfig.getHttpsPort() : port;
             	port = serverConfig.getHttpsPort();
                 sslContext = createSSLContext();
                 builder.addHttpsListener(port, serverConfig.getIp(), sslContext);
             }
             if (serverConfig.enableHttp) {
-//                port = port < 0 ? serverConfig.getHttpPort() : port;
             	port = serverConfig.getHttpPort();
                 builder.addHttpListener(serverConfig.getHttpPort(), serverConfig.getIp());
             }
             if(serverConfig.enableHttps==false && serverConfig.enableHttp==false) {
-                throw new RuntimeException(
-                        "Unable to start the server as both http and https are disabled in server.yml");
+                throw new RuntimeException("Unable to start the server as both http and https are disabled in server.yml");
             }
-
             if (serverConfig.enableHttp2) {
                 builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
             }
-
             if (serverConfig.isEnableTwoWayTls()) {
                builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
             }
-
-            // set and validate server options
             serverOptionInit();
-
             server = builder.setBufferSize(serverConfig.getBufferSize()).setIoThreads(serverConfig.getIoThreads())
-                    // above seems slightly faster in some configurations
                     .setSocketOption(Options.BACKLOG, serverConfig.getBacklog())
-                    .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) // don't send a keep-alive header for
-                    // HTTP/1.1 requests, as it is not required
+                    .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, true)
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
                     .setServerOption(UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL, serverConfig.isAllowUnescapedCharactersInUrl())
                     .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
-
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
             System.out.println("Failed to bind to port " + port + ". Trying " + ++port);
-            if (logger.isInfoEnabled())
-                logger.info("Failed to bind to port " + port + ". Trying " + ++port);
+            if (logger.isInfoEnabled()) {
+				logger.info("Failed to bind to port " + port + ". Trying " + ++port);
+			}
             return false;
         }
-        // application level service registry. only be used without docker container.
         if (serverConfig.enableRegistry) {
-            // assuming that registry is defined in service.json, otherwise won't start the server.
             serviceUrls = new ArrayList<>();
             serviceUrls.add(register(serverConfig.getServiceId(), port));
-            // check if any serviceIds from startup hook that need to be registered.
             if(serviceIds.size() > 0) {
                 for(String id: serviceIds) {
                     serviceUrls.add(register(id, port));
                 }
             }
-            // start heart beat if registry is enabled
             SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
-            if (logger.isInfoEnabled()) logger.info("Registry heart beat switcher is on");
+            if (logger.isInfoEnabled()) {
+				logger.info("Registry heart beat switcher is on");
+			}
         }
-
         if (serverConfig.enableHttp) {
         	port = serverConfig.getHttpPort();
             System.out.println("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
-            if (logger.isInfoEnabled())
-                logger.info("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+            if (logger.isInfoEnabled()) {
+				logger.info("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+			}
         } else {
             System.out.println("Http port disabled.");
-            if (logger.isInfoEnabled())
-                logger.info("Http port disabled.");
+            if (logger.isInfoEnabled()) {
+				logger.info("Http port disabled.");
+			}
         }
         if (serverConfig.enableHttps) {
         	port = serverConfig.getHttpsPort();
             System.out.println("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
-            if (logger.isInfoEnabled())
-                logger.info("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+            if (logger.isInfoEnabled()) {
+				logger.info("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+			}
         } else {
             System.out.println("Https port disabled.");
-            if (logger.isInfoEnabled())
-                logger.info("Https port disabled.");
+            if (logger.isInfoEnabled()) {
+				logger.info("Https port disabled.");
+			}
         }
-
         return true;
     }
 
     static public void stop() {
-        if (server != null)
-            server.stop();
+        if (server != null) {
+			server.stop();
+		}
     }
 
-    // implement shutdown hook here.
     static public void shutdown() {
-
         // need to unregister the service
         if (getServerConfig().enableRegistry && registry != null && serviceUrls != null) {
             for(URL serviceUrl: serviceUrls) {
@@ -306,8 +294,9 @@ public class Servers {
                 // Please don't remove the following line. When server is killed, the logback won't work anymore.
                 // Even debugger won't reach this point; however, the logic is executed successfully here.
                 System.out.println("unregister serviceUrl " + serviceUrl);
-                if (logger.isInfoEnabled())
-                    logger.info("unregister serviceUrl " + serviceUrl);
+                if (logger.isInfoEnabled()) {
+					logger.info("unregister serviceUrl " + serviceUrl);
+				}
             }
         }
 
@@ -323,8 +312,9 @@ public class Servers {
         }
 
         ShutdownHookProvider[] shutdownHookProviders = SingletonServiceFactory.getBeans(ShutdownHookProvider.class);
-        if (shutdownHookProviders != null)
-            Arrays.stream(shutdownHookProviders).forEach(s -> s.onShutdown());
+        if (shutdownHookProviders != null) {
+			Arrays.stream(shutdownHookProviders).forEach(s -> s.onShutdown());
+		}
 
         stop();
         logger.info("Cleaning up before server shutdown");
@@ -411,8 +401,6 @@ public class Servers {
         }
     }
 
-
-    // method used to merge status.yml and app-status.yml
     protected static void mergeStatusConfig() {
         Map<String, Object> appStatusConfig = Config.getInstance().getJsonMapConfigNoCache(STATUS_CONFIG_NAME[1]);
         if (appStatusConfig == null) {
@@ -447,8 +435,9 @@ public class Servers {
 	public static URL register(String serviceId, int port) {
         try {
             registry = SingletonServiceFactory.getBean(Registry.class);
-            if (registry == null)
-                throw new RuntimeException("Could not find registry instance in service map");
+            if (registry == null) {
+				throw new RuntimeException("Could not find registry instance in service map");
+			}
             // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment
             // variable. If this is null
             // then get the current server IP as it is not running in Kubernetes.
@@ -461,19 +450,23 @@ public class Servers {
             }
 
             ServerConfig serverConfig = getServerConfig();
-            Map parameters = new HashMap<>();
-            if (serverConfig.getEnvironment() != null)
-                parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
+            Map parameters = new HashMap<>(4);
+            if (serverConfig.getEnvironment() != null) {
+				parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
+			}
             URL serviceUrl = new URLImpl("light", ipAddress, port, serviceId, parameters);
-            if (logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
+            if (logger.isInfoEnabled()) {
+				logger.info("register service: " + serviceUrl.toFullStr());
+			}
             registry.register(serviceUrl);
             return serviceUrl;
             // handle the registration exception separately to eliminate confusion
         } catch (Exception e) {
             System.out.println("Failed to register service, the server stopped.");
             e.printStackTrace();
-            if (logger.isInfoEnabled())
-                logger.info("Failed to register service, the server stopped.", e);
+            if (logger.isInfoEnabled()) {
+				logger.info("Failed to register service, the server stopped.", e);
+			}
             throw new RuntimeException(e.getMessage());
         }
 

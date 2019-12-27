@@ -13,6 +13,7 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.alibaba.fastjson.JSONObject;
 import com.qq.weixin.mp.aes.AesException;
 import com.qq.weixin.mp.aes.WXBizMsgCrypt;
 import com.xlongwei.light4j.util.FileUtil.Charsets;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @SuppressWarnings({"rawtypes","unchecked"})
 public class WeixinUtil {
 	public static String service = "https://api.weixin.qq.com/cgi-bin/", appid = "wx78b808148023e9fa";
+	public static String appidTest = "wx5bb3e90365f54b7a", touserTest = "gh_f6216a9ae70b", appsecretTest = "d4624c36b6795d1d99dcf0547af5443d";
 	public static String cache = "weixin", accessTokenKey = "access_token", jsapiTicketKey = "jsapi_ticket";
 	private static Map<Class<?>,Field[]> fieldsCache = new HashMap<>(32);
 	private static Map<String, Class<? extends AbstractMessage>> classCache = new HashMap<>(16);
@@ -132,6 +134,11 @@ public class WeixinUtil {
 			log.warn(e.getMessage());
 		}
 		return null;
+	}
+	
+	/** 发送模板消息 */
+	public static JSONObject templateSend(String accessToken, JSONObject body) {
+		return JsonUtil.parse(cn.hutool.http.HttpUtil.post(service+"message/template/send?access_token="+accessToken, body.toJSONString()));
 	}
 	
 	/** 注册消息处理类 */

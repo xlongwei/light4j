@@ -1,7 +1,10 @@
 package com.xlongwei.light4j.handler.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
+import com.xlongwei.light4j.handler.weixin.SubscribeHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
+import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.WeixinUtil;
@@ -9,12 +12,14 @@ import com.xlongwei.light4j.util.WeixinUtil.AbstractMessage;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessage.TextMessage;
 
 import io.undertow.server.HttpServerExchange;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * weixin handler
  * @author xlongwei
  *
  */
+@Slf4j
 public class WeixinHandler extends AbstractHandler {
 
 	public void chat(HttpServerExchange exchange) throws Exception {
@@ -30,6 +35,31 @@ public class WeixinHandler extends AbstractHandler {
 			text = ((TextMessage)dispatch).getContent();
 			HandlerUtil.setResp(exchange, StringUtil.params("text", text));
 		}
+	}
+	
+	public void notify(HttpServerExchange exchange) throws Exception {
+		String text = HandlerUtil.getParam(exchange, "text");
+		String openid = HandlerUtil.getParam(exchange, "openid");
+		if(StringUtil.isBlank(text) || StringUtil.isBlank(openid)) {
+			return;
+		}
+		
+		String subscribe = RedisConfig.get(RedisConfig.CACHE, SubscribeHandler.WEIXIN_SUBSCRIBE+openid);
+		log.info("weixin.notify {} subscribe at {}", openid, subscribe);
+		if(StringUtil.isBlank(subscribe)) {
+			return;
+		}
+		
+		JSONObject send = JsonUtil.builder(false)
+				.put("touser", openid)
+				.put("template_id", "WEwOHqLkqTcRJlJSDi2okAU2gRUpgqW6Ah1soe0r6BI")
+				.put("url", "http://u5335.showapi.com/")
+				.putJSON("data")
+					.putJSON("notice")
+						.put("value", text)
+				.top().json();
+		JSONObject resp = WeixinUtil.templateSend(WeixinUtil.accessToken(WeixinUtil.appidTest, WeixinUtil.appsecretTest), send);
+		HandlerUtil.setResp(exchange, StringUtil.params("text", StringUtil.firstNotBlank(JsonUtil.get(resp, "errmsg"), "失败")));
 	}
 
 	public void token(HttpServerExchange exchange) throws Exception {
