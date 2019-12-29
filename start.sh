@@ -73,7 +73,7 @@ jars(){
 }
 
 deploy(){
-	mvn package -Prelease -Dmaven.javadoc.skip=true
+	mvn package -Prelease -Dmaven.test.skip=true -Dmaven.javadoc.skip=true
 }
 
 start(){

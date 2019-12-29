@@ -38,15 +38,33 @@ public class WeixinHandler extends AbstractHandler {
 	}
 	
 	public void notify(HttpServerExchange exchange) throws Exception {
-		String text = HandlerUtil.getParam(exchange, "text");
 		String openid = HandlerUtil.getParam(exchange, "openid");
-		if(StringUtil.isBlank(text) || StringUtil.isBlank(openid)) {
+		if(StringUtil.isBlank(openid)) {
 			return;
 		}
 		
 		String subscribe = RedisConfig.get(RedisConfig.CACHE, SubscribeHandler.WEIXIN_SUBSCRIBE+openid);
 		log.info("weixin.notify {} subscribe at {}", openid, subscribe);
 		if(StringUtil.isBlank(subscribe)) {
+			return;
+		}
+		
+		String text = HandlerUtil.getParam(exchange, "text");
+		if(StringUtil.isBlank(text)) {
+			text = HandlerUtil.getParam(exchange, "chat");
+			if(!StringUtil.isBlank(text)) {
+				TextMessage textMsg = new TextMessage();
+				textMsg.setFromUserName(openid);
+				textMsg.setContent(text);
+				AbstractMessage dispatch = WeixinUtil.dispatch(textMsg);
+				if(dispatch!=null && dispatch instanceof TextMessage) {
+					log.info("weixin.chat with {}", text);
+					text = ((TextMessage)dispatch).getContent();
+					log.info("weixin.chat resp {}", text);
+				}
+			}
+		}
+		if(StringUtil.isBlank(text)) {
 			return;
 		}
 		
