@@ -14,7 +14,7 @@ JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
 #JVM_OPS="$JVM_OPS -Dupload.url=http://ip/uploads/"
 #ENV_OPS="$ENV_OPS enableHttp=false httpPort=8080"
 ENV_OPS="$ENV_OPS enableHttps=true httpsPort=8443"
-#ENV_OPS="$ENV_OPS workerThreads=18"
+ENV_OPS="$ENV_OPS workerThreads=9"
 #ENV_OPS="$ENV_OPS enableRegistry=true STATUS_HOST_IP=api.xlongwei.com"
 
 usage(){
@@ -31,6 +31,7 @@ usage(){
     echo "  rebuild     stop && jar && start"
     echo "  refresh     stop && clean && jar && jars && start"
     echo "  deploy      package fat-jar $jarfile"
+    echo "  redeploy    package fat-jar $jarfile and restart"
     echo "  keystore    prepare keystore、crt、trustore"
 }
 
@@ -117,6 +118,7 @@ else
 	rebuild) stop && jar && start ;;
 	refresh) stop && clean && jar && jars && start ;;
 	deploy) deploy ;;
+	redeploy) stop && deploy && start ;;
 	keystore) keystore $@;;
 	*) usage ;;
 	esac
