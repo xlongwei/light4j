@@ -57,8 +57,10 @@ public class MobileHandler extends AbstractHandler {
 	static {
 		ByteArrayOutputStream byteData = new ByteArrayOutputStream();
 
+		boolean failData = true;
 		try(InputStream inputStream = new BufferedInputStream(ConfigUtil.stream("phone.dat"))) {
 			IOUtils.copy(inputStream, byteData);
+			failData = false;
 		} catch (Exception e) {
 			log.warn("fail to init phone.dat, ex: {}", e.getMessage());
 		}
@@ -67,10 +69,10 @@ public class MobileHandler extends AbstractHandler {
 
 		BYTE_BUFFER = ByteBuffer.wrap(DATA_BYTE_ARRAY);
 		BYTE_BUFFER.order(ByteOrder.LITTLE_ENDIAN);
-		int dataVersion = BYTE_BUFFER.getInt();
-		INDEX_AREA_OFFSET = BYTE_BUFFER.getInt();
+		int dataVersion = failData ? 0 : BYTE_BUFFER.getInt();
+		INDEX_AREA_OFFSET = failData ? 0 : BYTE_BUFFER.getInt();
 
-		PHONE_RECORD_COUNT = (DATA_BYTE_ARRAY.length - INDEX_AREA_OFFSET) / INDEX_SEGMENT_LENGTH;
+		PHONE_RECORD_COUNT = failData ? 0 : (DATA_BYTE_ARRAY.length - INDEX_AREA_OFFSET) / INDEX_SEGMENT_LENGTH;
 		log.info("phone.dat loaded, dataVersion={}, recordCount={}", dataVersion, PHONE_RECORD_COUNT);
 	}
 

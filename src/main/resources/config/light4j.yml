@@ -1,5 +1,6 @@
 light4j:
-  directory: http://t.xlongwei.com/softwares/library/
+  # http://t.xlongwei.com/softwares/library/
+  directory: /soft/softwares/library/
   frontUrl: http://cms.xlongwei.com
 
 redis:

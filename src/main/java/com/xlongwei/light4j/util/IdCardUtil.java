@@ -24,22 +24,26 @@ public class IdCardUtil {
 	public static Map<String, String> areas = new HashMap<>();
 
 	static {
-		InputStream inputStream = ConfigUtil.stream("idcard.txt");
-		TextReader reader = new TextReader();
-		reader.open(inputStream, CharsetNames.UTF_8);
-		String line = null;
-		while ((line = reader.read()) != null) {
-			if (StringUtil.isBlank(line) || line.startsWith("#")) {
-				continue;
+		try {
+			InputStream inputStream = ConfigUtil.stream("idcard.txt");
+			TextReader reader = new TextReader();
+			reader.open(inputStream, CharsetNames.UTF_8);
+			String line = null;
+			while ((line = reader.read()) != null) {
+				if (StringUtil.isBlank(line) || line.startsWith("#")) {
+					continue;
+				}
+				String[] split = StringUtils.split(line);
+				if (split == null || split.length != 2) {
+					continue;
+				}
+				areas.put(split[0], split[1]);
 			}
-			String[] split = StringUtils.split(line);
-			if (split == null || split.length != 2) {
-				continue;
-			}
-			areas.put(split[0], split[1]);
+			reader.close();
+			log.info("idcard areas initialized, total areas: {}", areas.size());
+		}catch(Exception e) {
+			log.info("fail to init idcard.txt, ex: {}", e.getMessage());
 		}
-		reader.close();
-		log.info("idcard areas initialized, total areas: {}", areas.size());
 	}
 
 	/** 解析六位行政区划码 */
