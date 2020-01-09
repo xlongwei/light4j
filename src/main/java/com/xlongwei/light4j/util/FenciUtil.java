@@ -24,7 +24,6 @@ import org.ansj.splitWord.Analysis;
 import org.ansj.splitWord.analysis.BaseAnalysis;
 import org.ansj.splitWord.analysis.DicAnalysis;
 import org.ansj.splitWord.analysis.IndexAnalysis;
-import org.ansj.splitWord.analysis.NlpAnalysis;
 import org.ansj.splitWord.analysis.ToAnalysis;
 import org.ansj.util.MyStaticValue;
 import org.nlpcn.commons.lang.jianfan.JianFan;
@@ -83,7 +82,7 @@ public class FenciUtil {
 		if(a == null) {
 			switch(method) {
 			case TO: a = new ToAnalysis(); break;
-			case NLP: a = new NlpAnalysis(); break;
+//			case NLP: a = new NlpAnalysis(); break;
 			case DIC: a = new DicAnalysis(); break;
 			case INDEX: a = new IndexAnalysis(); break;
 			case BASE: a = new BaseAnalysis(); break;
@@ -187,9 +186,12 @@ public class FenciUtil {
 	/** 计算文章摘要
 	 * @param tagRed true 关键词标红
 	 */
-	public static String summary(String title, String content, boolean tagRed) {
-		SummaryComputer sc = new SummaryComputer(title, content) ;
-		Summary summary = sc.toSummary();
+	@SuppressWarnings({"unchecked","rawtypes"})
+	public static String summary(String title, String content, boolean tagRed, Method method) {
+		SummaryComputer sc = new SummaryComputer(title, content);
+		KeyWordComputer kc = new KeyWordComputer(10, getAnalysis(method));
+		List keywords = kc.computeArticleTfidf(title, content);
+		Summary summary = sc.toSummary(keywords);
 		TagContent tagContent = tagRed ? new TagContent("<font color=\"red\">", "</font>") : new TagContent("", "");
 		return tagContent.tagContent(summary);
 	}

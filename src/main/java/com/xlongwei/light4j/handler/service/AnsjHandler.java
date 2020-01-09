@@ -41,7 +41,7 @@ public class AnsjHandler extends AbstractHandler {
 			break;
 		case "summary":
 			boolean red = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "red"), true);
-			string = FenciUtil.summary(HandlerUtil.getParam(exchange, "title"), text, red);
+			string = FenciUtil.summary(HandlerUtil.getParam(exchange, "title"), text, red, NumberUtil.parseEnum(HandlerUtil.getParam(exchange, "method"), Method.TO));
 			break;
 		case "jianfan":
 			boolean fan = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "fan"), true);

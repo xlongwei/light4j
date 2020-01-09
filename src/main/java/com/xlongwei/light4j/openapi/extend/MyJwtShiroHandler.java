@@ -43,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
+@SuppressWarnings("deprecation")
 public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	
 	public MyJwtShiroHandler() {
