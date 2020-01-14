@@ -73,7 +73,16 @@ public class HolidayUtil {
 	 * @return
 	 */
 	public static Date nextworkday(Date day) {
-		while(isworkday(day)==false) {
+		return nextworkday(day, false);
+	}
+	
+	/**
+	 * 返回下个工作日（如果day是工作日则返回day）
+	 * @param day
+	 * @param skipweekend true跳过周末
+	 */
+	public static Date nextworkday(Date day, boolean skipweekend) {
+		while(isworkday(day)==false || (skipweekend && isweekend(day))) {
 			day = DateUtil.offsetDay(day, 1);
 		}
 		return day;
@@ -86,14 +95,24 @@ public class HolidayUtil {
 	 * @return
 	 */
 	public static Date offsetworkday(Date day, int offset) {
+		return offsetworkday(day, offset, false);
+	}
+	
+	/**
+	 * 返回某天加减N个工作日
+	 * @param day
+	 * @param offset
+	 * @param skipweekend true跳过周末
+	 */
+	public static Date offsetworkday(Date day, int offset, boolean skipweekend) {
 		if(offset==0) {
-			return nextworkday(day);
+			return nextworkday(day, skipweekend);
 		}else {
 			int step = offset>0 ? 1 : -1;
 			offset = Math.abs(offset);
 			while(offset>0) {
 				day = DateUtil.offsetDay(day, step);
-				while(isworkday(day)==false) {
+				while(isworkday(day)==false || (skipweekend && isweekend(day))) {
 					day = DateUtil.offsetDay(day, step);
 				}
 				offset -= 1;
@@ -108,14 +127,14 @@ public class HolidayUtil {
 	 * @param end
 	 * @return
 	 */
-	public static int betweenworkday(Date start, Date end) {
+	public static int betweenworkday(Date start, Date end, boolean skipweekend) {
 		int workdays = 0;
 		DateRange range = start.after(end) ? DateUtil.range(end, start, DateField.DAY_OF_MONTH)
 				: DateUtil.range(start, end, DateField.DAY_OF_MONTH);
 		Iterator<DateTime> iterator = range.iterator();
 		while(iterator.hasNext()) {
 			DateTime next = iterator.next();
-			if(isworkday(next)) {
+			if(isworkday(next) && (skipweekend==false || isweekend(next))) {
 				workdays++;
 			}
 		}

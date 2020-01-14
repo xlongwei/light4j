@@ -65,11 +65,11 @@ public class DatetimeHandler extends AbstractHandler {
 			map.put("isweekend", HolidayUtil.isweekend(day));
 			break;
 		case "nextworkday":
-			day = HolidayUtil.nextworkday(day);
+			day = HolidayUtil.nextworkday(day, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
 			map.put("nextworkday", DateUtil.dateFormat.format(day));
 			break;
 		case "offsetworkday":
-			day = HolidayUtil.offsetworkday(day, NumberUtil.parseInt(HandlerUtil.getParam(exchange, "offset"), 0));
+			day = HolidayUtil.offsetworkday(day, NumberUtil.parseInt(HandlerUtil.getParam(exchange, "offset"), 0), NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
 			map.put("offsetworkday", DateUtil.dateFormat.format(day));
 			break;
 		case "offsetday":
@@ -101,7 +101,7 @@ public class DatetimeHandler extends AbstractHandler {
 				start = start==null ? day : start;
 				end = end==null ? day : end;
 				long between = "betweenday".equals(path) ? cn.hutool.core.date.DateUtil.betweenDay(start, end, true)
-						: HolidayUtil.betweenworkday(start, end);
+						: HolidayUtil.betweenworkday(start, end, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
 				map.put(path, between);
 			}
 			break;
