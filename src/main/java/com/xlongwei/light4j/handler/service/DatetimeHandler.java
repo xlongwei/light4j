@@ -30,6 +30,10 @@ public class DatetimeHandler extends AbstractHandler {
 	private static FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
 	
 	public DatetimeHandler() {
+		reload();
+	}
+
+	private void reload() {
 		String holidays = RedisConfig.get("datetime.holidays");
 		if(StringUtil.isBlank(holidays)) {
 			return;
@@ -52,7 +56,7 @@ public class DatetimeHandler extends AbstractHandler {
 			exchange.getResponseSender().send("{\"datetime\":\""+datetime+"\"}");
 			return;
 		}
-		Date day = DateUtil.parseNow(HandlerUtil.getParam(exchange, "day"));
+		Date day = DateUtil.parseNow(HandlerUtil.getParam(exchange, "day")), start = null, end = null;
 		Map<String, Object> map = new HashMap<>(4);
 		switch(path) {
 		case "isworkday":
@@ -96,13 +100,50 @@ public class DatetimeHandler extends AbstractHandler {
 			break;
 		case "betweenday":
 		case "betweenworkday":
-			Date start = DateUtil.parse(HandlerUtil.getParam(exchange, "start")), end = DateUtil.parse(HandlerUtil.getParam(exchange, "end"));
-			if(start!=null || end!=null) {
+			start = DateUtil.parse(HandlerUtil.getParam(exchange, "start")); end = DateUtil.parse(HandlerUtil.getParam(exchange, "end"));
+			if(start==null && end==null) {
+				start = cn.hutool.core.date.DateUtil.beginOfYear(day);
+			}
+			start = start==null ? day : start;
+			end = end==null ? day : end;
+			long between = "betweenday".equals(path) ? cn.hutool.core.date.DateUtil.betweenDay(start, end, true)
+					: HolidayUtil.betweenworkday(start, end, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
+			map.put(path, between);
+			map.put("start", DateUtil.dayFormat.format(start));
+			map.put("end", DateUtil.dayFormat.format(end));
+			break;
+		case "workday":
+			String type = HandlerUtil.getParam(exchange, "type");
+			map.put("day", day);
+			if("isworkday".equals(type)) {
+				map.put("isworkday", HolidayUtil.isworkday(day));
+			}else if("isholiday".equals(type)) {
+				map.put("isholiday", HolidayUtil.isholiday(day));
+			}else if("isweekend".equals(type)) {
+				map.put("isweekend", HolidayUtil.isweekend(day));
+			}else if("nextworkday".equals(type)) {
+				day = HolidayUtil.nextworkday(day, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
+				map.put("day", DateUtil.dateFormat.format(day));
+			}else if("offsetworkday".equals(type)) {
+				day = HolidayUtil.offsetworkday(day, NumberUtil.parseInt(HandlerUtil.getParam(exchange, "offset"), 0), NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
+				map.put("day", DateUtil.dateFormat.format(day));
+			}else if("offsetday".equals(type)) {
+				day = cn.hutool.core.date.DateUtil.offsetDay(day, NumberUtil.parseInt(HandlerUtil.getParam(exchange, "offset"), 0));
+				map.put("day", DateUtil.dateFormat.format(day));
+			}else if("countday".equals(type) || "countworkday".equals(type)) {
+				start = DateUtil.parse(HandlerUtil.getParam(exchange, "start")); end = DateUtil.parse(HandlerUtil.getParam(exchange, "end"));
+				if(start==null && end==null) {
+					start = cn.hutool.core.date.DateUtil.beginOfYear(day);
+				}
 				start = start==null ? day : start;
 				end = end==null ? day : end;
-				long between = "betweenday".equals(path) ? cn.hutool.core.date.DateUtil.betweenDay(start, end, true)
-						: HolidayUtil.betweenworkday(start, end, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
-				map.put(path, between);
+				map.put("start", DateUtil.dayFormat.format(start));
+				map.put("end", DateUtil.dayFormat.format(end));
+				map.put("count", "countday".equals(type) ? cn.hutool.core.date.DateUtil.betweenDay(start, end, true)
+						: HolidayUtil.betweenworkday(start, end, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false)));
+			}else if("reload".equals(type)){
+				reload();
+				map.put("reload", HolidayUtil.holidays.size());
 			}
 			break;
 		default:
