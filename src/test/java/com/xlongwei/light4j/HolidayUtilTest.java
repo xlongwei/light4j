@@ -7,6 +7,11 @@ import org.junit.Test;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HolidayUtil;
 
+/**
+ * holiday util test
+ * @author xlongwei
+ *
+ */
 public class HolidayUtilTest {
 	
 	@Test public void test() throws Exception {

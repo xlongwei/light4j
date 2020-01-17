@@ -46,7 +46,7 @@
         <version.hutool>4.6.8</version.hutool>
         <version.shiro>1.2.3</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
-        <version.bouncycastle>1.38</version.bouncycastle>
+        <version.bouncycastle>1.64</version.bouncycastle>
     </properties>
 
     <dependencies>
