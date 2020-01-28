@@ -1,7 +1,5 @@
 package com.xlongwei.light4j.handler.weixin;
 
-import java.util.regex.Pattern;
-
 import com.xlongwei.light4j.util.PlateUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
@@ -13,14 +11,19 @@ import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextH
  */
 public class PlateHandler extends AbstractTextHandler {
 	
-	public static Pattern pattern = Pattern.compile("(?:车牌号?)?([京沪津渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤川青藏琼宁][a-zA-Z]-?[0-9a-zA-Z]{0,5})");
-
 	@Override
 	public String handle(String content) {
-		if(StringUtil.isBlank(content) || StringUtil.isBlank(content=StringUtil.getPatternString(content, pattern))) {
+		if(StringUtil.isBlank(content)) {
 			return null;
 		}
-		return PlateUtil.search(content);
+		boolean search = false;
+		if(content.length()>3 && content.startsWith("车牌")) {
+			content = content.charAt(2)=='号' ? content.substring(3) : content.substring(2);
+			search = true;
+		}else {
+			search = StringUtil.isPlateNumber(content);
+		}
+		return search ? PlateUtil.search(content) : null;
 	}
 
 }

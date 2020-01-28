@@ -47,9 +47,9 @@ public class HolidayUtilTest {
 		assertEquals("2020-01-02", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-01-01"))));
 		assertEquals("2020-01-20", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-01-18"), true)));
 		assertEquals("2020-01-23", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-01-23"))));
-		assertEquals("2020-01-31", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-01-24"))));
-		assertEquals("2020-01-31", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-01-30"))));
-		assertEquals("2020-02-01", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-02-01"))));
+		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-01-24"))));
+		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-01-30"))));
+		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-02-01"))));
 		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-02-02"))));
 		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.nextworkday(DateUtil.parse("2020-02-01"), true)));
 	}
@@ -59,14 +59,14 @@ public class HolidayUtilTest {
 		assertEquals("2020-01-19", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-18"), 1)));
 		assertEquals("2020-01-20", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-17"), 1, true)));
 		assertEquals("2020-01-20", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-18"), 1, true)));
-		assertEquals("2020-01-31", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-23"), 1)));
-		assertEquals("2020-01-31", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-30"), 1)));
-		assertEquals("2020-02-01", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-31"), 1)));
-		assertEquals("2020-02-01", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-30"), 2)));
-		assertEquals("2020-02-01", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-02-03"), -1)));
-		assertEquals("2020-02-01", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-02-08"), -6)));
+		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-23"), 1)));
+		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-30"), 1)));
+		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-31"), 1)));
+		assertEquals("2020-02-04", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-30"), 2)));
+		assertEquals("2020-01-23", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-02-03"), -1)));
+		assertEquals("2020-01-23", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-02-08"), -6)));
 		assertEquals("2020-02-07", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-02-09"), -1)));
-		assertEquals("2020-02-01", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-02-09"), -6)));
+		assertEquals("2020-01-23", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-02-09"), -6)));
 		assertEquals("2020-01-19", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-31"), -5)));
 		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-31"), 1, true)));
 	}
