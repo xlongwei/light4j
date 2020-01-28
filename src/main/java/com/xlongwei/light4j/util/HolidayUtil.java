@@ -24,13 +24,15 @@ public class HolidayUtil {
 	public static Map<String, String> plans = new HashMap<>(32);
 	public static Map<String, Integer> holidays = new HashMap<>(64);
 	public static FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy.MM.dd");
-	private static String days2020 = "{\"元旦节\":\"1.1\",\"春节\":\"-1.19,1.24-30,-2.1\",\"清明节\":\"4.4-6\",\"劳动节\":\"-4.26,5.1-5,-5.9\",\"端午节\":\"6.25-27,-6.28\",\"国庆节\":\"-9.27,10.1-8,-10.10\"}";
+	private static String days2020 = "{\"元旦节\":\"1.1\",\"春节\":\"-1.19,1.24-2.2\",\"清明节\":\"4.4-6\",\"劳动节\":\"-4.26,5.1-5,-5.9\",\"端午节\":\"6.25-27,-6.28\",\"国庆节\":\"-9.27,10.1-8,-10.10\"}";
 	private static String days2019 = "{\"元旦节\":\"1.1\",\"春节\":\"-2.2-3,2.4-10\",\"清明节\":\"4.5\",\"劳动节\":\"5.1\",\"端午节\":\"6.7\",\"中秋节\":\"9.13\",\"国庆节\":\"-9.29,10.1-7,-10.12\"}";
+	private static String days2018 = "{\"元旦节\":\"1.1\",\"春节\":\"-2.11,2.15-21,-2.24\",\"清明节\":\"4.5-7,-4.8\",\"劳动节\":\"-4.28,4.29-5.1\",\"端午节\":\"6.18\",\"中秋节\":\"9.24\",\"国庆节\":\"-9.29-30,10.1-7\"}";
 	private static FastDateFormat dayFormat = FastDateFormat.getInstance("M月d日");
 	
 	static {
 		addPlan("2020", days2020);
 		addPlan("2019", days2019);
+		addPlan("2018", days2018);
 	}
 	
 	/**
@@ -174,7 +176,7 @@ public class HolidayUtil {
 				continue;
 			}
 			int serial = holiday.ordinal()+1;
-			//春节=-1.19,1.24-30,-2.1
+			//春节=-1.19,1.24-2.2
 			String[] split = value.split("[,]");
 			for(String day : split) {
 				boolean isworkday = false;

@@ -1,6 +1,10 @@
 package com.xlongwei.light4j;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.TreeMap;
 
 import org.junit.Test;
 
@@ -15,8 +19,8 @@ import com.xlongwei.light4j.util.HolidayUtil;
 public class HolidayUtilTest {
 	
 	@Test public void test() throws Exception {
-		HolidayUtil.holidays.forEach((k,v) -> System.out.println(k+"="+v));
-		HolidayUtil.plans.forEach((k,v) -> System.out.println(k+"="+v));
+		new TreeMap<>(HolidayUtil.holidays).forEach((k,v) -> System.out.println(k+"="+v));
+		new TreeMap<>(HolidayUtil.plans).forEach((k,v) -> System.out.println(k+"="+v));
 		assertEquals("元旦节", HolidayUtil.nameOf(1));
 		assertEquals("春节", HolidayUtil.nameOf(2));
 		assertEquals("中秋节", HolidayUtil.nameOf(7));
@@ -33,8 +37,8 @@ public class HolidayUtilTest {
 		assertFalse(HolidayUtil.isworkday(DateUtil.parse("2020-01-28")));
 		assertFalse(HolidayUtil.isworkday(DateUtil.parse("2020-01-29")));
 		assertFalse(HolidayUtil.isworkday(DateUtil.parse("2020-01-30")));
-		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2020-01-31")));
-		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2020-02-01")));
+		assertFalse(HolidayUtil.isworkday(DateUtil.parse("2020-01-31")));
+		assertFalse(HolidayUtil.isworkday(DateUtil.parse("2020-02-01")));
 		assertFalse(HolidayUtil.isworkday(DateUtil.parse("2020-02-02")));
 		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2020-02-03")));
 	}

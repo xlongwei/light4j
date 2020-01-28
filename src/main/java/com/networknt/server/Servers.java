@@ -16,6 +16,32 @@
 
 package com.networknt.server;
 
+import java.net.InetAddress;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.xnio.Options;
+import org.xnio.SslClientAuthMode;
+
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
@@ -30,25 +56,11 @@ import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import com.networknt.utility.TlsUtil;
 import com.networknt.utility.Util;
-import io.undertow.Handlers;
+
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.GracefulShutdownHandler;
-import io.undertow.util.Headers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.xnio.Options;
-import org.xnio.SslClientAuthMode;
-
-import javax.net.ssl.*;
-import java.net.InetAddress;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.util.*;
 
 /**
  * This is the entry point of the framework. It wrapped Undertow Core HTTP
@@ -230,7 +242,7 @@ public class Servers {
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
                     .setServerOption(UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL, serverConfig.isAllowUnescapedCharactersInUrl())
-                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
+                    .setHandler(handler).setWorkerThreads(serverConfig.getWorkerThreads()).build();
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {

@@ -8,6 +8,7 @@ import java.util.Set;
 import com.networknt.cors.CorsUtil;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.utility.StringUtils;
+import com.xlongwei.light4j.handler.ServiceHandler;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.PathEndpointSource;
@@ -52,6 +53,9 @@ public class OpenapiHandler implements LightHttpHandler {
 		if(split.length > 0) {
 			String name = split[0];
 			AbstractHandler handler = handlers.get(name);
+			if(handler == null) {
+				handler = ServiceHandler.handlers.get(name);
+			}
 			if(handler != null) {
 				if(CorsUtil.isPreflightedRequest(exchange)) {
 					HandlerUtil.setResp(exchange, MapUtil.newHashMap());

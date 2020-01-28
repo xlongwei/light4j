@@ -99,6 +99,60 @@ paths:
               example:
                 code: 0
                 url: 'http://localhost:8081/uploads/openapi/1167322814205558785.png'
+  /openapi/service:
+    post:
+      summary: openapi to service
+      operationId: openapiToService
+      tags:
+        - Apis
+      parameters:
+        - name: handler
+          in: query
+          required: true
+          description: handler name
+          schema:
+            type: string
+        - name: path
+          in: query
+          description: optional handler path
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      security:
+        - api_key: []
+      responses:
+        '200':
+          description: service response
+          content:
+            application/json:
+              schema:
+                type: string
+  /openapi/pinyin:
+    post:
+      summary: openapi to pinyin
+      operationId: openapiToPinyin
+      tags:
+        - Apis
+      parameters:
+        - name: text
+          in: query
+          description: chinese text
+          required: true
+          schema:
+            type: string
+      security:
+        - api_key: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
 components:
   securitySchemes:
     api_key:

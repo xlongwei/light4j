@@ -26,7 +26,7 @@ import org.apache.shiro.util.StringUtils;
 import org.jose4j.jwt.JwtClaims;
 
 import com.networknt.cors.CorsUtil;
-import com.networknt.security.JwtHelper;
+import com.networknt.security.JwtVerifier;
 import com.networknt.utility.Constants;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.ShiroUtil;
@@ -43,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-@SuppressWarnings("deprecation")
 public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	
 	public MyJwtShiroHandler() {
@@ -68,7 +67,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		if(isEnabled() && CorsUtil.isPreflightedRequest(exchange)==false) {
 	        String authorization = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-	        String jwt = JwtHelper.getJwtFromAuthorization(authorization);
+	        String jwt = JwtVerifier.getJwtFromAuthorization(authorization);
 	        Subject subject = SecurityUtils.getSubject();
 	        subject.login(new JwtAuthenticationToken(jwt));
 	        try{
@@ -183,7 +182,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 			SimpleAuthorizationInfo authz = new SimpleAuthorizationInfo();
 	        try{
 	        	String jwt = (String)principals.getPrimaryPrincipal();
-	        	JwtClaims claims = JwtHelper.verifyJwt(jwt, true, true);
+	        	JwtClaims claims = MyJwtVerifyHandler.jwtVerifier.verifyJwt(jwt, true, true);
 	        	String userId = claims.getStringClaimValue(Constants.USER_ID_STRING);
 	        	//这里可以自定义用户的角色和权限列表
 	        	Set<String> roles = ShiroUtil.getRoles(userId);
