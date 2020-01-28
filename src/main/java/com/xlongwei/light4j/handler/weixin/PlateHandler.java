@@ -21,7 +21,7 @@ public class PlateHandler extends AbstractTextHandler {
 			content = content.charAt(2)=='号' ? content.substring(3) : content.substring(2);
 			search = true;
 		}else {
-			search = StringUtil.isPlateNumber(content);
+			search = Character.isAlphabetic(content.charAt(1));
 		}
 		return search ? PlateUtil.search(content) : null;
 	}

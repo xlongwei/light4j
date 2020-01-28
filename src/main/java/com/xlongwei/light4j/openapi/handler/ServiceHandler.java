@@ -32,6 +32,7 @@ public class ServiceHandler extends AbstractHandler {
 			String path = HandlerUtil.getParam(exchange, "path");
 			exchange.putAttachment(AbstractHandler.PATH, StringUtil.isBlank(path)?"":path);
 			handler.handleRequest(exchange);
+			com.xlongwei.light4j.handler.ServiceHandler.serviceCount(name);
 		}
 	}
 

@@ -39,8 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ServiceHandler implements LightHttpHandler {
 	public static final String BAD_REQUEST = "{\"status\":\"200\", \"error\":\"bad request\"}";
 	public static Map<String, AbstractHandler> handlers = new HashMap<>();
-	public static ServiceCounter serviceCounter = new ServiceCounter(64, TimeUnit.SECONDS.toMillis(18));
 	public static boolean serviceCount = true;
+	private static ServiceCounter serviceCounter = new ServiceCounter(64, TimeUnit.SECONDS.toMillis(18));
 	
 	public ServiceHandler() {
 		String service = getClass().getPackage().getName()+".service";
@@ -74,9 +74,7 @@ public class ServiceHandler implements LightHttpHandler {
 					exchange.putAttachment(AbstractHandler.PATH, path);
 					HandlerUtil.parseBody(exchange);
 					handler.handleRequest(exchange);
-					if(serviceCount) {
-						serviceCounter.count("service", name);
-					}
+					serviceCount(name);
 				}
 			}
 		}
@@ -151,6 +149,11 @@ public class ServiceHandler implements LightHttpHandler {
 		ServiceHandler.serviceCount = serviceCount;
 		LoggerContext lc = (LoggerContext)LoggerFactory.getILoggerFactory();
 		lc.getLogger("root").setLevel(serviceCount ? Level.INFO : Level.OFF);
+	}
+	public static void serviceCount(String name) {
+		if(serviceCount) {
+			serviceCounter.count("service", name);
+		}
 	}
 	/** 统计service调用次数，定时保存到redis */
 	private static class ServiceCounter extends TokenCounter {

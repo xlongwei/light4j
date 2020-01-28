@@ -55,6 +55,7 @@ public class OpenapiHandler implements LightHttpHandler {
 			AbstractHandler handler = handlers.get(name);
 			if(handler == null) {
 				handler = ServiceHandler.handlers.get(name);
+				ServiceHandler.serviceCount(name);
 			}
 			if(handler != null) {
 				if(CorsUtil.isPreflightedRequest(exchange)) {
