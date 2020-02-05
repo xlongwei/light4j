@@ -44,7 +44,7 @@
         <version.commons-io>2.6</version.commons-io>
         <version.icu4j>64.2</version.icu4j>
         <version.hutool>4.6.8</version.hutool>
-        <version.shiro>1.2.3</version.shiro>
+        <version.shiro>1.4.2</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
         <version.bouncycastle>1.64</version.bouncycastle>
     </properties>
