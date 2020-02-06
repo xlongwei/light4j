@@ -4,6 +4,7 @@ handlers:
   - com.xlongwei.light4j.handler.ServiceHandler@service
   - com.xlongwei.light4j.handler.UploadHandler@upload
   - com.xlongwei.light4j.handler.WeixinHandler@weixin
+  - com.xlongwei.light4j.handler.DemoHandler@demo
   - com.xlongwei.light4j.provider.WebSocketHandlerProvider@websocket
 # openapi
   - com.networknt.exception.ExceptionHandler@exception
@@ -57,3 +58,7 @@ paths:
   - source: com.xlongwei.light4j.openapi.OpenapiHandler$OpenapiEndpointSource
     exec:
       - openapi
+# demo
+  - source: com.xlongwei.light4j.handler.DemoHandler$DemoEndpointSource
+    exec:
+      - demo

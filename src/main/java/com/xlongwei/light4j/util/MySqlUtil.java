@@ -6,6 +6,13 @@ import java.util.Properties;
 
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
+import org.beetl.sql.core.ClasspathLoader;
+import org.beetl.sql.core.ConnectionSourceHelper;
+import org.beetl.sql.core.Interceptor;
+import org.beetl.sql.core.SQLManager;
+import org.beetl.sql.core.UnderlinedNameConversion;
+import org.beetl.sql.core.db.MySqlStyle;
+import org.beetl.sql.ext.DebugInterceptor;
 
 import com.networknt.config.Config;
 import com.zaxxer.hikari.HikariConfig;
@@ -23,6 +30,7 @@ public class MySqlUtil {
 	public static final Map<String, HikariDataSource> DATASOURCEMAP = new HashMap<>();
 	public static final HikariDataSource DATASOURCE;
 	public static final QueryRunner QUERYRUNNER;
+	public static final SQLManager SQLMANAGER;
 	
 	static {
 		Map<String, Object> dataSourceMap = (Map<String, Object>) Config.getInstance().getJsonMapConfig("mysql");
@@ -47,6 +55,7 @@ public class MySqlUtil {
 		});
 		DATASOURCE = DATASOURCEMAP.get("mysql");
 		QUERYRUNNER = new QueryRunner(DATASOURCE);
+		SQLMANAGER = new SQLManager(new MySqlStyle(),new ClasspathLoader("/beetl/sql"),ConnectionSourceHelper.getSingle(DATASOURCE),new  UnderlinedNameConversion(),new Interceptor[]{new DebugInterceptor()});
 		log.info("mysql config loaded");
 		
 		TaskUtil.addShutdownHook(new Runnable() {

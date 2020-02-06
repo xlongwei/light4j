@@ -47,6 +47,7 @@
         <version.shiro>1.2.3</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
         <version.bouncycastle>1.64</version.bouncycastle>
+        <version.beetlsql>2.11.0</version.beetlsql>
     </properties>
 
     <dependencies>
@@ -250,6 +251,11 @@
 		  <groupId>org.bouncycastle</groupId>
 		  <artifactId>bcprov-jdk14</artifactId>
 		  <version>${version.bouncycastle}</version>
+		</dependency>
+		<dependency>
+		  <groupId>com.ibeetl</groupId>
+		  <artifactId>beetlsql</artifactId>
+		  <version>${version.beetlsql}</version>
 		</dependency>
         
         <!-- Test Dependencies -->

@@ -21,6 +21,7 @@ import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.PathEndpointSource;
 import com.xlongwei.light4j.util.RedisConfig;
+import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TokenCounter;
 
 import ch.qos.logback.classic.Level;
@@ -116,7 +117,7 @@ public class ServiceHandler implements LightHttpHandler {
 		@Override
 		public void handleRequest(HttpServerExchange exchange) throws Exception {
 			String path = exchange.getAttachment(PATH);
-			Method method = methods.get(path);
+			Method method = methods.get(StringUtil.isBlank(path) ? name() : path);
 			if(method != null) {
 				try {
 					method.invoke(this, exchange);
