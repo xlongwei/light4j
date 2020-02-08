@@ -2,6 +2,7 @@ package com.xlongwei.light4j.handler.service;
 
 import java.awt.image.BufferedImage;
 import java.io.OutputStream;
+import java.util.Map;
 
 import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
@@ -56,9 +57,17 @@ public class CheckcodeHandler extends AbstractHandler {
 		int length = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "length"), 4);
 		boolean specials = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "specials"), false);
 		int type = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "type"), -2);
-		Tuple<String, BufferedImage> tuple = ImageUtil.create(length, specials, type);
+		Tuple<String, String> codecheck = ImageUtil.create(length, specials, type);
+		Tuple<String, BufferedImage> tuple = ImageUtil.create(codecheck.first, codecheck.second);
 		String image = ImageUtil.encode(ImageUtil.bytes(tuple.second), null);
-		HandlerUtil.setResp(exchange, StringUtil.params("sid", tuple.first, "image", image));
+		Map<String, String> params = StringUtil.params("sid", tuple.first, "image", image);
+		if(NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "secure"), true)==false) {
+			params.put("code", codecheck.first);
+			if(!codecheck.first.equals(codecheck.second) && !StringUtil.isBlank(codecheck.second)) {
+				params.put("check", codecheck.second);
+			}
+		}
+		HandlerUtil.setResp(exchange, params);
 	}
 	
 	public void check(HttpServerExchange exchange) throws Exception {

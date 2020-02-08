@@ -200,7 +200,7 @@ public class ImageUtil {
 	/**
 	 * @param type -2 length+specials 0中文 1算术 2拆字 -1随机
 	 */
-	public static Tuple<String, BufferedImage> create(int length, boolean specials, int type) {
+	public static Tuple<String, String> create(int length, boolean specials, int type) {
 		String[] special = type<-1 ? null : special(type);
 		String code = special!=null&& special.length>0 ? special[0] : null;
 		String check = null;
@@ -209,6 +209,10 @@ public class ImageUtil {
 		}else {
 			check = special.length>1 ? special[1] : code;
 		}
+		return new Tuple<>(code, check);
+	}
+	
+	public static Tuple<String, BufferedImage> create(String code, String check) {
 		BufferedImage image = create(code);
 		String sid = String.valueOf(IdWorker.getId());
 		RedisCache.set(ImageUtil.attr, sid, check);
