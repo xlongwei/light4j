@@ -129,7 +129,7 @@ public class DatetimeHandler extends AbstractHandler {
 		Date start;
 		Date end;
 		String type = HandlerUtil.getParam(exchange, "type");
-		map.put("day", day);
+		map.put("day", DateUtil.dateFormat.format(day));
 		if("isworkday".equals(type)) {
 			map.put("isworkday", HolidayUtil.isworkday(day));
 		}else if("isholiday".equals(type)) {

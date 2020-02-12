@@ -136,7 +136,7 @@ public class HolidayUtil {
 		Iterator<DateTime> iterator = range.iterator();
 		while(iterator.hasNext()) {
 			DateTime next = iterator.next();
-			if(isworkday(next) && (skipweekend==false || isweekend(next))) {
+			if(isworkday(next) && !(skipweekend && isweekend(next))) {
 				workdays++;
 			}
 		}

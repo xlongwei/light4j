@@ -70,4 +70,9 @@ public class HolidayUtilTest {
 		assertEquals("2020-01-19", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-31"), -5)));
 		assertEquals("2020-02-03", DateUtil.dateFormat.format(HolidayUtil.offsetworkday(DateUtil.parse("2020-01-31"), 1, true)));
 	}
+	
+	@Test public void betweenworkday() {
+		assertEquals(25, HolidayUtil.betweenworkday(DateUtil.parse("2020-01-01"), DateUtil.parse("2020-02-12"), false));
+		assertEquals(24, HolidayUtil.betweenworkday(DateUtil.parse("2020-01-01"), DateUtil.parse("2020-02-12"), true));
+	}
 }
