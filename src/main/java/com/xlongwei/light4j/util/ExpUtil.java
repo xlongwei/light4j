@@ -14,6 +14,7 @@ public class ExpUtil {
 	private static final String MISS_FUNCTION_PARAMS = "Miss function params";
 	private static final String NO_EXPRESSION = "No Expression";
 	private static final String MISS_OPERANDS = "Miss operands";
+	private static final String NEGATIVE = "~";
 
 	/**
 	 * 静态初始化，仅执行一次
@@ -82,7 +83,7 @@ public class ExpUtil {
 		addOperator("/", 2, OperatorTypes.DIVIDE);
 		addOperator("%", 2, OperatorTypes.MOD);
 		addOperator("^", 3, OperatorTypes.POWER);
-		//addOperator("N", 4, OperatorTypes.NEGATIVE);
+		addOperator(NEGATIVE, 4, OperatorTypes.NEGATIVE);
 		
 		// 添加函数，(函数名，参数个数，类型)
 		addFunction("sin", 1, FunctionTypes.SIN);
@@ -317,7 +318,7 @@ public class ExpUtil {
 		boolean isPlus = "+".equals(operator) && ((lastTokenType == null) || (lastTokenType == TokenTypes.LEFTP));
 		if (isMinus) {
 			// 处理负号
-			operators.push("N");
+			operators.push(NEGATIVE);
 		} else if(isPlus == false) {
 			// 2+1
 			if ((lastTokenType != TokenTypes.NUMBER)
@@ -555,8 +556,7 @@ public class ExpUtil {
 		if (operands.size() == 0) { throw new ExpException(MISS_OPERANDS); }
 		String operator = operators.pop();
 		Number operand2 = operands.pop();
-		String negative = "N";
-		if (operator.equals(negative)) {
+		if (NEGATIVE.equals(operator)) {
 			if (operand2 instanceof Integer) {
 				operands.push(0 - (Integer) operand2);
 			} else {

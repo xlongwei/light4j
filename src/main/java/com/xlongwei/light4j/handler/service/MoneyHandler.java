@@ -3,8 +3,10 @@ package com.xlongwei.light4j.handler.service;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
+import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
@@ -42,6 +44,19 @@ public class MoneyHandler extends AbstractHandler {
 				context.put(paramName, number);
 			}
 		});
+		JSONObject vars = JsonUtil.parseNew(HandlerUtil.getParam(exchange, "vars"));
+		if(!vars.isEmpty()) {
+			for(String name : vars.keySet()) {
+				String value = vars.getString(name);
+				Number number = StringUtil.isNumbers(value) ? NumberUtil.parseInt(value, null) : null;
+				if(number==null && StringUtil.isDecimal(value)) {
+					number = NumberUtil.parseDouble(value, null);
+				}
+				if(number != null) {
+					context.put(name, number);
+				}
+			}
+		}
 		String result = NumberUtil.parseExp(exp, context);
 		HandlerUtil.setResp(exchange, StringUtil.params("result", result));
 	}
