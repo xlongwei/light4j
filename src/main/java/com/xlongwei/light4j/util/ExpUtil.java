@@ -240,7 +240,7 @@ public class ExpUtil {
 						int paramIdx = findParam(exp, ',', i);
 						if (paramIdx != -1) {
 							// 每个参数都是表达式，其中仍然可以嵌套函数
-							operands.push(new ExpUtil().parse(exp.substring(i, paramIdx)).getResult());
+							operands.push(ExpUtil.exp(exp.substring(i, paramIdx)).context(context).parse().getResult());
 							i = paramIdx + 1;
 						//支持log(10)等价于log(e,10)
 						} else if("log".equals(function) && j==1){ 
@@ -253,7 +253,7 @@ public class ExpUtil {
 					int rpIdx = findParam(exp, ')', i);
 					// 最后一个参数
 					if (rpIdx != -1) {
-						operands.push(new ExpUtil().parse(exp.substring(i, rpIdx)).getResult());
+						operands.push(ExpUtil.exp(exp.substring(i, rpIdx)).context(context).parse().getResult());
 						i = rpIdx;
 					} else {
 						throw new ExpException(MISS_FUNCTION_PARAMS);
@@ -447,6 +447,14 @@ public class ExpUtil {
 			context = new HashMap<>(4);
 		}
 		context.put(name, value);
+		return this;
+	}
+	
+	/** 批量设置上下文 */
+	public ExpUtil context(Map<String, Number> ctx) {
+		if(ctx!=null && ctx.size()>0) {
+			ctx.forEach((k,v) -> context(k, v));
+		}
 		return this;
 	}
 	
