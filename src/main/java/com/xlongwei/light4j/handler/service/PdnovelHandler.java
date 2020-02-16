@@ -28,7 +28,15 @@ import io.undertow.server.HttpServerExchange;
 public class PdnovelHandler extends AbstractHandler {
 
 	public void books(HttpServerExchange exchange) throws Exception {
-		Map<String, Object> map = new HashMap<>(1);
+		String type = HandlerUtil.getParam(exchange, "type");
+		if("reload".equals(type)) {
+			PdnovelUtil.reload();
+		}else if("merge".equals(type)) {
+			int novelid = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "novelid"), 0);
+			int volumeid = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "volumeid"), 0);
+			PdnovelUtil.merge(novelid, volumeid);
+		}
+		Map<String, Object> map = new HashMap<>(4);
 		JSONArray books = new JSONArray();
 		for(Integer novelid : PdnovelUtil.books.keySet()) {
 			Book book = PdnovelUtil.books.get(novelid);
