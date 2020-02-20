@@ -18,6 +18,7 @@ import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.core.date.Week;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 
@@ -159,6 +160,12 @@ public class DatetimeHandler extends AbstractHandler {
 		}else if("reload".equals(type)){
 			reload();
 			map.put("reload", HolidayUtil.holidays.size());
+		}else {
+			map.put("isworkday", HolidayUtil.isworkday(day));
+			map.put("isholiday", HolidayUtil.isholiday(day));
+			Week week = cn.hutool.core.date.DateUtil.dayOfWeekEnum(day);
+			map.put("week", week.getValue()==1 ? 7 : week.getValue()-1);
+			map.put("isweekend", week==Week.SATURDAY || week==Week.SUNDAY);
 		}
 	}
 

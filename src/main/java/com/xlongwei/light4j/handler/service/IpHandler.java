@@ -31,7 +31,10 @@ public class IpHandler extends AbstractHandler {
 		String ip = HandlerUtil.getParam(exchange, "ip");
 		boolean addIp = false;
 		if(StringUtil.isBlank(ip)) {
-			ip = HandlerUtil.getIp(exchange);
+			ip = HandlerUtil.getParam(exchange, "showapi_userIp");
+			if(StringUtil.isBlank(ip)) {
+				ip = HandlerUtil.getIp(exchange);
+			}
 			addIp = true;
 		}
 		Map<String, String> map = searchToMap(ip);
