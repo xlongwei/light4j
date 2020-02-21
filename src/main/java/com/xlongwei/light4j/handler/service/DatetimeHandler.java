@@ -17,6 +17,7 @@ import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
+import com.xlongwei.light4j.util.ZhDate;
 
 import cn.hutool.core.date.Week;
 import io.undertow.server.HttpServerExchange;
@@ -104,6 +105,15 @@ public class DatetimeHandler extends AbstractHandler {
 		case "workday":
 			workday(exchange, day, map);
 			break;
+		case "nongli":
+			convert(exchange, day, map);
+			break;
+		case "yangli":
+			convert(exchange, null, map);
+			break;
+		case "convert":
+			convert(exchange, StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null, map);
+			break;
 		default:
 			break;
 		}
@@ -160,6 +170,12 @@ public class DatetimeHandler extends AbstractHandler {
 		}else if("reload".equals(type)){
 			reload();
 			map.put("reload", HolidayUtil.holidays.size());
+		}else if("nongli".equals(type)){
+			convert(exchange, day, map);
+		}else if("yangli".equals(type)){
+			convert(exchange, null, map);
+		}else if("convert".equals(type)){
+			convert(exchange, StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null, map);
 		}else {
 			map.put("isworkday", HolidayUtil.isworkday(day));
 			map.put("isholiday", HolidayUtil.isholiday(day));
@@ -169,4 +185,32 @@ public class DatetimeHandler extends AbstractHandler {
 		}
 	}
 
+	private void convert(HttpServerExchange exchange, Date day, Map<String, Object> map) {
+		if(day!=null) {
+			ZhDate zhDate = ZhDate.fromDate(day);
+			map.put("nongli", zhDate.toString());
+			map.put("chinese", zhDate.chinese());
+			map.put("ganzhi", zhDate.ganzhi());
+			map.put("shengxiao", zhDate.shengxiao());
+			map.put("lunarYear", zhDate.getLunarYear());
+			map.put("lunarMonth", zhDate.getLunarMonth());
+			map.put("lunarDay", zhDate.getLunarDay());
+			map.put("isLeapMonth", zhDate.isLeapMonth());
+		}else {
+			int lunarYear = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "lunarYear"), 2020);
+			int lunarMonth = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "lunarMonth"), 1);
+			int lunarDay = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "lunarDay"), 28);
+			boolean isLeapMonth = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "isLeapMonth"), false);
+			if(ZhDate.validate(lunarYear, lunarMonth, lunarDay, isLeapMonth)) {
+				ZhDate zhDate = new ZhDate(lunarYear, lunarMonth, lunarDay, isLeapMonth);
+				day = zhDate.toDate();
+				map.put("day", DateUtil.dateFormat.format(day));
+				map.put("chinese", zhDate.chinese());
+				map.put("ganzhi", zhDate.ganzhi());
+				map.put("shengxiao", zhDate.shengxiao());
+			}else {
+				map.put("status", "农历日期不支持");
+			}
+		}
+	}
 }
