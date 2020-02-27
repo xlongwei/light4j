@@ -210,12 +210,12 @@ public class ZhDate {
 	
 	public static String ganzhi(int year) {
 		int anum = year - 1900 + 36;
-		return new StringBuilder().append(TIANGAN.charAt(anum % 10)).append(DIZHI.charAt(anum % 12)).toString();
+		return new StringBuilder().append(TIANGAN.charAt(anum(anum,10))).append(DIZHI.charAt(anum(anum, 12))).toString();
 	}
 	
 	public static String shengxiao(int year) {
 		int anum = year - 1900;
-		return String.valueOf(SHENGXIAO.charAt(anum % 12));
+		return String.valueOf(SHENGXIAO.charAt(anum(anum,12)));
 	}
 
 	/**
@@ -297,6 +297,9 @@ public class ZhDate {
 				&& this.leapMonth==o.leapMonth;
 	}
 	
+	/**
+	 * @return 农历2020年1月1日
+	 */
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -395,5 +398,9 @@ public class ZhDate {
 			accumulateDays.add(sum);
 		}
 		return accumulateDays;
+	}
+	private static int anum(int anum, int mod) {
+		anum = anum % mod;
+		return anum < 0 ? anum+mod : anum;
 	}
 }

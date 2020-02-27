@@ -114,15 +114,26 @@ public class DatetimeHandler extends AbstractHandler {
 		case "convert":
 			convert(exchange, StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null, map);
 			break;
+		case "ganzhi":
+		case "shengxiao":
+			shengxiao(exchange, day, map);
+			break;
 		default:
 			break;
 		}
 		HandlerUtil.setResp(exchange, map);
 	}
 
+	private void shengxiao(HttpServerExchange exchange, Date day, Map<String, Object> map) {
+		int year = NumberUtil.parseInt(StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "year"), DateUtil.yearFormat.format(day)), 2020);
+		map.put("ganzhi", ZhDate.ganzhi(year));
+		map.put("shengxiao", ZhDate.shengxiao(year));
+		map.put("year", year);
+	}
+
 	private void holiday(HttpServerExchange exchange, Date day, Map<String, Object> map) {
-		String name = HandlerUtil.getParam(exchange, "name");
-		String plan = StringUtil.isBlank(name) ? null : HolidayUtil.plans.get(DateUtil.yearFormat.format(day)+"."+name);
+		String name = HandlerUtil.getParam(exchange, "name"), year = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "year"), DateUtil.yearFormat.format(day));
+		String plan = StringUtil.isBlank(name) ? null : HolidayUtil.plans.get(year+"."+name);
 		if(plan==null) {
 			Integer flag = HolidayUtil.holidays.get(HolidayUtil.dateFormat.format(day));
 			if(flag!=null && flag.intValue()>0) {
@@ -176,6 +187,8 @@ public class DatetimeHandler extends AbstractHandler {
 			convert(exchange, null, map);
 		}else if("convert".equals(type)){
 			convert(exchange, StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null, map);
+		}else if("ganzhi".equals(type) || "shengxiao".equals(type)){
+			shengxiao(exchange, day, map);
 		}else {
 			map.put("isworkday", HolidayUtil.isworkday(day));
 			map.put("isholiday", HolidayUtil.isholiday(day));

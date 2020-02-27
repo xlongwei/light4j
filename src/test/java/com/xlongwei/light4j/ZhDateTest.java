@@ -65,6 +65,8 @@ public class ZhDateTest {
 		Assert.assertEquals("鼠", new ZhDate(1900, 9, 1, False).shengxiao());
 		Assert.assertEquals("一九零零年九月初一", new ZhDate(1900, 9, 1, False).chinese());
 		Assert.assertEquals("二零二零年正月二十八", ZhDate.fromDate(DateUtil.parse("2020-02-21")).chinese());
+		Assert.assertEquals("鼠", ZhDate.shengxiao(1900));
+		Assert.assertEquals("猪", ZhDate.shengxiao(1899));
 	}
 	
 	private Date datetime(int year, int month, int day) {

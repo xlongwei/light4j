@@ -75,4 +75,15 @@ public class HolidayUtilTest {
 		assertEquals(25, HolidayUtil.betweenworkday(DateUtil.parse("2020-01-01"), DateUtil.parse("2020-02-12"), false));
 		assertEquals(24, HolidayUtil.betweenworkday(DateUtil.parse("2020-01-01"), DateUtil.parse("2020-02-12"), true));
 	}
+	
+	@Test public void test2017_2011() {
+		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2011-10-8")));
+		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2011-12-31")));
+		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2012-4-1")));
+		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2013-4-27")));
+		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2014-5-4")));
+		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2015-2-15")));
+		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2016-9-18")));
+		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2017-4-1")));
+	}
 }
