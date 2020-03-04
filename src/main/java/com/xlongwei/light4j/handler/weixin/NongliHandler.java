@@ -32,7 +32,7 @@ public class NongliHandler extends AbstractTextHandler {
 				boolean leapMonth = NumberUtil.parseBoolean(matcher.group(5), false);
 				if(ZhDate.validate(lunarYear, lunarMonth, lunarDay, leapMonth)) {
 					ZhDate zhDate = new ZhDate(lunarYear, lunarMonth, lunarDay, leapMonth);
-					return DateUtil.format(zhDate.toDate());
+					return DateUtil.dayFormat.format(zhDate.toDate());
 				}else {
 					return "农历日期不支持";
 				}

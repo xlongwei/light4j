@@ -8,6 +8,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 /**
  * 农历日期转换
  * @author Wang, Yi
@@ -86,7 +88,7 @@ public class ZhDate {
 		}else if(lunarDay<=29) {
 			return true;
 		}else {
-			return ((yearCode >> (12 - lunarMonth) + 4) & 1) == 1;
+			return ((yearCode >> ((12 - lunarMonth) + 4)) & 1) == 1;
 		}
 	}
 	
@@ -297,6 +299,11 @@ public class ZhDate {
 				&& this.leapMonth==o.leapMonth;
 	}
 	
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(lunarYear).append(lunarMonth).append(lunarDay).append(leapMonth).hashCode();
+	}
+
 	/**
 	 * @return 农历2020年1月1日
 	 */
