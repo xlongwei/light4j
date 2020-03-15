@@ -1,6 +1,7 @@
 package com.xlongwei.light4j.handler.service;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +21,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.networknt.url.HttpURL;
 import com.networknt.utility.StringUtils;
+import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
@@ -230,6 +232,7 @@ public class HtmlHandler extends AbstractHandler {
 				jskey = "js."+(isClient==false?"":userName+".")+jskey;
 				RedisConfig.set(jskey, js);
 				SCRIPTS.remove(jskey);
+				log.info("jsConfig remove compiled script, jskey: {}", jskey);
 			}
 			HandlerUtil.setResp(exchange, map);
 		}
@@ -247,9 +250,10 @@ public class HtmlHandler extends AbstractHandler {
 		if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
 			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
 			boolean isClient = ConfigUtil.isClient(userName);
+			String clientName = isClient==false?"":userName+".";
 			//优先取redis配置，其次取原值，userName独立配置
-			data = StringUtil.firstNotBlank(RedisConfig.get("js."+(isClient==false?"":userName+".")+data), data);
-			String jskey = "js."+(isClient==false?"":userName+".")+js;
+			data = StringUtil.firstNotBlank(RedisConfig.get("js."+clientName+data), data);
+			String jskey = "js."+clientName+js;
 			String jsConfig = RedisConfig.get(jskey);
 			if(StringUtil.hasLength(jsConfig)) {
 				js = jsConfig;
@@ -257,44 +261,85 @@ public class HtmlHandler extends AbstractHandler {
 				jskey = null;
 			}
 			if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
-				log.info("jsEval data: {}, js: \n{}", data, js);
-				JSONObject dataObj = JsonUtil.parse(data);
-				JSONArray dataArray = JsonUtil.parseArray(data);
-				if(dataObj!=null || dataArray!=null) {
-					Bindings bindings = new SimpleBindings();
-					bindings.put("data", dataObj!=null ? dataObj : dataArray);
-					Object result = null;
-					if(jskey!=null) {
-						CompiledScript script = SCRIPTS.get(jskey);
-						if(script!=null) {
-							try{
-								result = script.eval(bindings);
-								HandlerUtil.setResp(exchange, MapUtil.of("result", result));
-							}catch(Exception e) {
-								log.info("fail to eval js, ex: {}", e.getMessage());
-								HandlerUtil.setResp(exchange, StringUtil.params("error", e.getMessage()));
-							}
-							return;
-						}
-					}
-					try(PooledObject<ScriptEngine> pooledObject = POOL.allocate()){
-						ScriptEngine se = pooledObject.getObject();
-						result = se.eval(js, bindings);
-						HandlerUtil.setResp(exchange, MapUtil.of("result", result));
-						if(jskey!=null) {
-							CompiledScript script = ((Compilable)se).compile(js);
-							SCRIPTS.put(jskey, script);
-						}
-					}catch(Exception e) {
-						log.info("fail to eval js, ex: {}", e.getMessage());
-						HandlerUtil.setResp(exchange, StringUtil.params("error", e.getMessage()));
-					}
-				}else {
-					HandlerUtil.setResp(exchange, StringUtil.params("error", "bad data config"));
-				}
+				Tuple<Boolean, String> result = jsEval(data, js, jskey);
+				HandlerUtil.setResp(exchange, StringUtil.params(result.first ? "result" : "error", result.second));
 			}else {
 				HandlerUtil.setResp(exchange, StringUtil.params("error", "empty data && js"));
 			}
+		}
+	}
+	
+	public void jsEvals(HttpServerExchange exchange) throws Exception {
+		String jskeys = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "jskeys"), HandlerUtil.getParam(exchange, "jskey"));
+		String datakeys = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "datakeys"), HandlerUtil.getParam(exchange, "datakey"));
+		String data = HandlerUtil.getBodyString(exchange);
+		if(StringUtil.isBlank(jskeys) || (StringUtil.isBlank(datakeys) && StringUtil.isBlank(data))) {
+			HandlerUtil.setResp(exchange, StringUtil.params("error", "empty datakeys or jskeys"));
+		}else {
+			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			boolean isClient = ConfigUtil.isClient(userName);
+			String clientName = isClient==false?"":userName+".", js = null;
+			List<Map<String, String>> results = new LinkedList<>();
+			for(String jskey : jskeys.split("[,]")) {
+				jskey = "js." + clientName + jskey;
+				js = RedisConfig.get(jskey);
+				if(StringUtil.isBlank(js)) {
+					results.add(StringUtil.params("jskey", jskey, "error", "empty js"));
+				}else if(StringUtil.isBlank(datakeys)) {
+					Tuple<Boolean, String> tuple = jsEval(data, js, jskey);
+					results.add(StringUtil.params("jskey", jskey, tuple.first ? "result" : "error", tuple.second));
+				}else {
+					for(String datakey : datakeys.split("[,]")) {
+						datakey = "js." + clientName + datakey;
+						data = RedisConfig.get(datakey);
+						if(StringUtil.isBlank(data)) {
+							results.add(StringUtil.params("jskey", jskey, "datakey", datakey, "error", "empty data"));
+						}else {
+							Tuple<Boolean, String> tuple = jsEval(data, js, jskey);
+							results.add(StringUtil.params("jskey", jskey, "datakey", datakey, tuple.first ? "result" : "error", tuple.second));
+						}
+					}
+				}
+			}
+			HandlerUtil.setResp(exchange, MapUtil.of("results", results));
+		}
+	}
+
+	private Tuple<Boolean, String> jsEval(String data, String js, String jskey) {
+		log.info("jsEval data: {}, jskey: {}, js: \n{}", data, jskey, js);
+		JSONObject dataObj = StringUtil.isBlank(data)||'{'!=data.charAt(0) ? null : JsonUtil.parse(data);
+		JSONArray dataArray = StringUtil.isBlank(data)||'['!=data.charAt(0) ? null : JsonUtil.parseArray(data);
+		if(dataObj!=null || dataArray!=null) {
+			Bindings bindings = new SimpleBindings();
+			bindings.put("data", dataObj!=null ? dataObj : dataArray);
+			Object result = null;
+			if(jskey!=null) {
+				CompiledScript script = SCRIPTS.get(jskey);
+				if(script!=null) {
+					try{
+						result = script.eval(bindings);
+						return new Tuple<>(Boolean.TRUE, String.valueOf(result));
+					}catch(Exception e) {
+						log.info("fail to eval js, ex: {}", e.getMessage());
+						return new Tuple<>(Boolean.FALSE, e.getMessage());
+					}
+				}
+			}
+			try(PooledObject<ScriptEngine> pooledObject = POOL.allocate()){
+				ScriptEngine se = pooledObject.getObject();
+				result = se.eval(js, bindings);
+				if(jskey!=null) {
+					CompiledScript script = ((Compilable)se).compile(js);
+					SCRIPTS.put(jskey, script);
+					log.info("jsEval save compiled script, jskey: {}", jskey);
+				}
+				return new Tuple<>(Boolean.TRUE, String.valueOf(result));
+			}catch(Exception e) {
+				log.info("fail to eval js, ex: {}", e.getMessage());
+				return new Tuple<>(Boolean.FALSE, e.getMessage());
+			}
+		}else {
+			return new Tuple<>(Boolean.FALSE, "bad data config");
 		}
 	}
 }

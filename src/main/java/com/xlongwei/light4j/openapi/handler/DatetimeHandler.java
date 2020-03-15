@@ -52,7 +52,7 @@ public class DatetimeHandler extends AbstractHandler {
 			try {
 				ClientConnection connection = connections.get(service);
 				if(connection == null || !connection.isOpen()) {
-					connection = client.connect(service, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+					connection = client.connect(service, Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
 					connections.put(service, connection);
 				}
 				AtomicReference<ClientResponse> reference = new AtomicReference<>();

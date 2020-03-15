@@ -142,6 +142,7 @@ public class DatetimeHandler extends AbstractHandler {
 			}
 		}
 		if(StringUtil.hasLength(plan)) {
+			map.put("year", year);
 			map.put("holiday", name);
 			map.put("remark", plan);
 		}

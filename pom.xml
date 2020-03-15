@@ -11,8 +11,7 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.main.class>com.networknt.server.Server</project.main.class>
-        <version.light-4j>1.6.9</version.light-4j>
-        <version.jackson>2.9.9</version.jackson>
+        <version.light-4j>1.6.17</version.light-4j>
         <version.jose4j>0.6.3</version.jose4j>
         <version.logback>1.2.3</version.logback>
         <version.junit>4.12</version.junit>
@@ -44,7 +43,7 @@
         <version.commons-io>2.6</version.commons-io>
         <version.icu4j>64.2</version.icu4j>
         <version.hutool>4.6.8</version.hutool>
-        <version.shiro>1.2.3</version.shiro>
+        <version.shiro>1.4.2</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
         <version.bouncycastle>1.64</version.bouncycastle>
         <version.beetlsql>2.11.0</version.beetlsql>
