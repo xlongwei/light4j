@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PdnovelUtil {
 	public static Map<Integer, Book> books = new LinkedHashMap<>();
+	private static Pattern chapterNamePattern = Pattern.compile("[^']+'([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)'\\);");
 
 	static {
 		reload();
@@ -94,29 +95,39 @@ public class PdnovelUtil {
 		log.info("pdnovel merge novelid: {}, volumeid: {}, novels: {}, exists: {}", novelid, volumeid, novels.getAbsoluteFile(), novels.exists());
 		File[] novelFiles = novels.exists() ? novels.listFiles() : new File[0];
 		Arrays.sort(novelFiles, FileUtil.fileComparator);
-		Pattern chapterNamePattern = Pattern.compile("[^']+'([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)'\\);");
 		for(File novelFile : novelFiles) {
 			int novelid2 = NumberUtil.parseInt(novelFile.getName(), 0);
-			if(!novelFile.isDirectory() || novelid2<=0) continue;
-			if(novelid>0 && novelid!=novelid2) continue;//指定novelid时覆盖处理，不指定时披露处理但不覆盖
+			if(!novelFile.isDirectory() || novelid2<=0) {
+				continue;
+			}
+			if(novelid>0 && novelid!=novelid2) {
+				continue;//指定novelid时覆盖处理，不指定时披露处理但不覆盖
+			}
 			boolean novelForce = novelid>0&&novelid==novelid2;
 			File novelTarget = new File(uploadsFile, "pdnovel/"+novelid2+".txt");
-			if(novelTarget.exists() && !novelForce) continue;
+			if(novelTarget.exists() && !novelForce) {
+				continue;
+			}
 			File[] volumeFiles = novelFile.listFiles();
 			Arrays.sort(volumeFiles, FileUtil.fileComparator);
 			TextWriter novelWriter = new TextWriter(novelTarget, CharsetNames.UTF_8, false, true);
 			int volumeIndex = 1;
 			for(File volumeFile : volumeFiles) {
 				int volumeid2 = NumberUtil.parseInt(volumeFile.getName(), 0);
-				if(!volumeFile.isDirectory() || volumeid2<=0) continue;
+				if(!volumeFile.isDirectory() || volumeid2<=0) {
+					continue;
+				}
 				File volumeSql = new File(volumeFile, volumeFile.getName()+".sql");
-				String volumeName = ""; Map<String, String> chapterNames = new HashMap<>();
+				String volumeName = ""; Map<String, String> chapterNames = new HashMap<>(16);
 				if(volumeSql.exists()) {
 					List<String> lines = FileUtil.readLines(volumeSql, CharsetNames.UTF_8);
 					for(String line:lines) {
 						Matcher matcher = chapterNamePattern.matcher(line);
-						if(matcher.matches()) chapterNames.put(matcher.group(9), matcher.group(8));
-						else volumeName = StringUtil.getPatternString(line, "[^']+'[^',]*','[^',]*','([^',]*)','[^',]*','[^',]*','[^',]*'\\);");
+						if(matcher.matches()) {
+							chapterNames.put(matcher.group(9), matcher.group(8));
+						} else {
+							volumeName = StringUtil.getPatternString(line, "[^']+'[^',]*','[^',]*','([^',]*)','[^',]*','[^',]*','[^',]*'\\);");
+						}
 					}
 				}
 				File volumeTarget = new File(uploadsFile, "pdnovel/"+novelid2+"/"+volumeid2+".txt");
@@ -126,8 +137,12 @@ public class PdnovelUtil {
 					continue;
 				}
 				boolean volumeForce = novelForce || (volumeid>0&&volumeid==volumeid2);
-				if(volumeTarget.exists() && !volumeForce) continue;
-				if(!volumeTarget.exists()) volumeTarget.getParentFile().mkdirs();
+				if(volumeTarget.exists() && !volumeForce) {
+					continue;
+				}
+				if(!volumeTarget.exists()) {
+					volumeTarget.getParentFile().mkdirs();
+				}
 				File[] chapterFiles = volumeFile.listFiles(new FileUtil.ExtFileFilter("txt"));
 				Arrays.sort(chapterFiles, FileUtil.fileComparator);
 				TextWriter volumeWriter = new TextWriter(volumeTarget, CharsetNames.UTF_8, false, true);

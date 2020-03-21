@@ -14,6 +14,11 @@ import com.xlongwei.light4j.util.StringUtil;
 import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 
+/**
+ * beetl index demo
+ * @author xlongwei
+ *
+ */
 public class IndexHandler extends AbstractHandler {
 
 	public void index(HttpServerExchange exchange) throws Exception {

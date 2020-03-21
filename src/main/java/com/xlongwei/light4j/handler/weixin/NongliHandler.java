@@ -11,6 +11,11 @@ import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
 import com.xlongwei.light4j.util.ZhDate;
 
+/**
+ * 农历转换
+ * @author xlongwei
+ *
+ */
 public class NongliHandler extends AbstractTextHandler {
 	
 	private Pattern pattern = Pattern.compile("(\\d{4})[\\.\\-](\\d{1,2})[\\.\\-](\\d{1,2})([,，](true|false))?");

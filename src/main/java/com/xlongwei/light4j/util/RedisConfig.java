@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -88,6 +89,32 @@ public class RedisConfig {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteValue = jedis.get(byteKey);
 				return RedisUtil.stringValue(byteValue);
+			}
+		});
+	}
+	
+	/**
+	 * 批量获取多个键值
+	 * @param cache
+	 * @param pattern exam.java1.*
+	 * @return Map&lt;String, String>={key:value}，key去掉了cache前缀
+	 */
+	public static Map<String, String> gets(final String cache, final String pattern) {
+		return execute(new JedisCallback<Map<String, String>>() {
+			@Override
+			public Map<String, String> doInJedis(Jedis jedis) {
+				byte[] byteKey = RedisUtil.byteKey(cache, pattern);
+				Set<byte[]> keys = jedis.keys(byteKey);
+				Map<String, String> map = new HashMap<>(16);
+				int prefix = cache.length()+1;
+				for(byte[] key:keys) {
+					byte[] byteValue = jedis.get(key);
+					String stringValue = RedisUtil.stringValue(byteValue);
+					String stringKey = RedisUtil.stringKey(key);
+					stringKey = stringKey.substring(prefix);
+					map.put(stringKey, stringValue);
+				}
+				return map;
 			}
 		});
 	}

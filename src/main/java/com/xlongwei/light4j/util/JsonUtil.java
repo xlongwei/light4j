@@ -9,6 +9,7 @@ import java.util.Set;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.Feature;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -164,7 +165,7 @@ public class JsonUtil {
 	/** 解析json串，必要时新建空对象 */
 	public static JSONObject parseNew(String json) {
 		try{
-			JSONObject parse = JSONObject.parseObject(json);
+			JSONObject parse = JSONObject.parseObject(json, Feature.OrderedField);
 			if(parse != null) {
 				return parse;
 			}

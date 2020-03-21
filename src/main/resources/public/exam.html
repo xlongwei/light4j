@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>exam</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<style type="text/css">
+.row { border-bottom:solid 1px lightgray;margin-top:8px;margin-bottom:8px; }
+.custom-radio, .custom-control-label, .alert { width:100% }
+.custom-switch {width:50px;display:inline-block;}
+</style>
+</head>
+<body>
+	<div class="container-fluid">
+		<nav class="navbar navbar-light bg-light">
+			<span>{{questions[current].id}}</span>
+			<span v-show="bingo>=0">结果：{{bingo}}/{{total}}</span>
+			<button type="button" class="btn btn-success" @click="commit" v-bind:disabled="bingo>=0||progress<commitProgress">{{bingo>=0 ? answerId : '提交'}}</button>
+		</nav>
+		<div class="progress" style="height:0.2rem">
+			<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width:{{progress}}%"></div>
+		</div>
+		<div class="row-fluid">
+			<div class="span12">
+				<p class="lead">{{questions[current].q}}</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="custom-control custom-radio">
+				<input type="radio" id="customRadio1" name="customRadio" @click="choose" value="a" :checked="check('a')" v-bind:disabled="bingo>=0" class="custom-control-input">
+				<label class="custom-control-label" for="customRadio1">{{questions[current].a}}</label>
+			</div>
+		</div>
+		<div class="row">
+			<div class="custom-control custom-radio">
+				<input type="radio" id="customRadio2" name="customRadio" @click="choose" value="b" :checked="check('b')" v-bind:disabled="bingo>=0" class="custom-control-input">
+				<label class="custom-control-label" for="customRadio2">{{questions[current].b}}</label>
+			</div>
+		</div>
+		<div class="row">
+			<div class="custom-control custom-radio">
+				<input type="radio" id="customRadio3" name="customRadio" @click="choose" value="c" :checked="check('c')" v-bind:disabled="bingo>=0" class="custom-control-input">
+				<label class="custom-control-label" for="customRadio3">{{questions[current].c}}</label>
+			</div>
+		</div>
+		<div class="row">
+			<div class="custom-control custom-radio">
+				<input type="radio" id="customRadio4" name="customRadio" @click="choose" value="d" :checked="check('d')" v-bind:disabled="bingo>=0" class="custom-control-input">
+				<label class="custom-control-label" for="customRadio4">{{questions[current].d}}</label>
+			</div>
+		</div>
+		<div class="row" v-show="bingo>=0">
+			<div class="alert" v-bind:class="!notes[questions[current].id] ? 'alert-success' : 'alert-warning'" role="alert">
+			  <strong>{{!notes[questions[current].id] ? '✔' : '❌'}}</strong> {{notes[questions[current].id]}}
+			</div>
+		</div>
+		<div class="navigation" style="text-align: center; font-size: 22px">
+			<button type="button" class="btn btn-secondary" @click="prev">上一题</button>
+			<span id="current-item-title" class="ht-font">
+				<input class="form-control" style="display: inline; width: 36px; padding: 3px; text-align: center" @keyup.enter="gotoPage" v-model="current" :value="current">
+				/{{total}}
+			</span>
+			<button type="button" class="btn btn-secondary" @click="next">下一题</button>
+			<div class="custom-control custom-switch float-right" v-show="bingo>=0">
+			  <input type="checkbox" class="custom-control-input" id="customSwitch1" v-model="checkWrongs">
+			  <label class="custom-control-label" for="customSwitch1"></label>
+			</div>		
+		</div>
+	</div>
+</body>
+<script src="https://cdn.bootcss.com/vue/1.0.18/vue.min.js"></script>
+<script src="https://cdn.bootcss.com/vue-resource/0.7.0/vue-resource.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script type="text/javascript">
+	new Vue({
+		el : '.container-fluid',
+		data : {
+			current : 1,
+			total : 100,
+			progress : 0, //控制进度条和提交按钮
+			commitProgress : 60, //至少完成60%才能提交
+			missParams: true,
+			checkWrongs: false, //仅查看错题
+			bingo: -1, //-1 未提交 [0,total]已提交
+			answerId: '',
+			questions : [], //[{id,q,a,b,c,d,r,n}]
+			answers: {}, //{type.id:a}
+			notes: {} //{type.id:{r,n}}
+		},
+		methods : {
+			first: function(){
+				this.page(1);
+			},
+			prev: function(){
+				prev = parseInt(this.current) - 1;
+				while(prev>1 && this.checkWrongs && !this.notes[this.questions[prev].id]){
+					prev -= 1;
+				}
+				this.page(prev);
+			},
+			next: function(){
+				next = parseInt(this.current) + 1;
+				while(next<this.total && this.checkWrongs && !this.notes[this.questions[next].id]){
+					next += 1;
+				}
+				this.page(next);
+			},
+			last: function(){
+				this.page(this.total);
+			},
+			gotoPage: function(e){
+				this.page(parseInt(e.target.value))
+			},
+			page: function(num){
+				if(num<1 || this.total<1) num = 1;
+				else if(num>this.total) num = this.total;
+				//初次打开页面时，选中A，点击下一题，A没有取消勾选，因此手动去掉所有勾选
+				if(this.current != num && !this.answers[this.questions[num].id]){
+					$('input[name="customRadio"]').prop('checked',false);
+				}
+				this.current = num;
+			},
+			refresh: function(questions){
+				console.log(questions);
+				this.questions = questions;
+				this.total = questions.length;
+				for(i in questions){
+					this.answers[questions[i].id] = '';
+				}
+				//current使用[1-total]访问questions，位置0插入占位对象
+				this.questions.unshift({id:'0',q:'1+0=?',a:'1',b:'2',c:'3',d:'4'});
+				//this.answers={1:'b'};
+				//this.notes={2:'答错啦'};
+			},
+			setAnswers: function(result){
+				this.notes = {};
+				for(typeId in result){
+					answer = result[typeId];
+					if(!!answer.n){
+						this.notes[typeId] = answer.n;
+					}
+					if(!!answer.a){
+						this.answers[typeId] = answer.a;
+					}
+				}
+				this.bingo = result.corrects;
+				this.answerId = result.answerId;
+				console.log(this.notes)
+			},
+			choose: function(e){
+				this.answers[this.questions[this.current].id] = e.target.value;
+				answered = 0;
+				for(i in this.answers){
+					if(!this.answers[i]){
+						
+					}else{
+						answered += 1;
+					}
+				}
+				this.progress = answered * 100 / this.total;
+			},
+			check: function(o){
+				return o==this.answers[this.questions[this.current].id];
+			},
+			commit: function(){
+				if(this.progress < this.commitProgress){
+					alert('需要完成60%才能提交，当前进度：'+this.progress+'%');
+				}else if(confirm((this.progress<100?'当前进度：'+this.progress+'%，':'')+'确定提交吗？')){
+					console.log(this.answers)
+					if(missParams){
+						result = {};
+						corrects = 4;
+						if(this.answers['1'] != 'b'){ result['1']={'r':'b','n':'1+1=2'}; corrects--; }
+						if(this.answers['2'] != 'c'){ result['2']={'r':'c','n':'1+2=3'}; corrects--; }
+						if(this.answers['3'] != 'd'){ result['3']={'r':'d','n':'1+3=4'}; corrects--; }
+						if(this.answers['4'] != 'd'){ result['4']={'r':'d','n':'2+2=4'}; corrects--; }
+						result.corrects = corrects;
+						result.answerId = 1;
+						this.setAnswers(result);
+					}else{
+						this.$http.post('/service/exam/commit', {'answers':this.answers}).then(function(response){
+							console.log(response);
+							this.setAnswers(response.data.result);
+						});
+					}
+					this.first();
+				}
+			}
+		},
+		ready : function() {
+			//https://stackoverflow.com/questions/6539761/window-location-search-query-as-json
+			params = new URLSearchParams(location.search);
+			missParams = !params.get('type') && !params.get('id') && !params.get('answer')
+			if(missParams){
+				questions = [{id:'1',q:'1+1=?',a:'1',b:'2',c:'3',d:'4'},{id:'2',q:'1+2=?',a:'1',b:'2',c:'3',d:'4'},{id:'3',q:'1+3=?',a:'1',b:'2',c:'3',d:'4'},{id:'4',q:'2+2=?',a:'1',b:'2',c:'3',d:'4'}];
+				this.refresh(questions);
+			}else{
+				this.$http.get('/service/exam/paper'+location.search).then(function(response){
+					console.log(response);
+					this.refresh(response.data.questions);
+					if(response.data.result && !!response.data.result.answerId){
+						this.setAnswers(response.data.result);
+					}
+				});	
+			}
+		}
+	});
+</script>
+</html>
