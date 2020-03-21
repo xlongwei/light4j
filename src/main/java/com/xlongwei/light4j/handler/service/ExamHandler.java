@@ -1,21 +1,30 @@
 package com.xlongwei.light4j.handler.service;
 
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.alibaba.excel.ExcelReader;
+import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.metadata.Sheet;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.JsonUtil.JsonBuilder;
+import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.form.FormData.FormValue;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -41,8 +50,8 @@ public class ExamHandler extends AbstractHandler {
 			JSONArray array = JsonUtil.parseArray(paper);
 			if(array!=null && !array.isEmpty()) {
 				for(int i=0;i<array.size();i++) {
-					String key = array.getString(i);
-					String value = RedisConfig.get(PREFIX+key);
+					String key = PREFIX+array.getString(i);
+					String value = RedisConfig.get(key);
 					addQuestion(jsonBuilder, key, value);
 				}
 			}
@@ -129,6 +138,91 @@ public class ExamHandler extends AbstractHandler {
 		}
 		ret.put("corrects", corrects);
 		HandlerUtil.setResp(exchange, JsonUtil.builder(false).put("result", ret).json());
+	}
+	
+	/** 从excel导入问卷
+	 * <br/>sheet名称作为type，列标题有：id	question	a	b	c	d	right	note
+	 */
+	public void excel(HttpServerExchange exchange) throws Exception {
+		FormValue file = HandlerUtil.getFile(exchange, "file");
+		InputStream is = null;
+		if(file!=null && file.isFileItem()) {
+			is = file.getFileItem().getInputStream();
+		}
+		if(is != null) {
+			final List<List<String>> rows = new ArrayList<>();
+	        ExcelReader excelReader = new ExcelReader(is, null, new AnalysisEventListener<List<String>>() {
+	            @Override
+	            public void invoke(List<String> object, AnalysisContext context) {
+	                rows.add(object);
+	            }
+	            @Override
+	            public void doAfterAllAnalysed(AnalysisContext context) {
+	            }
+	        }, false);
+	        List<Sheet> sheets = excelReader.getSheets();
+	        JsonBuilder jb = JsonUtil.builder(false).put("sheets", sheets.size());
+	        Set<String> sheetNames = sheets.stream().map(s -> s.getSheetName()).collect(Collectors.toSet());
+			for(Sheet sheet : sheets) {
+				rows.clear();
+				excelReader.read(sheet);
+				String sheetName = sheet.getSheetName();
+				log.info("read sheet: {} rows: {}",sheetName,rows.size());
+				jb = jb.putJSON(sheetName);
+				JsonBuilder badRows = JsonUtil.builder(true), paperIds = JsonUtil.builder(true);
+				int success = 0;
+				for(int i=1;i<rows.size();i++) {
+					List<String> row = rows.get(i);
+					int idx = 0, cols = row.size();
+					String id = cols<=idx?null:row.get(idx++);
+					String q = cols<=idx?null:row.get(idx++);
+					if(!StringUtil.isBlank(id) && !StringUtil.isBlank(q) && sheetNames.contains(id) && !sheetName.equals(id)) {
+						//导入问卷
+						String type = id;
+						Integer no = NumberUtil.parseInt(q, null);
+						if(no!=null) {
+							paperIds.add(type+"."+no);
+							success++;
+						}else {
+							log.info("invalid exam row: {}, sheet: {}", row, sheetName);
+							badRows.add(i);
+						}
+						continue;
+					}
+					String a = cols<=idx?null:row.get(idx++);
+					String b = cols<=idx?null:row.get(idx++);
+					String c = cols<=idx?null:row.get(idx++);
+					String d = cols<=idx?null:row.get(idx++);
+					String r = cols<=idx?null:row.get(idx++);
+					String n = cols<=idx?null:row.get(idx++);
+					boolean invalid = NumberUtil.parseInt(id, null)==null || StringUtil.isBlank(q) || StringUtil.isBlank(a) || StringUtil.isBlank(b) || StringUtil.isBlank(c)
+							|| StringUtil.isBlank(d) || StringUtil.isBlank(r);
+					if(invalid == false) {
+						//导入问题
+						String key = PREFIX+sheetName+"."+id;
+						String value = JsonUtil.builder(false).put("id", id).put("q", q).put("a", a).put("b", b).put("c", c).put("d", d).put("r", r).put("n", n).json().toJSONString();
+						RedisConfig.persist(key, value);
+						success++;
+					}else {
+						log.info("invalid exam row: {}, sheet: {}", row, sheetName);
+						badRows.add(i);
+					}
+				}
+				JSONArray paperIdsArray = paperIds.array();
+				if(!paperIdsArray.isEmpty()) {
+					String key = PREFIX+"paper."+sheetName;
+					String value = paperIdsArray.toJSONString();
+					RedisConfig.persist(key, value);
+				}
+				JSONArray badRowsArray = badRows.array();
+				if(!badRowsArray.isEmpty()) {
+					jb.put("badRows", badRowsArray);
+				}
+				jb.put("success", success);
+				jb = jb.parent();
+			}
+			HandlerUtil.setResp(exchange, jb.json());
+		}
 	}
 
 	private void addQuestion(JsonBuilder jsonBuilder, String key, String value) {

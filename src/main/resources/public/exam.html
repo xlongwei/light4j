@@ -7,7 +7,7 @@
 <title>exam</title>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 <style type="text/css">
-.row { border-bottom:solid 1px lightgray;margin-top:8px;margin-bottom:8px; }
+.row { border-bottom:solid 1px lightgray;margin-top:12px;margin-bottom:12px; }
 .custom-radio, .custom-control-label, .alert { width:100% }
 .custom-switch {width:50px;display:inline-block;}
 </style>
@@ -65,7 +65,7 @@
 			<button type="button" class="btn btn-secondary" @click="next">下一题</button>
 			<div class="custom-control custom-switch float-right" v-show="bingo>=0">
 			  <input type="checkbox" class="custom-control-input" id="customSwitch1" v-model="checkWrongs">
-			  <label class="custom-control-label" for="customSwitch1"></label>
+			  <label class="custom-control-label" for="customSwitch1" title="仅查看错题"></label>
 			</div>		
 		</div>
 	</div>
@@ -139,7 +139,7 @@
 				for(typeId in result){
 					answer = result[typeId];
 					if(!!answer.n){
-						this.notes[typeId] = answer.n;
+						this.notes[typeId] = answer.r.toUpperCase()+'：'+answer.n;
 					}
 					if(!!answer.a){
 						this.answers[typeId] = answer.a;
@@ -147,6 +147,7 @@
 				}
 				this.bingo = result.corrects;
 				this.answerId = result.answerId;
+				this.checkWrongs = true;
 				console.log(this.notes)
 			},
 			choose: function(e){
