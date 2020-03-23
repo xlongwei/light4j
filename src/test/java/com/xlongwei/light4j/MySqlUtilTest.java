@@ -16,6 +16,11 @@ import cn.hutool.extra.template.Template;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * MySqlUtilTest
+ * @author xlongwei
+ *
+ */
 @Slf4j
 public class MySqlUtilTest {
 
@@ -65,6 +70,7 @@ public class MySqlUtilTest {
 	}
 	
 	public interface UserDao extends BaseMapper<User> {
+		/** sample */
 		List<User> sample(User user);
 	}
 }

@@ -42,7 +42,7 @@ public class ConsulTest {
         if(connection == null || !connection.isOpen()) {
             try {
                 String apidHost = cluster.serviceToUrl("https", "com.xlongwei.light4j", tag, null);
-                connection = client.connect(new URI(apidHost), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+                connection = client.connect(new URI(apidHost), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
             } catch (Exception e) {
                 log.error("Exeption:", e);
                 throw new ClientException(e);
@@ -70,7 +70,7 @@ public class ConsulTest {
 			ClientConnection connection = connections.get(service);
 	        if(connection == null || !connection.isOpen()) {
 	            try {
-	                connection = client.connect(new URI(service), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+	                connection = client.connect(new URI(service), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
 	                connections.put(service, connection);
 	            } catch (Exception e) {
 	            	log.info("fail to get connection, i=[{}]", i);

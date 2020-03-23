@@ -164,80 +164,69 @@ public class ExamHandler extends AbstractHandler {
 	        JsonBuilder jb = JsonUtil.builder(false).put("sheets", sheets.size());
 	        Set<String> sheetNames = sheets.stream().map(s -> s.getSheetName()).collect(Collectors.toSet());
 			for(Sheet sheet : sheets) {
-				rows.clear();
-				excelReader.read(sheet);
-				String sheetName = sheet.getSheetName();
-				log.info("read sheet: {} rows: {}",sheetName,rows.size());
-				jb = jb.putJSON(sheetName);
-				JsonBuilder badRows = JsonUtil.builder(true), paperIds = JsonUtil.builder(true);
-				int success = 0;
-				for(int i=1;i<rows.size();i++) {
-					List<String> row = rows.get(i);
-					int idx = 0, cols = row.size();
-					String id = cols<=idx?null:row.get(idx++);
-					String q = cols<=idx?null:row.get(idx++);
-					if(!StringUtil.isBlank(id) && !StringUtil.isBlank(q) && sheetNames.contains(id) && !sheetName.equals(id)) {
-						//导入问卷
-						String type = id;
-						Integer no = NumberUtil.parseInt(q, null);
-						if(no!=null) {
-							paperIds.add(type+"."+no);
-							success++;
-						}else {
-							log.info("invalid exam row: {}, sheet: {}", row, sheetName);
-							badRows.add(i);
-						}
-						continue;
-					}
-					String a = cols<=idx?null:row.get(idx++);
-					String b = cols<=idx?null:row.get(idx++);
-					String c = cols<=idx?null:row.get(idx++);
-					String d = cols<=idx?null:row.get(idx++);
-					String r = cols<=idx?null:row.get(idx++);
-					String n = cols<=idx?null:row.get(idx++);
-					boolean invalid = NumberUtil.parseInt(id, null)==null || StringUtil.isBlank(q) || StringUtil.isBlank(a) || StringUtil.isBlank(b) || StringUtil.isBlank(c)
-							|| StringUtil.isBlank(d) || StringUtil.isBlank(r);
-					if(invalid == false) {
-						//导入问题
-						String key = PREFIX+sheetName+"."+id;
-						String value = JsonUtil.builder(false).put("id", id).put("q", q).put("a", a).put("b", b).put("c", c).put("d", d).put("r", r).put("n", n).json().toJSONString();
-						RedisConfig.persist(key, value);
-						success++;
-					}else {
-						log.info("invalid exam row: {}, sheet: {}", row, sheetName);
-						badRows.add(i);
-					}
-				}
-				JSONArray paperIdsArray = paperIds.array();
-				if(!paperIdsArray.isEmpty()) {
-					String key = PREFIX+"paper."+sheetName;
-					String value = paperIdsArray.toJSONString();
-					RedisConfig.persist(key, value);
-				}
-				JSONArray badRowsArray = badRows.array();
-				if(!badRowsArray.isEmpty()) {
-					jb.put("badRows", badRowsArray);
-				}
-				jb.put("success", success);
-				jb = jb.parent();
+				jb = handleSheet(sheet, excelReader, sheetNames, rows, jb);
 			}
 			HandlerUtil.setResp(exchange, jb.json());
 		}
 	}
 
+	private JsonBuilder handleSheet(Sheet sheet, ExcelReader excelReader, Set<String> sheetNames, List<List<String>> rows, JsonBuilder jb) {
+		rows.clear();
+		excelReader.read(sheet);
+		String sheetName = sheet.getSheetName();
+		log.info("read sheet: {} rows: {}",sheetName,rows.size());
+		jb = jb.putJSON(sheetName);
+		JsonBuilder badRows = JsonUtil.builder(true), paperIds = JsonUtil.builder(true);
+		int success = 0;
+		for(int i=1;i<rows.size();i++) {
+			List<String> row = rows.get(i);
+			int idx = 0, cols = row.size();
+			String id = cols<=idx?null:row.get(idx++), q = cols<=idx?null:row.get(idx++);
+			if(!StringUtil.isBlank(id) && !StringUtil.isBlank(q) && sheetNames.contains(id) && !sheetName.equals(id)) {
+				String type = id;
+				Integer no = NumberUtil.parseInt(q, null);
+				if(no!=null) {
+					paperIds.add(type+"."+no);
+					success++;
+				}else {
+					log.info("invalid exam row: {}, sheet: {}", row, sheetName);
+					badRows.add(i);
+				}
+				continue;
+			}
+			String a = cols<=idx?null:row.get(idx++), b = cols<=idx?null:row.get(idx++), c = cols<=idx?null:row.get(idx++), d = cols<=idx?null:row.get(idx++), r = cols<=idx?null:row.get(idx++), n = cols<=idx?null:row.get(idx++);
+			boolean invalid = NumberUtil.parseInt(id, null)==null || StringUtil.isBlank(q) || StringUtil.isBlank(a) || StringUtil.isBlank(b) || StringUtil.isBlank(c)
+					|| StringUtil.isBlank(d) || StringUtil.isBlank(r);
+			if(invalid == false) {
+				String key = PREFIX+sheetName+"."+id;
+				String value = JsonUtil.builder(false).put("id", id).put("q", q).put("a", a).put("b", b).put("c", c).put("d", d).put("r", r).put("n", n).json().toJSONString();
+				RedisConfig.persist(key, value);
+				success++;
+			}else {
+				log.info("invalid exam row: {}, sheet: {}", row, sheetName);
+				badRows.add(i);
+			}
+		}
+		JSONArray paperIdsArray = paperIds.array();
+		if(!paperIdsArray.isEmpty()) {
+			String key = PREFIX+"paper."+sheetName;
+			String value = paperIdsArray.toJSONString();
+			RedisConfig.persist(key, value);
+		}
+		JSONArray badRowsArray = badRows.array();
+		if(!badRowsArray.isEmpty()) {
+			jb.put("badRows", badRowsArray);
+		}
+		jb.put("success", success);
+		jb = jb.parent();
+		return jb;
+	}
+
 	private void addQuestion(JsonBuilder jsonBuilder, String key, String value) {
-		String id;
 		JSONObject json = JsonUtil.parseNew(value);
 		if(!StringUtil.isBlank(json.getString("q"))) {
-			id = key.substring(PREFIX_LENGTH);
-			jsonBuilder.addJSON()
-					.put("id", id)
-					.put("q", json.getString("q"))
-					.put("a", json.getString("a"))
-					.put("b", json.getString("b"))
-					.put("c", json.getString("c"))
-					.put("d", json.getString("d"))
-				.parent();
+			String id = key.substring(PREFIX_LENGTH);
+			jsonBuilder.addJSON().put("id", id).put("q", json.getString("q")).put("a", json.getString("a")).put("b", json.getString("b")).put("c", json.getString("c")).put("d", json.getString("d")).parent();
 		}
 	}
 	

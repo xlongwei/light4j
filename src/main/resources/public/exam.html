@@ -17,6 +17,7 @@
 		<nav class="navbar navbar-light bg-light">
 			<span>{{questions[current].id}}</span>
 			<span v-show="bingo>=0">结果：{{bingo}}/{{total}}</span>
+			<span v-show="bingo<0 && countdownTimer!=null" style="color:red">{{countdown.countdownStr}}</span>
 			<button type="button" class="btn btn-success" @click="commit" v-bind:disabled="bingo>=0||progress<commitProgress">{{bingo>=0 ? answerId : '提交'}}</button>
 		</nav>
 		<div class="progress" style="height:0.2rem">
@@ -87,7 +88,15 @@
 			answerId: '',
 			questions : [], //[{id,q,a,b,c,d,r,n}]
 			answers: {}, //{type.id:a}
-			notes: {} //{type.id:{r,n}}
+			notes: {}, //{type.id:{r,n}}
+			countdown: {
+				countdownNum: 0,
+				countdownMax: 3600,
+				countdownStr: '01:00:00',
+				countupStr: '00:00:00',
+				countdownStart: '',
+			},
+			countdownTimer: null,
 		},
 		methods : {
 			first: function(){
@@ -147,8 +156,9 @@
 				}
 				this.bingo = result.corrects;
 				this.answerId = result.answerId;
-				this.checkWrongs = true;
-				console.log(this.notes)
+				//this.checkWrongs = true;
+				console.log(this.notes);
+				this.first();
 			},
 			choose: function(e){
 				this.answers[this.questions[this.current].id] = e.target.value;
@@ -166,9 +176,7 @@
 				return o==this.answers[this.questions[this.current].id];
 			},
 			commit: function(){
-				if(this.progress < this.commitProgress){
-					alert('需要完成60%才能提交，当前进度：'+this.progress+'%');
-				}else if(confirm((this.progress<100?'当前进度：'+this.progress+'%，':'')+'确定提交吗？')){
+				if(this.countdown.countdownNum >= this.countdown.countdownMax || confirm((this.progress<100?'当前进度：'+this.progress+'%，':'')+'确定提交吗？')){
 					console.log(this.answers)
 					if(missParams){
 						result = {};
@@ -181,13 +189,26 @@
 						result.answerId = 1;
 						this.setAnswers(result);
 					}else{
-						this.$http.post('/service/exam/commit', {'answers':this.answers}).then(function(response){
+						this.$http.post('/service/exam/commit', {'answers':this.answers,'countdown':this.countdown}).then(function(response){
 							console.log(response);
 							this.setAnswers(response.data.result);
 						});
 					}
-					this.first();
 				}
+			},
+			countup: function(){
+				if(this.countdown.countdownNum < this.countdown.countdownMax){
+					this.countdown.countdownNum += 1;
+					this.countdown.countupStr = this.countStr(this.countdown.countdownNum);
+					this.countdown.countdownStr = this.countStr(this.countdown.countdownMax - this.countdown.countdownNum);
+				}else{
+					window.clearInterval(this.countdownTimer);
+					this.commit();
+				}
+			},
+			countStr: function(n){
+				h = Math.floor(n/3600), m = Math.floor((n-h*3600)/60), s = n % 60;
+				return (h<10?'0'+h:h)+':'+(m<10?'0'+m:m)+':'+(s<10?'0'+s:s);
 			}
 		},
 		ready : function() {
@@ -205,6 +226,11 @@
 						this.setAnswers(response.data.result);
 					}
 				});	
+			}
+			this.countdown.countdownStart = new Date().toTimeString().substring(0,9);
+			if(missParams || !!params.get('id')){
+				//问卷时计时，分类时刷题
+				this.countdownTimer = window.setInterval(this.countup, 1000);
 			}
 		}
 	});
