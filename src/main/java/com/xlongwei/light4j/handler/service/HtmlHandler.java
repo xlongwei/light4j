@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.script.Bindings;
@@ -29,11 +28,14 @@ import com.xlongwei.light4j.util.HtmlUtil;
 import com.xlongwei.light4j.util.IdWorker;
 import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.NumberUtil;
+import com.xlongwei.light4j.util.QnObject;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
+import com.xlongwei.light4j.util.QnObject.QnException;
 
 import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.cache.LRUCache;
 import io.undertow.util.ObjectPool;
 import io.undertow.util.PooledObject;
 import io.undertow.util.SimpleObjectPool;
@@ -51,7 +53,7 @@ public class HtmlHandler extends AbstractHandler {
 	private static final ObjectPool<ScriptEngine> POOL = new SimpleObjectPool<ScriptEngine>(
 			NumberUtil.parseInt(RedisConfig.get(""), 6), () -> new NashornScriptEngineFactory().getScriptEngine("-strict", "--no-java", "--no-syntax-extensions"),
 			ScriptEngine::getContext, ScriptEngine::getContext);
-	private static final Map<String, CompiledScript> SCRIPTS = new ConcurrentHashMap<>();
+	private static final LRUCache<String, CompiledScript> SCRIPTS = new LRUCache<>(1000, -1);
 
 	public void charset(HttpServerExchange exchange) throws Exception {
 		String charset = null;
@@ -304,6 +306,46 @@ public class HtmlHandler extends AbstractHandler {
 			HandlerUtil.setResp(exchange, MapUtil.of("results", results));
 		}
 	}
+	
+	public void jsQn(HttpServerExchange exchange) throws Exception {
+		String qn = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "qn"), HandlerUtil.getBodyString(exchange));
+		if(StringUtil.isBlank(qn)) {
+			return;
+		}
+		try {
+			QnObject qnObj = QnObject.fromString(qn);
+			String js = QnObject.toJs(qnObj);
+			HandlerUtil.setResp(exchange, StringUtil.params("js", js));
+		}catch(QnException e) {
+			HandlerUtil.setResp(exchange, StringUtil.params("pos", String.valueOf(e.getPos()), "error", e.getMessage()));
+		}
+	}
+	
+	public void jsQnEval(HttpServerExchange exchange) throws Exception {
+		String data = HandlerUtil.getParam(exchange, "data"), datakey = HandlerUtil.getParam(exchange, "datakey");
+		if(StringUtil.isBlank(data) && StringUtil.isBlank(datakey)) {
+			return;
+		}
+		if(StringUtil.isBlank(data)) {
+			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			boolean isClient = ConfigUtil.isClient(userName);
+			String clientName = isClient==false?"":userName+".";
+			datakey = "js." + clientName + datakey;
+			data = RedisConfig.get(datakey);
+		}
+		String qn = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "qn"), HandlerUtil.getBodyString(exchange));
+		if(StringUtil.isBlank(qn) || StringUtil.isBlank(data)) {
+			return;
+		}
+		try {
+			QnObject qnObj = QnObject.fromString(qn);
+			String js = QnObject.toJs(qnObj);
+			Tuple<Boolean, String> result = jsEval(data, js, null);
+			HandlerUtil.setResp(exchange, StringUtil.params(result.first ? "result" : "error", result.second));
+		}catch(QnException e) {
+			HandlerUtil.setResp(exchange, StringUtil.params("pos", String.valueOf(e.getPos()), "error", e.getMessage()));
+		}
+	}
 
 	private Tuple<Boolean, String> jsEval(String data, String js, String jskey) {
 		log.info("jsEval data: {}, jskey: {}, js: \n{}", data, jskey, js);
@@ -330,7 +372,7 @@ public class HtmlHandler extends AbstractHandler {
 				result = se.eval(js, bindings);
 				if(jskey!=null) {
 					CompiledScript script = ((Compilable)se).compile(js);
-					SCRIPTS.put(jskey, script);
+					SCRIPTS.add(jskey, script);
 					log.info("jsEval save compiled script, jskey: {}", jskey);
 				}
 				return new Tuple<>(Boolean.TRUE, String.valueOf(result));
