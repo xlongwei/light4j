@@ -39,10 +39,10 @@ public class QnObjectTest {
 	
 	@Test public void testLoop() {
 		QnObject qnObj = null;
-		qnObj = QnObject.fromString("您好：<>[{姓名}，]");
+		qnObj = QnObject.fromString("{姓名}的老婆有：<老婆>[{昵称}、-]");
 		System.out.println(qnObj.toString());
 		System.out.println(QnObject.toJs(qnObj));
-		qnObj = QnObject.fromString("您好：<列表>[{姓名}、-]");
+		qnObj = QnObject.fromString("您好：({列表}<>EMPTY)[<列表>[{姓名}、-]]");
 		System.out.println(qnObj.toString());
 		System.out.println(QnObject.toJs(qnObj));
 		qnObj = QnObject.fromString("您好：<>[<列表>[{姓名}，]]");

@@ -28,8 +28,9 @@ import lombok.Getter;
  * <li>{变量}，值为空时原样输出
  * <li>(条件)[内容]，条件支持and、or、分组括号
  * <li><>[内容]，顶层循环，支持内嵌列表循环
- * <li><列表>[内容]，列表循环，支持-]删除最后一个字符
+ * <li><{列表}>[内容]，列表循环，支持-]删除最后一个字符
  * <li>条件和循环里的[内容]可以嵌套语法规则，并且只能顶层循环嵌套列表循环
+ * <li>({列表}!=EMPTY)，判断{列表}是否非空
  * @author xlongwei
  * @date 2020-03-24
  */
@@ -51,6 +52,7 @@ public class QnObject {
 	private static final String EQUAL = "=";
 	private static final String NOT_EQUAL = "!=";
 	private static final String NOT_EQUAL2 = "<>";
+	private static final String EMPTY = "EMPTY";
 	private static final String[] OPS = new String[] {EQUAL, "<", ">"};
 	private static final String[] OPS2 = new String[] {"<=", ">=", "==", NOT_EQUAL, NOT_EQUAL2};
 	private static final char BLANK = ' ';
@@ -81,7 +83,7 @@ public class QnObject {
 				p = fromLoop(obj, qn, from, len);
 				from = p+1;
 			}
-			p = indexOf(qn, from, len, VAR_START, CONDITION_START);
+			p = indexOf(qn, from, len, VAR_START, CONDITION_START, LOOP_START);
 		}
 		if(len > from) {
 			obj.nodes.add(qn.substring(from));
@@ -99,6 +101,11 @@ public class QnObject {
 				throw new QnException(p+1, QnException.MISS_LOOP_END);
 			}else {
 				String name = qn.substring(from+1, p);
+				if(StringUtil.isBlank(name)==false) {
+					if(name.charAt(0)==VAR_START && name.charAt(name.length()-1)==VAR_END) {
+						name = name.substring(1, name.length()-1);
+					}
+				}
 				String content = qn.substring(p+2, e);
 				QnObject contentObj = QnObject.fromString(content);
 				obj.nodes.add(new Loop(name, contentObj));
@@ -415,6 +422,9 @@ public class QnObject {
 					}else {
 						sb.append(")==-1");
 					}
+				}else if((NOT_EQUAL.equals(op) || NOT_EQUAL2.equals(op)) && EMPTY.equals(right)){
+					sb.append("!!");
+					toJs(sb, left);
 				}else {
 					toJs(sb, left);
 					if(EQUAL.equals(op)) {
@@ -456,7 +466,8 @@ public class QnObject {
 			obj.toJs(temp);
 			String tempJs = temp.toString().replace("json.", "item.");
 			boolean hasSubLoop = tempJs.contains(".forEach(");
-			sb.append(StringUtil.isBlank(name) ? "array" : (hasSubLoop ? "item." : "data.")+name).append(".forEach(function(item){\n");
+			String array = StringUtil.isBlank(name) ? "array" : (hasSubLoop ? "item." : "json.")+name;
+			sb.append(array).append(" && ").append(array).append(".forEach(function(item){\n");
 			if(hasSubLoop) {
 				tempJs = tempJs.replace("data.", "item.");
 			}
@@ -467,7 +478,9 @@ public class QnObject {
 			sb.append(tempJs);
 			sb.append("});\n");
 			if(hasMinus) {
+				sb.append("if(").append(array).append(" && ").append(array).append(".length>0){\n");
 				sb.append("result = result.substring(0,result.length-1);\n");
+				sb.append("}\n");
 			}
 		}
 	}
