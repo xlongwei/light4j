@@ -30,18 +30,21 @@ import lombok.Getter;
 public class QnObject {
 	private static final char VAR_START = '{';
 	private static final char VAR_END = '}';
-	private static final String DATA_DOT = "data.";
+	private static final String DATA_DOT = "json.";
 	private static final char CONDITION_START = '(';
 	private static final String CONDITION_INNER = ")[";
 	private static final char CONDITION_END = ']';
 	private static final char COND_START = '(';
 	private static final char COND_END = ')';
+	private static final char BACKSLASH = '\\';
 	private static final String AND = " and ";
 	private static final String OR = " or ";
 	private static final String COND = String.valueOf(COND_START);
 	private static final String EQUAL = "=";
+	private static final String NOT_EQUAL = "!=";
+	private static final String NOT_EQUAL2 = "<>";
 	private static final String[] OPS = new String[] {EQUAL, "<", ">"};
-	private static final String[] OPS2 = new String[] {"<=", ">=", "!="};
+	private static final String[] OPS2 = new String[] {"<=", ">=", "==", NOT_EQUAL, NOT_EQUAL2};
 	private static final char BLANK = ' ';
 	private static final char PAUSE = '、';
 	private List<Object> nodes = new LinkedList<>();
@@ -52,6 +55,10 @@ public class QnObject {
 		int p = indexOf(qn, from, len, VAR_START, CONDITION_START);
 		while(p != -1) {
 			if(p > from) {
+				if(BACKSLASH == qn.charAt(p-1)) {
+					p = indexOf(qn, p+1, len, VAR_START, CONDITION_START);
+					continue;
+				}
 				obj.nodes.add(qn.substring(from, p));
 			}
 			char c = qn.charAt(p);
@@ -102,7 +109,10 @@ public class QnObject {
 	}
 	
 	public static String toJs(QnObject qnObj) {
-		StringBuilder sb = new StringBuilder("var result = '';\n");
+		StringBuilder sb = new StringBuilder();
+		sb.append("var array=(data.toString()[0]=='[') ? data : [data];\n");
+		sb.append("var json = array[0];\n");
+		sb.append("var result = '';\n");
 		qnObj.toJs(sb);
 		sb.append("result");
 		return sb.toString();
@@ -363,17 +373,23 @@ public class QnObject {
 				return new StringBuilder(left).append(op).append(right).toString();
 			}
 			public void toJs(StringBuilder sb) {
-				if(EQUAL.equals(op) && right.indexOf(PAUSE)>0) {
+				if((EQUAL.equals(op) || NOT_EQUAL.equals(op) || NOT_EQUAL2.equals(op)) && right.indexOf(PAUSE)>0) {
 					//{机构}=北京、上海
 					sb.append("[");
 					sb.append(StringUtil.join(Arrays.asList(right.split("[、]")), "'", "'", ","));
 					sb.append("].indexOf(");
 					toJs(sb, left);
-					sb.append(")>-1");
+					if(EQUAL.equals(op)) {
+						sb.append(")>-1");
+					}else {
+						sb.append(")==-1");
+					}
 				}else {
 					toJs(sb, left);
 					if(EQUAL.equals(op)) {
 						sb.append("==");
+					}else if(NOT_EQUAL2.equals(op)){
+						sb.append("!=");
 					}else {
 						sb.append(op);
 					}
