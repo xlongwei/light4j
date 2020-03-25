@@ -14,7 +14,7 @@ import lombok.Getter;
  * 用法：
  * <pre>
  * try{
- *     String qn = "您好：{姓名}(({性别}=男 and {年龄}>60) or {机构}=北京、上海)[老({机构}=北京)[{机构}]先生]";
+ *     String qn = "您好：{姓名}(({性别}=男 and {年龄}>60) or {机构}=北京、上海)[老({机构}=北京)[{机构}]先生]<>[<列表>[{姓名}、-]]";
  *     QnObject qnObj = QnObject.fromString(qn);
  *     String js = QnObject.toJs(qnObj);
  * }catch(QnException ex){
@@ -24,6 +24,12 @@ import lombok.Getter;
  * String data = "{姓名:'老张',性别:'男',年龄: "60", 机构: "北京"}";
  * String result = "您好：老张老北京先生"; //data + js = QnObject.toJs(qnObj)
  * </pre>
+ * 语法规则：
+ * <li>{变量}，值为空时原样输出
+ * <li>(条件)[内容]，条件支持and、or、分组括号
+ * <li><>[内容]，顶层循环，支持内嵌列表循环
+ * <li><列表>[内容]，列表循环，支持-]删除最后一个字符
+ * <li>条件和循环里的[内容]可以嵌套语法规则，并且只能顶层循环嵌套列表循环
  * @author xlongwei
  * @date 2020-03-24
  */
@@ -37,6 +43,8 @@ public class QnObject {
 	private static final char COND_START = '(';
 	private static final char COND_END = ')';
 	private static final char BACKSLASH = '\\';
+	private static final char LOOP_START = '<';
+	private static final String LOOP_INNER = ">[";
 	private static final String AND = " and ";
 	private static final String OR = " or ";
 	private static final String COND = String.valueOf(COND_START);
@@ -52,7 +60,7 @@ public class QnObject {
 	public static QnObject fromString(String qn) {
 		QnObject obj = new QnObject();
 		int from = 0, len = qn.length();
-		int p = indexOf(qn, from, len, VAR_START, CONDITION_START);
+		int p = indexOf(qn, from, len, VAR_START, CONDITION_START, LOOP_START);
 		while(p != -1) {
 			if(p > from) {
 				if(BACKSLASH == qn.charAt(p-1)) {
@@ -69,6 +77,9 @@ public class QnObject {
 			}else if(CONDITION_START == c) {
 				p = fromCondition(obj, qn, from, len);
 				from = p+1;
+			}else if(LOOP_START == c) {
+				p = fromLoop(obj, qn, from, len);
+				from = p+1;
 			}
 			p = indexOf(qn, from, len, VAR_START, CONDITION_START);
 		}
@@ -76,6 +87,24 @@ public class QnObject {
 			obj.nodes.add(qn.substring(from));
 		}
 		return obj;
+	}
+
+	private static int fromLoop(QnObject obj, String qn, int from, int len) {
+		int p = qn.indexOf(LOOP_INNER, from+1);
+		if(p==-1) {
+			throw new QnException(from, QnException.MISS_LOOP_INNER);
+		}else {
+			int e = conditionEnd(qn, p+2, len, 0);
+			if(e==-1) {
+				throw new QnException(p+1, QnException.MISS_LOOP_END);
+			}else {
+				String name = qn.substring(from+1, p);
+				String content = qn.substring(p+2, e);
+				QnObject contentObj = QnObject.fromString(content);
+				obj.nodes.add(new Loop(name, contentObj));
+			}
+			return e;
+		}
 	}
 
 	private static int fromCondition(QnObject obj, String qn, int from, int len) {
@@ -135,6 +164,8 @@ public class QnObject {
 				((Var)obj).toJs(sb);
 			}else if(obj instanceof Condition) {
 				((Condition)obj).toJs(sb);
+			}else if(obj instanceof Loop) {
+				((Loop)obj).toJs(sb);
 			}
 		}
 	}
@@ -146,7 +177,7 @@ public class QnObject {
 		public String toString() {
 			return new StringBuilder().append(VAR_START).append(name).append(VAR_END).toString();
 		}
-		public void toJs(StringBuilder sb) {
+		void toJs(StringBuilder sb) {
 			//result += !data.name ? {name} : data.name
 			sb.append("result += !").append(DATA_DOT).append(name).append(" ? '{").append(name).append("}' : ").append(DATA_DOT).append(name).append(";\n");
 		}
@@ -160,7 +191,7 @@ public class QnObject {
 		public String toString() {
 			return new StringBuilder().append(CONDITION_START).append(cond.toString()).append(CONDITION_INNER).append(obj.toString()).append(CONDITION_END).toString();
 		}
-		public void toJs(StringBuilder sb) {
+		void toJs(StringBuilder sb) {
 			sb.append("if(");
 			cond.toJs(sb);
 			sb.append("){\n");
@@ -222,7 +253,7 @@ public class QnObject {
 					return sb.toString();
 				}
 			}
-			public void toJs(StringBuilder sb) {
+			void toJs(StringBuilder sb) {
 				if(type==0) {
 					comp.toJs(sb);
 				}else {
@@ -372,7 +403,7 @@ public class QnObject {
 			public String toString() {
 				return new StringBuilder(left).append(op).append(right).toString();
 			}
-			public void toJs(StringBuilder sb) {
+			void toJs(StringBuilder sb) {
 				if((EQUAL.equals(op) || NOT_EQUAL.equals(op) || NOT_EQUAL2.equals(op)) && right.indexOf(PAUSE)>0) {
 					//{机构}=北京、上海
 					sb.append("[");
@@ -408,14 +439,49 @@ public class QnObject {
 		}
 	}
 	
+	@AllArgsConstructor
+	static class Loop {
+		private String name;
+		QnObject obj;
+		@Override
+		public String toString() {
+			if(StringUtil.isBlank(name)) {
+				return new StringBuilder().append(LOOP_START).append(LOOP_INNER).append(obj.toString()).append(CONDITION_END).toString();
+			}else {
+				return new StringBuilder().append(LOOP_START).append(name).append(LOOP_INNER).append(obj.toString()).append(CONDITION_END).toString();
+			}
+		}
+		void toJs(StringBuilder sb) {
+			StringBuilder temp = new StringBuilder();
+			obj.toJs(temp);
+			String tempJs = temp.toString().replace("json.", "item.");
+			boolean hasSubLoop = tempJs.contains(".forEach(");
+			sb.append(StringUtil.isBlank(name) ? "array" : (hasSubLoop ? "item." : "data.")+name).append(".forEach(function(item){\n");
+			if(hasSubLoop) {
+				tempJs = tempJs.replace("data.", "item.");
+			}
+			boolean hasMinus = tempJs.contains("-'");
+			if(hasMinus) {
+				tempJs = tempJs.replace("-'", "'");
+			}
+			sb.append(tempJs);
+			sb.append("});\n");
+			if(hasMinus) {
+				sb.append("result = result.substring(0,result.length-1);\n");
+			}
+		}
+	}
+	
 	@Getter
 	@SuppressWarnings("serial")
 	public static class QnException extends RuntimeException {
 		public static final String MISS_VAR_END = String.format("变量缺少结束符：%s", VAR_END);
 		public static final String MISS_CONDITION_INNER = String.format("条件缺少分隔符：%s", CONDITION_INNER);
+		public static final String MISS_LOOP_INNER = String.format("循环缺少分隔符：%s", LOOP_INNER);
 		public static final String EMPTY_VAR = "变量不能为空";
 		public static final String BAD_VAR = "变量不能有空格";
 		public static final String MISS_CONDITION_END = "条件括号不匹配";
+		public static final String MISS_LOOP_END = "循环括号不匹配";
 		public static final String MISS_AND_OR = "多个条件之间需要有and或or";
 		public static final String BAD_AND_OR = "同时使用and和or时需要使用括号";
 		public static final String BAD_AND_OR2 = "and或or之后需要有条件";
@@ -474,7 +540,7 @@ public class QnObject {
 	}
 	
 	private static int conditionEnd(String qn, int from, int to, int level) {
-		int p = indexOf(qn, from, to, CONDITION_START, CONDITION_END);
+		int p = indexOf(qn, from, to, CONDITION_START, LOOP_START, CONDITION_END);
 		if(p==-1) {
 			return p;
 		}else {
@@ -482,9 +548,9 @@ public class QnObject {
 			if(CONDITION_END == c) {
 				return level<=0 ? p : conditionEnd(qn, p+1, to, level-1);
 			}else {
-				p = qn.indexOf(CONDITION_INNER, p+1);
+				p = qn.indexOf(LOOP_START==c ? LOOP_INNER : CONDITION_INNER, p+1);
 				if(p==-1) {
-					throw new QnException(from, QnException.MISS_CONDITION_INNER);
+					throw new QnException(from, LOOP_START==c ? QnException.MISS_LOOP_INNER : QnException.MISS_CONDITION_INNER);
 				}else {
 					return conditionEnd(qn, p+2, to, level+1);
 				}

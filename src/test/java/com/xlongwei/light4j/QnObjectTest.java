@@ -37,6 +37,19 @@ public class QnObjectTest {
 		System.out.println(QnObject.toJs(qnObj));
 	}
 	
+	@Test public void testLoop() {
+		QnObject qnObj = null;
+		qnObj = QnObject.fromString("您好：<>[{姓名}，]");
+		System.out.println(qnObj.toString());
+		System.out.println(QnObject.toJs(qnObj));
+		qnObj = QnObject.fromString("您好：<列表>[{姓名}、-]");
+		System.out.println(qnObj.toString());
+		System.out.println(QnObject.toJs(qnObj));
+		qnObj = QnObject.fromString("您好：<>[<列表>[{姓名}，]]");
+		System.out.println(qnObj.toString());
+		System.out.println(QnObject.toJs(qnObj));
+	}
+	
 	@Test public void testFails() {
 		String qn = null;
 		try {
