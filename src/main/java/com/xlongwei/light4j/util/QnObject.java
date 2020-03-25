@@ -52,6 +52,7 @@ public class QnObject {
 	private static final String EQUAL = "=";
 	private static final String NOT_EQUAL = "!=";
 	private static final String NOT_EQUAL2 = "<>";
+	private static final String NOT_2 = "!!";
 	private static final String EMPTY = "EMPTY";
 	private static final String[] OPS = new String[] {EQUAL, "<", ">"};
 	private static final String[] OPS2 = new String[] {"<=", ">=", "==", NOT_EQUAL, NOT_EQUAL2};
@@ -423,8 +424,11 @@ public class QnObject {
 						sb.append(")==-1");
 					}
 				}else if((NOT_EQUAL.equals(op) || NOT_EQUAL2.equals(op)) && EMPTY.equals(right)){
-					sb.append("!!");
+					sb.append(NOT_2);
 					toJs(sb, left);
+					sb.append(" && ");
+					toJs(sb, left);
+					sb.append(".length>0");
 				}else {
 					toJs(sb, left);
 					if(EQUAL.equals(op)) {
@@ -467,7 +471,7 @@ public class QnObject {
 			String tempJs = temp.toString().replace("json.", "item.");
 			boolean hasSubLoop = tempJs.contains(".forEach(");
 			String array = StringUtil.isBlank(name) ? "array" : (hasSubLoop ? "item." : "json.")+name;
-			sb.append(array).append(" && ").append(array).append(".forEach(function(item){\n");
+			sb.append(NOT_2).append(array).append(" && ").append(array).append(".forEach(function(item){\n");
 			if(hasSubLoop) {
 				tempJs = tempJs.replace("data.", "item.");
 			}
@@ -478,7 +482,7 @@ public class QnObject {
 			sb.append(tempJs);
 			sb.append("});\n");
 			if(hasMinus) {
-				sb.append("if(").append(array).append(" && ").append(array).append(".length>0){\n");
+				sb.append("if(").append(NOT_2).append(array).append(" && ").append(array).append(".length>0){\n");
 				sb.append("result = result.substring(0,result.length-1);\n");
 				sb.append("}\n");
 			}
