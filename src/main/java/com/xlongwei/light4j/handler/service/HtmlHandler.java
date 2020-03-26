@@ -254,7 +254,7 @@ public class HtmlHandler extends AbstractHandler {
 			boolean isClient = ConfigUtil.isClient(userName);
 			String clientName = isClient==false?"":userName+".";
 			//优先取redis配置，其次取原值，userName独立配置
-			data = StringUtil.firstNotBlank(RedisConfig.get("js."+clientName+data), data);
+			data = data.charAt(0)!='{' && data.charAt(0)!='[' ? RedisConfig.get("js."+clientName+data) : data;
 			String jskey = "js."+clientName+js;
 			String jsConfig = RedisConfig.get(jskey);
 			if(StringUtil.hasLength(jsConfig)) {
@@ -326,11 +326,11 @@ public class HtmlHandler extends AbstractHandler {
 		if(StringUtil.isBlank(data) && StringUtil.isBlank(datakey)) {
 			return;
 		}
-		if(StringUtil.isBlank(data)) {
+		if(StringUtil.isBlank(data) || (data.charAt(0)!='{' && data.charAt(0)!='[')) {
 			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
 			boolean isClient = ConfigUtil.isClient(userName);
 			String clientName = isClient==false?"":userName+".";
-			datakey = "js." + clientName + datakey;
+			datakey = "js." + clientName + StringUtil.firstNotBlank(data, datakey);
 			data = RedisConfig.get(datakey);
 		}
 		String qn = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "qn"), HandlerUtil.getBodyString(exchange));

@@ -50,12 +50,14 @@ public class QnObject {
 	private static final String OR = " or ";
 	private static final String COND = String.valueOf(COND_START);
 	private static final String EQUAL = "=";
+	private static final String EQUAL_2 = "==";
 	private static final String NOT_EQUAL = "!=";
 	private static final String NOT_EQUAL2 = "<>";
+	private static final String NOT = "!";
 	private static final String NOT_2 = "!!";
 	private static final String EMPTY = "EMPTY";
 	private static final String[] OPS = new String[] {EQUAL, "<", ">"};
-	private static final String[] OPS2 = new String[] {"<=", ">=", "==", NOT_EQUAL, NOT_EQUAL2};
+	private static final String[] OPS2 = new String[] {"<=", ">=", EQUAL_2, NOT_EQUAL, NOT_EQUAL2};
 	private static final char BLANK = ' ';
 	private static final char PAUSE = '、';
 	private List<Object> nodes = new LinkedList<>();
@@ -412,23 +414,27 @@ public class QnObject {
 				return new StringBuilder(left).append(op).append(right).toString();
 			}
 			void toJs(StringBuilder sb) {
-				if((EQUAL.equals(op) || NOT_EQUAL.equals(op) || NOT_EQUAL2.equals(op)) && right.indexOf(PAUSE)>0) {
+				if(right.indexOf(PAUSE)>0 && (EQUAL.equals(op) || EQUAL_2.equals(op) || NOT_EQUAL.equals(op) || NOT_EQUAL2.equals(op))) {
 					//{机构}=北京、上海
 					sb.append("[");
 					sb.append(StringUtil.join(Arrays.asList(right.split("[、]")), "'", "'", ","));
 					sb.append("].indexOf(");
 					toJs(sb, left);
-					if(EQUAL.equals(op)) {
+					if(EQUAL.equals(op) || EQUAL_2.equals(op)) {
 						sb.append(")>-1");
 					}else {
 						sb.append(")==-1");
 					}
-				}else if((NOT_EQUAL.equals(op) || NOT_EQUAL2.equals(op)) && EMPTY.equals(right)){
-					sb.append(NOT_2);
+				}else if(EMPTY.equals(right) && (EQUAL.equals(op) || EQUAL_2.equals(op) || NOT_EQUAL.equals(op) || NOT_EQUAL2.equals(op))){
+					boolean isEqual = EQUAL.equals(op) || EQUAL_2.equals(op);
+					sb.append(isEqual ? NOT : NOT_2);
 					toJs(sb, left);
-					sb.append(" && ");
+					sb.append(isEqual ? " || (" : " && (");
 					toJs(sb, left);
-					sb.append(".length>0");
+					sb.append(".toString()[0]=='[' ? ");
+					toJs(sb, left);
+					sb.append(isEqual ? ".length==0" : ".length>0");
+					sb.append(" : true)");
 				}else {
 					toJs(sb, left);
 					if(EQUAL.equals(op)) {
@@ -471,7 +477,7 @@ public class QnObject {
 			String tempJs = temp.toString().replace("json.", "item.");
 			boolean hasSubLoop = tempJs.contains(".forEach(");
 			String array = StringUtil.isBlank(name) ? "array" : (hasSubLoop ? "item." : "json.")+name;
-			sb.append(NOT_2).append(array).append(" && ").append(array).append(".forEach(function(item){\n");
+			sb.append(NOT_2).append(array).append(" && ").append(array).append(".toString()[0]=='['").append(" && ").append(array).append(".forEach(function(item){\n");
 			if(hasSubLoop) {
 				tempJs = tempJs.replace("data.", "item.");
 			}
