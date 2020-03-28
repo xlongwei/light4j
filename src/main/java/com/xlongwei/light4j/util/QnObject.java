@@ -15,8 +15,9 @@ import lombok.Getter;
  * <pre>
  * try{
  *     String qn = "您好：{姓名}(({性别}=男 and {年龄}>60) or {机构}=北京、上海)[老({机构}=北京)[{机构}]先生]<>[<列表>[{姓名}、-]]";
- *     QnObject qnObj = QnObject.fromString(qn);
- *     String js = QnObject.toJs(qnObj);
+ *     String js = QnObject.fromQn(qn).toJs();
+ *     String qc = "({性别}=男 and {年龄}>60) or {机构}=北京、上海";
+ *     String qcJs = QnObject.fromQc(qc).toJs();
  * }catch(QnException ex){
  *     int pos = ex.getPos();
  *     String error = ex.getError();
@@ -62,7 +63,13 @@ public class QnObject {
 	private static final char PAUSE = '、';
 	private List<Object> nodes = new LinkedList<>();
 
-	public static QnObject fromString(String qn) {
+	/**
+	 * 解析问题模板
+	 * <br>String js = QnObject.fromQn(qn).toJs();
+	 * @param qn 问题定义
+	 * @return QnObject，可调用方法toJs()
+	 */
+	public static QnObject fromQn(String qn) {
 		QnObject obj = new QnObject();
 		int from = 0, len = qn.length();
 		int p = indexOf(qn, from, len, VAR_START, CONDITION_START, LOOP_START);
@@ -93,6 +100,16 @@ public class QnObject {
 		}
 		return obj;
 	}
+	
+	/**
+	 * 解析问题条件
+	 * <br>String js = QnObject.fromQc(qc).toJs();
+	 * @param qc 问题条件
+	 * @return Cond，可调用方法toJs()
+	 */
+	public static Cond fromQc(String qc) {
+		return Cond.from(qc, 0, qc.length());
+	}
 
 	private static int fromLoop(QnObject obj, String qn, int from, int len) {
 		int p = qn.indexOf(LOOP_INNER, from+1);
@@ -110,7 +127,7 @@ public class QnObject {
 					}
 				}
 				String content = qn.substring(p+2, e);
-				QnObject contentObj = QnObject.fromString(content);
+				QnObject contentObj = QnObject.fromQn(content);
 				obj.nodes.add(new Loop(name, contentObj));
 			}
 			return e;
@@ -128,7 +145,7 @@ public class QnObject {
 			}else {
 				Cond cond = Cond.from(qn, from+1, p);
 				String content = qn.substring(p+2, e);
-				QnObject contentObj = QnObject.fromString(content);
+				QnObject contentObj = QnObject.fromQn(content);
 				obj.nodes.add(new Condition(cond, contentObj));
 			}
 			return e;
@@ -147,12 +164,12 @@ public class QnObject {
 		return p;
 	}
 	
-	public static String toJs(QnObject qnObj) {
+	public String toJs() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("var array=(data.toString()[0]=='[') ? data : [data];\n");
 		sb.append("var json = array[0];\n");
 		sb.append("var result = '';\n");
-		qnObj.toJs(sb);
+		this.toJs(sb);
 		sb.append("result");
 		return sb.toString();
 	}
@@ -194,7 +211,7 @@ public class QnObject {
 	}
 	
 	@AllArgsConstructor
-	static class Condition {
+	public static class Condition {
 		Cond cond;
 		QnObject obj;
 		@Override
@@ -208,12 +225,12 @@ public class QnObject {
 			obj.toJs(sb);
 			sb.append("}\n");
 		}
-		static class Cond {
+		public static class Cond {
 			/** 0 a=b, 1 and, 2 or */
 			private int type = 0;
 			private Comp comp;
 			private List<Cond> conds = new ArrayList<>();
-			static Cond from(String qn, int from, int to) {
+			public static Cond from(String qn, int from, int to) {
 				List<String> tokens = tokens(qn, from, to);
 				if(tokens.isEmpty()) {
 					return null;
@@ -263,6 +280,13 @@ public class QnObject {
 					return sb.toString();
 				}
 			}
+			public String toJs() {
+				StringBuilder sb = new StringBuilder();
+				sb.append("var array=(data.toString()[0]=='[') ? data : [data];\n");
+				sb.append("var json = array[0];\n");
+				toJs(sb);
+				return sb.toString();
+			}
 			void toJs(StringBuilder sb) {
 				if(type==0) {
 					comp.toJs(sb);
@@ -284,7 +308,7 @@ public class QnObject {
 					}
 				}
 			}
-			public static List<String> tokens(String qn, int from, int to){
+			private static List<String> tokens(String qn, int from, int to){
 				List<String> tokens = new ArrayList<>();
 				int p = indexOf(qn, from, to, COND, AND, OR);
 				boolean hasAnd = false, hasOr = false, lastCond = false;
@@ -349,7 +373,7 @@ public class QnObject {
 				return tokens;
 			}
 
-			public static int condEnd(String qn, int from, int to, int level) {
+			private static int condEnd(String qn, int from, int to, int level) {
 				int p = indexOf(qn, from, to, COND_START, COND_END);
 				char c = qn.charAt(p);
 				if(COND_END == c) {
@@ -434,7 +458,7 @@ public class QnObject {
 					sb.append(".toString()[0]=='[' ? ");
 					toJs(sb, left);
 					sb.append(isEqual ? ".length==0" : ".length>0");
-					sb.append(" : true)");
+					sb.append(isEqual ? " : false)" : " : true)");
 				}else {
 					toJs(sb, left);
 					if(EQUAL.equals(op)) {
@@ -519,7 +543,7 @@ public class QnObject {
 		}
 	}
 	
-	public static int indexOf(String str, int from, int to, char ... cs) {
+	private static int indexOf(String str, int from, int to, char ... cs) {
 		for(int i=from;i<to;i++) {
 			char c = str.charAt(i);
 			for(char c1 : cs) {
@@ -531,7 +555,7 @@ public class QnObject {
 		return -1;
 	}
 	
-	public static int indexOf(String qn, int from, int to, String ... strs) {
+	private static int indexOf(String qn, int from, int to, String ... strs) {
 		int length = strs.length;
 		int[] ps = new int[length];
 		for(int i=0; i<length; i++) {
@@ -543,7 +567,7 @@ public class QnObject {
 		return minIndexOf(0, ps.length, ps);
 	}
 	
-	public static int minIndexOf(int from, int to, int ... ps) {
+	private static int minIndexOf(int from, int to, int ... ps) {
 		if(from >= to-1) {
 			return ps[from];
 		}else if(from >= to-2){
@@ -554,12 +578,8 @@ public class QnObject {
 		}
 	}
 	
-	public static int minIndexOf(int p1, int p2) {
+	private static int minIndexOf(int p1, int p2) {
 		return p1==-1 ? p2 : (p2==-1 ? p1 : (p1<p2 ? p1 : p2));
-	}
-	
-	public static int minIndexOf2(int ... ps) {
-		return minIndexOf(0, ps.length, ps);
 	}
 	
 	private static int conditionEnd(String qn, int from, int to, int level) {

@@ -14,47 +14,52 @@ import com.xlongwei.light4j.util.QnObject.QnException;
 public class QnObjectTest {
 
 	@Test public void test1() {
-		QnObject qnObj = QnObject.fromString("您好：{姓名}(性别=男)[先生](性别=女)[女士]");
+		QnObject qnObj = QnObject.fromQn("您好：{姓名}(性别=男)[先生](性别=女)[女士]");
 		System.out.println(qnObj.toString());
-		System.out.println(QnObject.toJs(qnObj));
+		System.out.println(qnObj.toJs());
 	}
 	
 	@Test public void test2() {
-		QnObject qnObj = QnObject.fromString("您好：{姓名}(性别=男)[(年龄>=60)[老]先生]");
+		QnObject qnObj = QnObject.fromQn("您好：{姓名}(性别=男)[(年龄>=60)[老]先生]");
 		System.out.println(qnObj.toString());
-		System.out.println(QnObject.toJs(qnObj));
+		System.out.println(qnObj.toJs());
 	}
 	
 	@Test public void test3() {
-		QnObject qnObj = QnObject.fromString("您好：{姓名}(性别=男 and 年龄>=60)[老先生]");
+		QnObject qnObj = QnObject.fromQn("您好：{姓名}(性别=男 and 年龄>=60)[老先生]");
 		System.out.println(qnObj.toString());
-		System.out.println(QnObject.toJs(qnObj));
+		System.out.println(qnObj.toJs());
 	}
 	
 	@Test public void test4() {
-		QnObject qnObj = QnObject.fromString("您好：{姓名}(({性别}=男 and {年龄}>=60) or {机构}!=北京)[老先生]");
+		QnObject qnObj = QnObject.fromQn("您好：{姓名}(({性别}=男 and {年龄}>=60) or {机构}!=北京)[老先生]");
 		System.out.println(qnObj.toString());
-		System.out.println(QnObject.toJs(qnObj));
+		System.out.println(qnObj.toJs());
 	}
 	
 	@Test public void testLoop() {
 		QnObject qnObj = null;
-		qnObj = QnObject.fromString("{姓名}的老婆有：<老婆>[{昵称}、-]");
+		qnObj = QnObject.fromQn("{姓名}的老婆有：<老婆>[{昵称}、-]");
 		System.out.println(qnObj.toString());
-		System.out.println(QnObject.toJs(qnObj));
-		qnObj = QnObject.fromString("您好：({列表}<>EMPTY)[<列表>[{姓名}、-]]");
+		System.out.println(qnObj.toJs());
+		qnObj = QnObject.fromQn("您好：({列表}<>EMPTY)[<列表>[{姓名}、-]]");
 		System.out.println(qnObj.toString());
-		System.out.println(QnObject.toJs(qnObj));
-		qnObj = QnObject.fromString("您好：<>[<列表>[{姓名}，]]");
+		System.out.println(qnObj.toJs());
+		qnObj = QnObject.fromQn("您好：<>[<列表>[{姓名}，]]");
 		System.out.println(qnObj.toString());
-		System.out.println(QnObject.toJs(qnObj));
+		System.out.println(qnObj.toJs());
+	}
+	
+	@Test public void testCond() {
+		String qc = "{姓名}=张三";
+		System.out.println(QnObject.fromQc(qc).toJs());
 	}
 	
 	@Test public void testFails() {
 		String qn = null;
 		try {
 			qn = "您好：{姓名(性别=男 and 年龄>=60)[老先生]";
-			QnObject.fromString(qn);
+			QnObject.fromQn(qn);
 			Assert.fail();
 		}catch(QnException e) {
 			System.out.println(qn);
@@ -63,7 +68,7 @@ public class QnObjectTest {
 		}
 		try {
 			qn = "您好：{姓名}(性别=男 and 年龄>=60)老先生]";
-			QnObject.fromString(qn);
+			QnObject.fromQn(qn);
 			Assert.fail();
 		}catch(QnException e) {
 			System.out.println(qn);
@@ -72,7 +77,7 @@ public class QnObjectTest {
 		}
 		try {
 			qn = "您好：{}(性别=男 and 年龄>=60)[老先生]";
-			QnObject.fromString(qn);
+			QnObject.fromQn(qn);
 			Assert.fail();
 		}catch(QnException e) {
 			System.out.println(qn);
@@ -81,7 +86,7 @@ public class QnObjectTest {
 		}
 		try {
 			qn = "您好：{姓名}(性别=男 and 年龄>=60)[老先生";
-			QnObject.fromString(qn);
+			QnObject.fromQn(qn);
 			Assert.fail();
 		}catch(QnException e) {
 			System.out.println(qn);
@@ -90,7 +95,7 @@ public class QnObjectTest {
 		}
 		try {
 			qn = "您好：{姓名}({性别}=男 and {年龄}>=60 or 机构!=北京)[老先生]";
-			QnObject.fromString(qn);
+			QnObject.fromQn(qn);
 			Assert.fail();
 		}catch(QnException e) {
 			System.out.println(qn);

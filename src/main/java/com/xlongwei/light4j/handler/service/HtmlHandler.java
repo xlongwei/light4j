@@ -313,8 +313,7 @@ public class HtmlHandler extends AbstractHandler {
 			return;
 		}
 		try {
-			QnObject qnObj = QnObject.fromString(qn);
-			String js = QnObject.toJs(qnObj);
+			String js = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "isCondition"), false) ? QnObject.fromQc(qn).toJs() : QnObject.fromQn(qn).toJs();
 			HandlerUtil.setResp(exchange, StringUtil.params("js", js));
 		}catch(QnException e) {
 			HandlerUtil.setResp(exchange, StringUtil.params("pos", String.valueOf(e.getPos()), "error", e.getMessage()));
@@ -338,8 +337,7 @@ public class HtmlHandler extends AbstractHandler {
 			return;
 		}
 		try {
-			QnObject qnObj = QnObject.fromString(qn);
-			String js = QnObject.toJs(qnObj);
+			String js = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "isCondition"), false) ? QnObject.fromQc(qn).toJs() : QnObject.fromQn(qn).toJs();
 			Tuple<Boolean, String> result = jsEval(data, js, null);
 			HandlerUtil.setResp(exchange, StringUtil.params(result.first ? "result" : "error", result.second));
 		}catch(QnException e) {
