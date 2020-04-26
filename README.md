@@ -21,7 +21,8 @@ vi start.sh
 2. -Dlight4j.directory，可以从light4j.yml里面的网址下载文件
 3. -Dlogserver，在/etc/hosts配置logserver地址
 4. contextName=light4j，修改应用的日志上下文
-5. https、registry可自行研究，sh start.sh keystore转换密钥为相关文件
+5. -Djava.compiler=none，禁用JIT可节约内存，默认启用JIT可提高性能
+6. https、registry可自行研究，sh start.sh keystore转换密钥为相关文件
 
 #### 其他说明
 

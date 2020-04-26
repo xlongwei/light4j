@@ -59,7 +59,7 @@ public class ZhDateTest {
 		Assert.assertEquals(ZhDate.fromDate(datetime(2050, 5, 20)), new ZhDate(2050, 3, 30, True));
 		Assert.assertEquals(ZhDate.fromDate(datetime(1900, 1, 31)), new ZhDate(1900, 1, 1));
 	}
-	
+	//mvn test-compile test -Dmaven.test.skip=false -Dtest=com.xlongwei.light4j.ZhDateTest#test
 	@Test public void test() {
 		Assert.assertEquals("庚子", new ZhDate(1900, 9, 1, False).ganzhi());
 		Assert.assertEquals("鼠", new ZhDate(1900, 9, 1, False).shengxiao());
@@ -67,6 +67,9 @@ public class ZhDateTest {
 		Assert.assertEquals("二零二零年正月二十八", ZhDate.fromDate(DateUtil.parse("2020-02-21")).chinese());
 		Assert.assertEquals("鼠", ZhDate.shengxiao(1900));
 		Assert.assertEquals("猪", ZhDate.shengxiao(1899));
+		//-Duser.timezone=GMT+8 时区问题可能导致以下两行测试失败，因此start.sh添加了时区参数
+		Assert.assertEquals(ZhDate.fromDate(datetime(1986, 5, 5)), new ZhDate(1986, 3, 27));
+		Assert.assertEquals(ZhDate.fromDate(datetime(1986, 9, 13)), new ZhDate(1986, 8, 10));
 	}
 	
 	private Date datetime(int year, int month, int day) {

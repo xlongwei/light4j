@@ -4,7 +4,8 @@ daemon=true
 appname=light4j
 jarfile=target/light4j.jar
 [ ! -e "$jarfile" ] && jarfile=light4j.jar
-JVM_OPS="-Xmx272m -Xms272m -XX:NewSize=80m -XX:MaxNewSize=80m -Xss228k"
+JVM_OPS="-Xmx336m -Xms336m -XX:NewSize=80m -XX:MaxNewSize=80m -Xss228k"
+#JVM_OPS="-Djava.compiler=none -Xmx104m -Xms104m -XX:NewSize=40m -XX:MaxNewSize=40m -Xss228k"
 JVM_OPS="$JVM_OPS -Dlogserver -DcontextName=light4j"
 #ENV_OPS="PATH=/usr/java/jdk1.8.0_161/bin:$PATH"
 JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
@@ -12,6 +13,8 @@ JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
 #JVM_OPS="$JVM_OPS -Dredis.cacheDbs=xlongwei:6379:3-7"
 #JVM_OPS="$JVM_OPS -Dsoffice.hosts=xlongwei:8100-8102:true"
 #JVM_OPS="$JVM_OPS -Dupload.url=http://ip/uploads/"
+JVM_OPS="$JVM_OPS -Duser.timezone=GMT+8"
+#JVM_OPS="$JVM_OPS -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n"
 #ENV_OPS="$ENV_OPS enableHttp=false httpPort=8080"
 ENV_OPS="$ENV_OPS enableHttps=true httpsPort=8443"
 ENV_OPS="$ENV_OPS workerThreads=9"
