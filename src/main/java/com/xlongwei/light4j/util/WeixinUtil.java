@@ -250,6 +250,8 @@ public class WeixinUtil {
 			String msgType = obj.get("MsgType");
 			if(StringUtil.isBlank(msgType)) {
 				return null;
+			}else {
+				msgType = msgType.trim();
 			}
 			Class<? extends AbstractMessage> clazz = classCache.get(msgType);
 			boolean isEvent = false;

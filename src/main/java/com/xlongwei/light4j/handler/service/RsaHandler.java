@@ -4,8 +4,7 @@ import java.security.KeyPair;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.nlpcn.commons.lang.util.StringUtil;
-
+import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.IdWorker;
@@ -39,7 +38,7 @@ public class RsaHandler extends AbstractHandler {
 	public void config(HttpServerExchange exchange) throws Exception {
 		String publicKey = HandlerUtil.getParam(exchange, PUBLIC_KEY);
 		String privateKey = HandlerUtil.getParam(exchange, PRIVATE_KEY);
-		if(StringUtil.isNotBlank(publicKey) && StringUtil.isNotBlank(privateKey) && RsaUtil.verify(publicKey, privateKey)) {
+		if(StringUtils.isNotBlank(publicKey) && StringUtils.isNotBlank(privateKey) && RsaUtil.verify(publicKey, privateKey)) {
 			setKeys(exchange, publicKey, privateKey);
 		}
 	}
@@ -61,7 +60,7 @@ public class RsaHandler extends AbstractHandler {
 	public void encrypt(HttpServerExchange exchange) throws Exception {
 		String publicKey = HandlerUtil.getParam(exchange, PUBLIC_KEY, PUBLIC_CACHE_KEY);
 		String data = HandlerUtil.getParam(exchange, "data");
-		if(StringUtil.isNotBlank(publicKey) && StringUtil.isNotBlank(data)) {
+		if(StringUtils.isNotBlank(publicKey) && StringUtils.isNotBlank(data)) {
 			data = RsaUtil.encrypt(RsaUtil.getPublicKey(publicKey), data);
 			HandlerUtil.setResp(exchange, MapUtil.of("data", data));
 		}
@@ -70,7 +69,7 @@ public class RsaHandler extends AbstractHandler {
 	public void decrypt(HttpServerExchange exchange) throws Exception {
 		String privateKey = HandlerUtil.getParam(exchange, PRIVATE_KEY, PRIVATE_CACHE_KEY);
 		String data = HandlerUtil.getParam(exchange, "data");
-		if(StringUtil.isNotBlank(privateKey) && StringUtil.isNotBlank(data)) {
+		if(StringUtils.isNotBlank(privateKey) && StringUtils.isNotBlank(data)) {
 			data = RsaUtil.decrypt(RsaUtil.getPrivateKey(privateKey), data);
 			HandlerUtil.setResp(exchange, MapUtil.of("data", data));
 		}
@@ -79,7 +78,7 @@ public class RsaHandler extends AbstractHandler {
 	public void sign(HttpServerExchange exchange) throws Exception {
 		String privateKey = HandlerUtil.getParam(exchange, PRIVATE_KEY, PRIVATE_CACHE_KEY);
 		String data = HandlerUtil.getParam(exchange, "data");
-		if(StringUtil.isNotBlank(privateKey) && StringUtil.isNotBlank(data)) {
+		if(StringUtils.isNotBlank(privateKey) && StringUtils.isNotBlank(data)) {
 			data = RsaUtil.sign(RsaUtil.getPrivateKey(privateKey), data);
 			HandlerUtil.setResp(exchange, MapUtil.of("sign", data));
 		}
@@ -89,7 +88,7 @@ public class RsaHandler extends AbstractHandler {
 		String publicKey = HandlerUtil.getParam(exchange, PUBLIC_KEY, PUBLIC_CACHE_KEY);
 		String data = HandlerUtil.getParam(exchange, "data");
 		String sign = HandlerUtil.getParam(exchange, "sign");
-		if(StringUtil.isNotBlank(publicKey) && StringUtil.isNotBlank(data)) {
+		if(StringUtils.isNotBlank(publicKey) && StringUtils.isNotBlank(data)) {
 			boolean verify = RsaUtil.verify(RsaUtil.getPublicKey(publicKey), data, sign);
 			HandlerUtil.setResp(exchange, MapUtil.of("verify", String.valueOf(verify)));
 		}

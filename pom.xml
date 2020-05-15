@@ -106,11 +106,11 @@
 			<artifactId>pinyin4j</artifactId>
 			<version>${version.pinyin4j}</version>
 		</dependency>        
-        <dependency>
+        <!-- <dependency>
             <groupId>org.ansj</groupId>
             <artifactId>ansj_seg</artifactId>
             <version>${version.ansj}</version>
-        </dependency>
+        </dependency> -->
 		<dependency>
 		    <groupId>de.rrze</groupId>
 		    <artifactId>jpwgen</artifactId>
