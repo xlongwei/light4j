@@ -61,6 +61,11 @@ public class DemoHandler implements LightHttpHandler {
 			exchange.putAttachment(AbstractHandler.PATH, path);
 			HandlerUtil.parseBody(exchange);
 			handler.handleRequest(exchange);
+			String accept = exchange.getRequestHeaders().getFirst(Headers.ACCEPT);
+			if(accept!=null && accept.startsWith("application/json")) {
+				HandlerUtil.sendResp(exchange);
+				return;
+			}
 		}
 		exchange.setStatusCode(200);
 		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/html");
