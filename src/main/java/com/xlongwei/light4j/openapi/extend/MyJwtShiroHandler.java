@@ -25,7 +25,7 @@ import org.apache.shiro.util.CollectionUtils;
 import org.apache.shiro.util.StringUtils;
 import org.jose4j.jwt.JwtClaims;
 
-import com.networknt.cors.CorsUtil;
+import com.networknt.openapi.JwtVerifyHandler;
 import com.networknt.security.JwtVerifier;
 import com.networknt.utility.Constants;
 import com.xlongwei.light4j.util.RedisConfig;
@@ -65,26 +65,22 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
-		if(isEnabled() && CorsUtil.isPreflightedRequest(exchange)==false) {
-	        String authorization = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-	        String jwt = JwtVerifier.getJwtFromAuthorization(authorization);
-	        Subject subject = SecurityUtils.getSubject();
-	        subject.login(new JwtAuthenticationToken(jwt));
-	        try{
-	        	String path = exchange.getRequestPath();
-	        	if(path.lastIndexOf(CharUtil.DOT) > -1) {
-	        		path = path.substring(0, path.lastIndexOf('.'));
-	        	}
-	        	Map<String, String> urls = RedisConfig.hgetAll(RedisConfig.CACHE, "shiro.urls");
-	        	checkUrls(subject, path, urls);
-	        	super.handleRequest(exchange);
-	        }catch(AuthorizationException e) {
-	        	setExchangeStatus(exchange, "ERR12007");
-	        }finally {
-	        	subject.logout();
-			}
-		}else {
-			super.handleRequest(exchange);
+        String authorization = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+        String jwt = JwtVerifier.getJwtFromAuthorization(authorization);
+        Subject subject = SecurityUtils.getSubject();
+        subject.login(new JwtAuthenticationToken(jwt));
+        try{
+        	String path = exchange.getRequestPath();
+        	if(path.lastIndexOf(CharUtil.DOT) > -1) {
+        		path = path.substring(0, path.lastIndexOf(CharUtil.DOT));
+        	}
+        	Map<String, String> urls = RedisConfig.hgetAll(RedisConfig.CACHE, "shiro.urls");
+        	checkUrls(subject, path, urls);
+        	super.handleRequest(exchange);
+        }catch(AuthorizationException e) {
+        	setExchangeStatus(exchange, "ERR12007");
+        }finally {
+        	subject.logout();
 		}
 	}
 	
@@ -109,11 +105,11 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 		//roles["admin,user","client"] 校验角色：(admin and user) or client
 		String roles = StringUtil.getPatternString(rolesPerms, "roles\\[(.*)\\]");
 		if(StringUtil.hasLength(roles)) {
-			String[] roleArray = StringUtils.split(roles, StringUtils.DEFAULT_DELIMITER_CHAR, '"', '"', true, true);
+			String[] roleArray = StringUtils.split(roles, StringUtils.DEFAULT_DELIMITER_CHAR, CharUtil.DOUBLE_QUOTES, CharUtil.DOUBLE_QUOTES, true, true);
 			if(roleArray.length > 1) {
 				for(String role : roleArray) {
-					boolean hasRole = role.indexOf('"')==-1 && subject.hasRole(role);
-					boolean hasAllRoles = role.indexOf('"') > -1 && subject.hasAllRoles(Arrays.asList(role.substring(1, role.length()-1).split("[,]")));
+					boolean hasRole = role.indexOf(CharUtil.DOUBLE_QUOTES)==-1 && subject.hasRole(role);
+					boolean hasAllRoles = role.indexOf(CharUtil.DOUBLE_QUOTES) > -1 && subject.hasAllRoles(Arrays.asList(role.substring(1, role.length()-1).split("[,]")));
 					if(hasRole || hasAllRoles) {
 						return;
 					}
@@ -132,10 +128,10 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 		//perms[openapi:upload:*,"service:upload:upload,temp"] 校验权限：openapi:upload:* or service:upload:upload,temp
 		String perms = StringUtil.getPatternString(rolesPerms, "perms\\[(.*)\\]");
 		if(StringUtil.hasLength(perms)) {
-			String[] permArray = StringUtils.split(perms, StringUtils.DEFAULT_DELIMITER_CHAR, '"', '"', true, true);
+			String[] permArray = StringUtils.split(perms, StringUtils.DEFAULT_DELIMITER_CHAR, CharUtil.DOUBLE_QUOTES, CharUtil.DOUBLE_QUOTES, true, true);
 			if(permArray.length > 1) {
 				for(String perm : permArray) {
-					if(perm.indexOf('"') > -1) {
+					if(perm.indexOf(CharUtil.DOUBLE_QUOTES) > -1) {
 						perm = perm.substring(1, perm.length() -1);
 					}
 					if(subject.isPermitted(perm)) {
@@ -182,7 +178,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 			SimpleAuthorizationInfo authz = new SimpleAuthorizationInfo();
 	        try{
 	        	String jwt = (String)principals.getPrimaryPrincipal();
-	        	JwtClaims claims = MyJwtVerifyHandler.jwtVerifier.verifyJwt(jwt, true, true);
+	        	JwtClaims claims = JwtVerifyHandler.jwtVerifier.verifyJwt(jwt, true, true);
 	        	String userId = claims.getStringClaimValue(Constants.USER_ID_STRING);
 	        	//这里可以自定义用户的角色和权限列表
 	        	Set<String> roles = ShiroUtil.getRoles(userId);

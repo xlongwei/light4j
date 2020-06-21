@@ -53,10 +53,10 @@ public class DatetimeHandler extends AbstractHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		String path = exchange.getAttachment(AbstractHandler.PATH);
 		if(StringUtils.isBlank(path)) {
-			long currentSecond = SystemClock.now()/1000;
+			long currentMillis = SystemClock.now(), currentSecond = currentMillis/1000;
 			if(currentSecond > lastSecond) {
 				lastSecond = currentSecond;
-				lastSecondMap = Collections.singletonMap("datetime", fastDateFormat.format(currentSecond));
+				lastSecondMap = Collections.singletonMap("datetime", fastDateFormat.format(currentMillis));
 			}
 	        HandlerUtil.setResp(exchange, lastSecondMap);
 			return;

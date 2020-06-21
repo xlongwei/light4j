@@ -9,7 +9,7 @@ handlers:
 # openapi
   - com.networknt.exception.ExceptionHandler@exception
   - com.xlongwei.light4j.openapi.extend.MyCorsHttpHandler@cors
-  - com.xlongwei.light4j.openapi.extend.MyJwtVerifyHandler@security  
+  - com.networknt.openapi.JwtVerifyHandler@security  
   - com.xlongwei.light4j.openapi.extend.MyJwtShiroHandler@shiro  
   - com.networknt.specification.SpecDisplayHandler@spec
   - com.networknt.specification.SpecSwaggerUIHandler@swaggerui
