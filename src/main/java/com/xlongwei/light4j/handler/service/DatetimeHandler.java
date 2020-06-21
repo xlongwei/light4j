@@ -1,5 +1,6 @@
 package com.xlongwei.light4j.handler.service;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +22,6 @@ import com.xlongwei.light4j.util.ZhDate;
 
 import cn.hutool.core.date.Week;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpString;
 
 /**
  * datetime handler
@@ -30,6 +30,8 @@ import io.undertow.util.HttpString;
  */
 public class DatetimeHandler extends AbstractHandler {
 	private static FastDateFormat fastDateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+	private static long lastSecond = SystemClock.now()/1000;
+	private static Map<String, String> lastSecondMap = Collections.singletonMap("datetime", fastDateFormat.format(lastSecond));
 	
 	public DatetimeHandler() {
 		reload();
@@ -51,11 +53,12 @@ public class DatetimeHandler extends AbstractHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		String path = exchange.getAttachment(AbstractHandler.PATH);
 		if(StringUtils.isBlank(path)) {
-			exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
-			HandlerUtil.setCorsHeaders(exchange);
-	        exchange.setStatusCode(200);
-	        String datetime = fastDateFormat.format(SystemClock.now());
-			exchange.getResponseSender().send("{\"datetime\":\""+datetime+"\"}");
+			long currentSecond = SystemClock.now()/1000;
+			if(currentSecond > lastSecond) {
+				lastSecond = currentSecond;
+				lastSecondMap = Collections.singletonMap("datetime", fastDateFormat.format(currentSecond));
+			}
+	        HandlerUtil.setResp(exchange, lastSecondMap);
 			return;
 		}
 		Date day = DateUtil.parseNow(HandlerUtil.getParam(exchange, "day")), start = null, end = null;

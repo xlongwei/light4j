@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.networknt.cors.CorsUtil;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler;
@@ -13,7 +12,6 @@ import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.PathEndpointSource;
 
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.ReflectUtil;
 import io.undertow.server.HttpServerExchange;
@@ -58,14 +56,10 @@ public class OpenapiHandler implements LightHttpHandler {
 				ServiceHandler.serviceCount(name);
 			}
 			if(handler != null) {
-				if(CorsUtil.isPreflightedRequest(exchange)) {
-					HandlerUtil.setResp(exchange, MapUtil.newHashMap());
-				}else {
-					String path = split.length>1 ? split[1] : "";
-					exchange.putAttachment(AbstractHandler.PATH, path);
-					HandlerUtil.parseBody(exchange);
-					handler.handleRequest(exchange);
-				}
+				String path = split.length>1 ? split[1] : "";
+				exchange.putAttachment(AbstractHandler.PATH, path);
+				HandlerUtil.parseBody(exchange);
+				handler.handleRequest(exchange);
 			}
 		}
 		HandlerUtil.sendResp(exchange);

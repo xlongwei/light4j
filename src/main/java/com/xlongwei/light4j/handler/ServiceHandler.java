@@ -14,7 +14,6 @@ import org.jose4j.json.internal.json_simple.JSONObject;
 import org.omg.CORBA.IntHolder;
 import org.slf4j.LoggerFactory;
 
-import com.networknt.cors.CorsUtil;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.util.ConfigUtil;
@@ -26,7 +25,6 @@ import com.xlongwei.light4j.util.TokenCounter;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import lombok.extern.slf4j.Slf4j;
@@ -68,15 +66,11 @@ public class ServiceHandler implements LightHttpHandler {
 			String name = split[0];
 			AbstractHandler handler = handlers.get(name);
 			if(handler != null) {
-				if(CorsUtil.isPreflightedRequest(exchange)) {
-					HandlerUtil.setResp(exchange, MapUtil.newHashMap());
-				}else {
-					String path = split.length>1 ? split[1] : "";
-					exchange.putAttachment(AbstractHandler.PATH, path);
-					HandlerUtil.parseBody(exchange);
-					handler.handleRequest(exchange);
-					serviceCount(name);
-				}
+				String path = split.length>1 ? split[1] : "";
+				exchange.putAttachment(AbstractHandler.PATH, path);
+				HandlerUtil.parseBody(exchange);
+				handler.handleRequest(exchange);
+				serviceCount(name);
 			}
 		}
 		HandlerUtil.sendResp(exchange);

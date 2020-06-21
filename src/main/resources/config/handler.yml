@@ -8,6 +8,7 @@ handlers:
   - com.xlongwei.light4j.provider.WebSocketHandlerProvider@websocket
 # openapi
   - com.networknt.exception.ExceptionHandler@exception
+  - com.xlongwei.light4j.openapi.extend.MyCorsHttpHandler@cors
   - com.xlongwei.light4j.openapi.extend.MyJwtVerifyHandler@security  
   - com.xlongwei.light4j.openapi.extend.MyJwtShiroHandler@shiro  
   - com.networknt.specification.SpecDisplayHandler@spec
@@ -16,8 +17,12 @@ handlers:
   - com.networknt.security.JwtMockHandler@jwtmock
 
 chains:
+  service:
+    - cors
+    - service
   openapi:
     - exception
+    - cors
     - security
     - shiro
     - openapi
