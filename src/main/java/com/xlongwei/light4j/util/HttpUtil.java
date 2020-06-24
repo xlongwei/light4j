@@ -36,6 +36,19 @@ public class HttpUtil {
 	private static int maxConnTotal = 384;
 	private static int maxConnPerRoute = maxConnTotal;
 
+	public static String get(String api, Map<String, String> params) {
+		log.info("get: {}", api);
+		RequestBuilder requestBuilder = RequestBuilder.get(api);
+		if(params!=null && params.isEmpty()==false) {
+			params.forEach((k, v) -> {
+				if(v!=null && v.length()>0) {
+					requestBuilder.addParameter(k, v);
+				}
+			});
+		}
+		return execute(requestBuilder.build());
+	}
+	
 	public static String post(String api, Map<String, String> params, FileItem ... fileItems) {
 		MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create().setMode(HttpMultipartMode.RFC6532);
 		log.info("post: {}", api);
@@ -68,6 +81,10 @@ public class HttpUtil {
 				.setEntity(entity)
 				.build();
 		
+		return execute(request);
+	}
+
+	private static String execute(HttpUriRequest request) {
 		try {
 			long s = System.currentTimeMillis();
 			HttpResponse response = httpClient.execute(request);
