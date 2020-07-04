@@ -1,5 +1,5 @@
 mysql:
-  jdbcUrl: jdbc:mysql://localhost:3306/ite?useUnicode=true&characterEncoding=UTF8&zeroDateTimeBehavior=convertToNull
+  jdbcUrl: jdbc:mysql://localhost:3306/ite?useUnicode=true&characterEncoding=UTF8&zeroDateTimeBehavior=convertToNull&serverTimezone=GMT%2B8
   username: ite
   password: 
   minimumIdle: 1

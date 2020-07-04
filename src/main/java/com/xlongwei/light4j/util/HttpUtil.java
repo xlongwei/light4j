@@ -45,6 +45,7 @@ public class HttpUtil {
 					requestBuilder.addParameter(k, v);
 				}
 			});
+			log.info("with params: {}", params.toString());
 		}
 		return execute(requestBuilder.build());
 	}

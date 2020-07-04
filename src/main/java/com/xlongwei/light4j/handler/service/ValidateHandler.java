@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
+import com.xlongwei.light4j.util.BankUtil;
+import com.xlongwei.light4j.util.BankUtil.CardInfo;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.HolidayUtil;
@@ -64,7 +66,9 @@ public class ValidateHandler extends AbstractHandler {
 		case "organizationCode": valid = StringUtil.isOrganizationCode(value); break;
 		case "taxRegistrationNo": valid = StringUtil.isTaxRegistrationNo(value); break;
 		case "plateNumber": valid = plateNumber(value, map); break;
-		case "bankCardNumber": valid = StringUtil.isBankCardNumber(value); break;
+		case "bankCardNumber": valid = StringUtil.isBankCardNumber(value); CardInfo cardInfo = BankUtil.cardInfo(value); if(cardInfo != null) {
+			map.put("bankName", cardInfo.getBankName()); map.put("cardName", cardInfo.getCardName()); map.put("cardDigits", cardInfo.getCardDigits()); map.put("bankCode", cardInfo.getBankCode()); map.put("bankName2", cardInfo.getBankName2());
+		} break;
 		case "checkcode": valid = checkcode(exchange, value); break;
 		case "workday": { Date day = DateUtil.parse(value); valid = day!=null && HolidayUtil.isworkday(day); } break;
 		case "holiday": { Date day = DateUtil.parse(value); valid = day!=null && HolidayUtil.isholiday(day); } break;

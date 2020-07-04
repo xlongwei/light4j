@@ -25,7 +25,7 @@
         <version.aes>1.6</version.aes>
         <version.jedis>2.1.0</version.jedis>
         <version.guava>18.0</version.guava>
-        <version.beanutils>1.9.3</version.beanutils>
+        <version.beanutils>1.9.4</version.beanutils>
         <version.janino>2.6.1</version.janino>
         <version.poi>3.17</version.poi>
         <version.itext>2.0.8.1</version.itext>
@@ -37,7 +37,7 @@
         <version.zxing>3.2.1</version.zxing>
         <version.vcard>0.10.0</version.vcard>
         <version.easyexcel>1.1.2-beta5</version.easyexcel>
-        <version.mysql>5.1.43</version.mysql>
+        <version.mysql>8.0.16</version.mysql>
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.dbutils>1.7</version.dbutils>
         <version.commons-io>2.6</version.commons-io>
