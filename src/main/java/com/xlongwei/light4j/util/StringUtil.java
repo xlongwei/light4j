@@ -931,6 +931,61 @@ public class StringUtil {
         return cs[cs.length -1] == vi[power % 11];
 	}
 	
+	/** 计算证件号校验位 */
+	public static char checkIdNumber(String idNumber) {
+		if(idNumber==null || idNumber.length()!=17) {
+			return 0;
+		}
+		
+		final char[] cs = idNumber.toUpperCase().toCharArray();
+		//校验位数 Y = sum(Ai*Wi) Wi: 7 9 10 5 8 4 2 1 6 3 7 9 10 5 8 4 2
+		int power = 0;
+		for(int i=0; i<cs.length; i++){
+			if(cs[i]<'0' || cs[i]>'9') {
+				return 0;
+			}
+			if(i < cs.length){
+				power += (cs[i] - '0') * wi[i];
+			}
+		}
+		
+		//校验区位码
+		String area = idNumber.substring(0,2);
+		if(ArrayUtils.indexOf(areas, area)==-1){
+			return 0;
+		}
+		
+		//校验年份
+		String year = idNumber.substring(6, 10);
+		
+		final int iyear = Integer.parseInt(year);
+		int low = 1900;
+		if(iyear < low || iyear > Calendar.getInstance().get(Calendar.YEAR))
+		{
+			//1900年的PASS，超过今年的PASS
+			return 0;
+		}
+		
+		//校验月份
+		int monthHigh = 12;
+		String month = idNumber.substring(10,12);
+		final int imonth = Integer.parseInt(month);
+		if(imonth <1 || imonth > monthHigh){
+			return 0;
+		}
+		
+		//校验天数      
+		String day = idNumber.substring(12, 14);
+		final int iday = Integer.parseInt(day);
+		int dayHigh = 31;
+		if(iday < 1 || iday > dayHigh) {
+			return 0;
+		}       
+		//Y = mod(S, 11)
+		//Y: 0 1 2 3 4 5 6 7 8 9 10 校验码: 1 0 X 9 8 7 6 5 4 3 2
+		return (char)vi[power % 11];
+	}
+	
 	/** 组织机构代码证 */
 	public static boolean isOrganizationCode(String organizationCode) {
 		int organLength1 = 9, organLength2 = 18, organLength = organizationCode==null?0:organizationCode.length();
