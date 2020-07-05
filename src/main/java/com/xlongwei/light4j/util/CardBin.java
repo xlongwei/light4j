@@ -10,7 +10,6 @@ public class CardBin<E> {
 			Node<E> cn = root;
 			for(char c : bin.toCharArray()) {
 				if(cn.children == null) {
-					cn = null;
 					break;
 				}else {
 					boolean found = false;
@@ -21,11 +20,11 @@ public class CardBin<E> {
 						}
 					}
 					if(found == false) {
-						cn = null;
 						break;
 					}
 				}
 			}
+			while(cn!=null && cn.data==null && cn.parent!=null) cn = cn.parent;
 			return cn == null ? null : cn.data;
 		}
 		return null;

@@ -66,7 +66,7 @@ public class ValidateHandler extends AbstractHandler {
 		case "organizationCode": valid = StringUtil.isOrganizationCode(value); break;
 		case "taxRegistrationNo": valid = StringUtil.isTaxRegistrationNo(value); break;
 		case "plateNumber": valid = plateNumber(value, map); break;
-		case "bankCardNumber": valid = StringUtil.isBankCardNumber(value); CardInfo cardInfo = BankUtil.cardInfo(value); if(cardInfo != null) {
+		case "bankCardNumber": valid = StringUtil.isBankCardNumber(value); CardInfo cardInfo = StringUtil.isNumbers(value) ? BankUtil.cardInfo(value) : null; if(cardInfo != null) {
 			map.put("bankName", cardInfo.getBankName()); map.put("cardName", cardInfo.getCardName()); map.put("cardDigits", cardInfo.getCardDigits()); map.put("bankCode", cardInfo.getBankCode()); map.put("bankName2", cardInfo.getBankName2());
 		} break;
 		case "checkcode": valid = checkcode(exchange, value); break;
