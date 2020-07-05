@@ -1,6 +1,8 @@
 package com.xlongwei.light4j.handler.service;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -65,6 +67,37 @@ public class IdcardHandler extends AbstractHandler {
 		HandlerUtil.setResp(exchange, StringUtil.params("valid", Boolean.toString(StringUtil.isIdNumber(idNumber))));
 	}
 	
+	public void fix(HttpServerExchange exchange) throws Exception {
+		String idNumber = HandlerUtil.getParam(exchange, "idNumber");
+		if(!StringUtil.isBlank(idNumber) && idNumber.length()==18) {
+			Map<String, String> map = new HashMap<>(16);
+			if(StringUtil.isIdNumber(idNumber)) {
+				map.putAll(idcardInfo(idNumber));
+			}else {
+				int p = idNumber.indexOf('*');
+				if(p==17) {
+					idNumber = idNumber.substring(0, 17);
+					char check = StringUtil.checkIdNumber(idNumber);
+					if(check!=0) {
+						idNumber = idNumber+check;
+						map.put("idNumber", idNumber);
+						map.putAll(idcardInfo(idNumber));
+					}
+				}else {
+					for(int i=0;i<10;i++) {
+						idNumber = idNumber.substring(0, p)+i+idNumber.substring(p+1);
+						if(StringUtil.isIdNumber(idNumber)) {
+							map.put("idNumber", idNumber);
+							map.putAll(idcardInfo(idNumber));
+							break;
+						}
+					}
+				}
+			}
+			HandlerUtil.setResp(exchange, map);
+		}
+	}
+	
 	public void area(HttpServerExchange exchange) throws Exception {
 		String area = HandlerUtil.getParam(exchange, "area");
 		List<String> areas = IdCardUtil.areas(area);
@@ -78,24 +111,24 @@ public class IdcardHandler extends AbstractHandler {
 		String area = HandlerUtil.getParam(exchange, "area");
 		if(StringUtil.isBlank(area)) {
 			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().endsWith("0000")).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), (v1,v2) -> v1));
-			HandlerUtil.setResp(exchange, map);
+			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}else if(area.matches("\\d{2}(0000)?")) {
 			final String prefix = area.substring(0, 2);
 			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().startsWith(prefix) && e.getKey().endsWith("00") && !e.getKey().endsWith("0000")).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), (v1,v2) -> v1));
-			HandlerUtil.setResp(exchange, map);
+			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}else if(area.matches("\\d{4}(00)?")) {
 			final String prefix = area.substring(0, 4);
 			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().startsWith(prefix) && !e.getKey().endsWith("00")).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), (v1,v2) -> v1));
-			HandlerUtil.setResp(exchange, map);
+			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}
 	}
 
 	/** 生成证件号码 */
-	public void random(HttpServerExchange exchange) throws Exception {
+	public void gen(HttpServerExchange exchange) throws Exception {
 		String area = HandlerUtil.getParam(exchange, "area"), birthday = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "birth"), HandlerUtil.getParam(exchange, "birthday")), serial = HandlerUtil.getParam(exchange, "serial"), sex = HandlerUtil.getParam(exchange, "sex");
 		if(StringUtil.isBlank(area) || !StringUtil.isNumbers(area) || area.length()>6 || area.endsWith("00") || IdCardUtil.areas.get(area=StringUtils.rightPad(area, 6, '0'))==null) {
 			String prefix = !StringUtil.isBlank(area)&&IdCardUtil.areas.get(area)!=null ? (area.endsWith("0000") ? area.substring(0, 2) : (area.endsWith("00") ? area.substring(0, 4) : area)) : null;
-			List<String> list = IdCardUtil.areas.entrySet().stream().filter(e -> !e.getKey().endsWith("00") && e.getKey().startsWith(prefix)).map(e -> e.getKey()).collect(Collectors.toList());
+			List<String> list = IdCardUtil.areas.entrySet().stream().filter(e -> !e.getKey().endsWith("00") && (prefix==null||e.getKey().startsWith(prefix))).map(e -> e.getKey()).collect(Collectors.toList());
 			area = list.get(RandomUtils.nextInt(0, list.size()));
 		}
 		if(!StringUtil.isBlank(birthday)) {
