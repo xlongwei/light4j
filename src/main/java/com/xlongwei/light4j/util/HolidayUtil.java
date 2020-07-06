@@ -250,7 +250,34 @@ public class HolidayUtil {
 	 * @author xlongwei
 	 */
 	public enum Holiday {
-		元旦节, 春节, 清明节, 劳动节, 端午节, 国庆节, 中秋节;
+		/**
+		 * 1.1元旦节
+		 */
+		元旦节, 
+		/**
+		 * 农历除夕春节
+		 */
+		春节, 
+		/**
+		 * 二十四节气有清明节
+		 */
+		清明节, 
+		/**
+		 * 5.1劳动节
+		 */
+		劳动节, 
+		/**
+		 * 五五端午节
+		 */
+		端午节, 
+		/**
+		 * 10.1国庆节
+		 */
+		国庆节, 
+		/**
+		 * 八月十五中秋节
+		 */
+		中秋节;
 		public static Holiday nameOf(String name) {
 			try {
 				return Holiday.valueOf(name);

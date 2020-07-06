@@ -33,36 +33,40 @@ import com.xlongwei.light4j.util.StringUtil;
 import cn.hutool.core.text.TextSimilarity;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * BankUtil测试类
+ * @author xlongwei
+ *
+ */
 @Slf4j
 public class BankUtilTest {
 
 	@Test public void prepareData() throws Exception {
-		File dir = new File("target"), bin2017 = new File(dir, "最新卡BIN20171122.xls"), bin2020 = new File(dir, "2020年04月25日版卡表.xls");
-		File bin2020_dw = new File(dir, "2020年04月25日版单位结算卡卡表.xls"), bin2020_fb = new File(dir, "2020年04月25日版非标卡表.xls"), bin2020_kh = new File(dir, "2020年04月25日版跨行转账卡表总信息.xls"), bin2020_nm = new File(dir, "2020年04月25日版农民工卡表.xls");
-		log.info("path={}",bin2017.getAbsolutePath());
-		log.info("exists={}",bin2020.exists());
-		Map<String, String> bankIdAndNameMap = new HashMap<>();
-		//List<BankInfo> bankInfos2017 = bankInfos(bin2017, bankIdAndNameMap);
-		List<CardInfo> bankInfos2020 = bankInfos(bin2020, bankIdAndNameMap);
-		List<CardInfo> bankInfos2020_dw = bankInfos(bin2020_dw, bankIdAndNameMap);
-		List<CardInfo> bankInfos2020_fb = bankInfos(bin2020_fb, bankIdAndNameMap);
-		List<CardInfo> bankInfos2020_kh = bankInfos(bin2020_kh, bankIdAndNameMap);
-		List<CardInfo> bankInfos2020_nm = bankInfos(bin2020_nm, bankIdAndNameMap);
+		File dir = new File("target"), bin = new File(dir, "2020年04月25日版卡表.xls");
+		File binDw = new File(dir, "2020年04月25日版单位结算卡卡表.xls"), binFb = new File(dir, "2020年04月25日版非标卡表.xls"), binKh = new File(dir, "2020年04月25日版跨行转账卡表总信息.xls"), binNm = new File(dir, "2020年04月25日版农民工卡表.xls");
+		log.info("path={}",bin.getAbsolutePath());
+		log.info("exists={}",bin.exists());
+		Map<String, String> bankIdAndNameMap = new HashMap<>(4096);
+		List<CardInfo> bankInfos = bankInfos(bin, bankIdAndNameMap);
+		List<CardInfo> bankInfosDw = bankInfos(binDw, bankIdAndNameMap);
+		List<CardInfo> bankInfosFb = bankInfos(binFb, bankIdAndNameMap);
+		List<CardInfo> bankInfosKh = bankInfos(binKh, bankIdAndNameMap);
+		List<CardInfo> bankInfosNm = bankInfos(binNm, bankIdAndNameMap);
 		log.info("bankIdAndNameMap={}", bankIdAndNameMap.size());
 		Map<String, CardInfo> cardBinMap = new HashMap<>(10240);
-		bankInfos2020.forEach(bankInfo -> {
+		bankInfos.forEach(bankInfo -> {
 			cardBinMap.put(bankInfo.getCardBin(), bankInfo);
 		});
-		bankInfos2020_dw.forEach(bankInfo -> {
+		bankInfosDw.forEach(bankInfo -> {
 			addBankInfo(bankInfo, cardBinMap);
 		});
-		bankInfos2020_fb.forEach(bankInfo -> {
+		bankInfosFb.forEach(bankInfo -> {
 			addBankInfo(bankInfo, cardBinMap);
 		});
-		bankInfos2020_kh.forEach(bankInfo -> {
+		bankInfosKh.forEach(bankInfo -> {
 			addBankInfo(bankInfo, cardBinMap);
 		});
-		bankInfos2020_nm.forEach(bankInfo -> {
+		bankInfosNm.forEach(bankInfo -> {
 			addBankInfo(bankInfo, cardBinMap);
 		});
 		Map<String, CardInfo> bankInfoMap = bankInfoMap(bankIdAndNameMap);
@@ -147,7 +151,9 @@ public class BankUtilTest {
 				bankInfo.setCardDigits(Objects.toString(values.get(idx+=7), null));
 				bankInfo.setCardBin(Objects.toString(values.get(idx+=5), null));
 				bankInfo.setCardType(Objects.toString(values.get(idx+=2), null));
-				if(p1==-1 || p2==-2) log.warn("bad bankNameAndId={}, cardBin={}", bankNameAndId, bankInfo.getCardBin());
+				if(p1==-1 || p2==-2) {
+					log.warn("bad bankNameAndId={}, cardBin={}", bankNameAndId, bankInfo.getCardBin());
+				}
 				//log.info("bankInfo={}", bankInfo.rowOut());
 				//623529,,中国银联支付标记,00010030,19,借记卡,中国银联移动支付标记化产品
 				String bankName = bankIdAndNameMap.get(bankInfo.getBankId());
@@ -176,7 +182,7 @@ public class BankUtilTest {
 				bankCodeAndNameMap.forEach((bankCode, name) -> {
 					double score = -1;
 					//处理特殊情况
-					Map<String, List<String>> nickNamesMap = new HashMap<>();
+					Map<String, List<String>> nickNamesMap = new HashMap<>(64);
 					nickNamesMap.put("中国邮政储蓄银行", Arrays.asList("邮政储蓄","邮储银行"));
 					nickNamesMap.put("中国农业银行", Arrays.asList("农业银行","农行"));
 					nickNamesMap.put("中国工商银行", Arrays.asList("工行","工商银行"));
@@ -202,7 +208,9 @@ public class BankUtilTest {
 						}
 					}
 					//还有其他相似度算法可参考 https://zhuanlan.zhihu.com/p/91645988
-					if(score < 0) score = TextSimilarity.similar(bankName.replace("村镇", "").replace("信用社", "").replace("市", ""), name.replace("村镇", "").replace("信用社", "").replace("市", ""));
+					if(score < 0) {
+						score = TextSimilarity.similar(bankName.replace("村镇", "").replace("信用社", "").replace("市", ""), name.replace("村镇", "").replace("信用社", "").replace("市", ""));
+					}
 					if(scoreAndCode.getLeft()==null || scoreAndCode.getLeft().doubleValue() < score) {
 						scoreAndCode.setLeft(Double.valueOf(score));
 						scoreAndCode.setRight(bankCode);

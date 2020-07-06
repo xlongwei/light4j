@@ -1,6 +1,9 @@
 package com.xlongwei.light4j.util;
 
-/** 卡bin搜索 */
+/**
+ * 卡bin搜索
+ * @author xlongwei
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class CardBin<E> {
 	
@@ -24,7 +27,9 @@ public class CardBin<E> {
 					}
 				}
 			}
-			while(cn!=null && cn.data==null && cn.parent!=null) cn = cn.parent;
+			while(cn!=null && cn.data==null && cn.parent!=null) {
+				cn = cn.parent;
+			}
 			return cn == null ? null : cn.data;
 		}
 		return null;

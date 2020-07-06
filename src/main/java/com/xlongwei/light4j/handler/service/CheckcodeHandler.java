@@ -2,6 +2,7 @@ package com.xlongwei.light4j.handler.service;
 
 import java.awt.image.BufferedImage;
 import java.io.OutputStream;
+import java.text.MessageFormat;
 import java.util.Map;
 
 import com.networknt.utility.Tuple;
@@ -12,6 +13,7 @@ import com.xlongwei.light4j.util.ImageUtil;
 import com.xlongwei.light4j.util.MailUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisCache;
+import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 
 import io.undertow.server.HttpServerExchange;
@@ -90,8 +92,14 @@ public class CheckcodeHandler extends AbstractHandler {
 			if(StringUtil.isBlank(checkcode)) {
 				checkcode = ImageUtil.random(NumberUtil.parseInt(HandlerUtil.getParam(exchange, "length"), 6), false);
 			}
-			String content = "您的验证码为："+checkcode+"，有效期"+minutes+"分钟，超时请重新获取；<br>如非本人操作，请忽略此邮件；";
-			boolean send = MailUtil.send(toEmail, title, content);
+			String showapiUserName = HandlerUtil.getParam(exchange, "showapi_userName");
+			String template = "您的验证码为{0}，有效期{1}分钟，超时请重新获取。";
+			if(!StringUtil.isBlank(showapiUserName)) {
+				//Your verification code is {0}, valid for {1} minutes, please get it again after timeout.
+				template = StringUtil.firstNotBlank(RedisConfig.get("email."+showapiUserName), template);
+			}
+			String content = MessageFormat.format(template, checkcode, minutes);
+			boolean send = NumberUtil.parseBoolean(RedisConfig.get("email.switch"), true) ? MailUtil.send(toEmail, title, content) : true;
 			if(send) {
 				String sid = String.valueOf(IdWorker.getId());
 				RedisCache.set(ImageUtil.attr, sid, checkcode);

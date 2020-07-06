@@ -4,6 +4,11 @@ import java.util.Arrays;
 
 import lombok.Data;
 
+/**
+ * 银行卡号信息查询
+ * @author xlongwei
+ *
+ */
 public class BankUtil {
 	static CardBin<CardInfo> cardBin = new CardBin<>();
 	

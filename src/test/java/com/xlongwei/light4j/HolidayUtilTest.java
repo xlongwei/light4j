@@ -76,7 +76,7 @@ public class HolidayUtilTest {
 		assertEquals(24, HolidayUtil.betweenworkday(DateUtil.parse("2020-01-01"), DateUtil.parse("2020-02-12"), true));
 	}
 	
-	@Test public void test2017_2011() {
+	@Test public void test2017To2011() {
 		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2011-10-8")));
 		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2011-12-31")));
 		assertTrue(HolidayUtil.isworkday(DateUtil.parse("2012-4-1")));

@@ -25,7 +25,7 @@ import io.undertow.util.Headers;
  *
  */
 public class MyCorsHttpHandler extends DummyMiddlewareHandler {
-	private static final Collection<String> allowedMethods = Arrays.asList("GET", "POST");
+	private static final Collection<String> ALLOWED_METHODS = Arrays.asList("GET", "POST");
 	private static final long ONE_HOUR_IN_SECONDS = 60 * 60;
 
 	@Override
@@ -52,7 +52,7 @@ public class MyCorsHttpHandler extends DummyMiddlewareHandler {
 //                exchange.getResponseHeaders().add(Headers.VARY, Headers.ORIGIN_STRING);
 //            }
         }
-        responseHeaders.addAll(ACCESS_CONTROL_ALLOW_METHODS, allowedMethods);
+        responseHeaders.addAll(ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
         HeaderValues requestedHeaders = requestHeaders.get(ACCESS_CONTROL_REQUEST_HEADERS);
         if (requestedHeaders != null && !requestedHeaders.isEmpty()) {
             responseHeaders.addAll(ACCESS_CONTROL_ALLOW_HEADERS, requestedHeaders);

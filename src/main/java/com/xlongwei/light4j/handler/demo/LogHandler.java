@@ -55,7 +55,7 @@ public class LogHandler extends AbstractHandler {
 		log.info("check logger level, loggers:{}", loggers.size());
 		List<Map<String, String>> list = loggers.stream().sorted((a, b) -> a.getName().compareTo(b.getName()))
 				.map(logger -> {
-					Map<String, String> map = new HashMap<>();
+					Map<String, String> map = new HashMap<>(4);
 					map.put("logger", logger.getName());
 					map.put("level", Objects.toString(logger.getLevel(), ""));
 					return map;
