@@ -37,11 +37,10 @@
         <version.zxing>3.2.1</version.zxing>
         <version.vcard>0.10.0</version.vcard>
         <version.easyexcel>1.1.2-beta5</version.easyexcel>
-        <version.mysql>8.0.16</version.mysql>
+        <version.mysql>5.1.43</version.mysql>
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.dbutils>1.7</version.dbutils>
         <version.commons-io>2.6</version.commons-io>
-        <version.icu4j>64.2</version.icu4j>
         <version.hutool>4.6.8</version.hutool>
         <version.shiro>1.4.2</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
@@ -221,11 +220,6 @@
         	<artifactId>commons-io</artifactId>
         	<version>${version.commons-io}</version>
         </dependency>
-		<dependency>
-		    <groupId>com.ibm.icu</groupId>
-		    <artifactId>icu4j</artifactId>
-		    <version>${version.icu4j}</version>
-		</dependency>
         <dependency>
         	<groupId>net.minidev</groupId>
         	<artifactId>json-smart</artifactId>
