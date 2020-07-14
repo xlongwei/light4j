@@ -240,7 +240,7 @@ public class Servers {
                     .setSocketOption(Options.BACKLOG, serverConfig.getBacklog())
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, true)
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
-                    .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
+                    .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, true)
                     .setServerOption(UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL, serverConfig.isAllowUnescapedCharactersInUrl())
                     .setHandler(handler).setWorkerThreads(serverConfig.getWorkerThreads()).build();
             server.start();

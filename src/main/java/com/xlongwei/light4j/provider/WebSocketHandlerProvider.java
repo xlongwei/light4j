@@ -5,19 +5,14 @@ import static io.undertow.Handlers.resource;
 import static io.undertow.Handlers.websocket;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.input.Tailer;
-import org.apache.commons.io.input.TailerListenerAdapter;
 
-import com.google.common.base.Joiner;
 import com.networknt.handler.HandlerProvider;
 import com.xlongwei.light4j.util.DateUtil;
-import com.xlongwei.light4j.util.ExecUtil;
 import com.xlongwei.light4j.util.FileUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.NumberUtil;
@@ -27,13 +22,11 @@ import com.xlongwei.light4j.util.TaskUtil;
 import com.xlongwei.light4j.util.TaskUtil.Callback;
 import com.xlongwei.light4j.util.UploadUtil;
 
-import cn.hutool.core.collection.CollUtil;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import io.undertow.websockets.core.AbstractReceiveListener;
 import io.undertow.websockets.core.BufferedTextMessage;
-import io.undertow.websockets.core.CloseMessage;
 import io.undertow.websockets.core.WebSocketChannel;
 import io.undertow.websockets.core.WebSockets;
 import io.undertow.websockets.spi.WebSocketHttpExchange;
@@ -46,13 +39,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class WebSocketHandlerProvider implements HandlerProvider {
-	private final String key = "ws.chat", searchPattern = "search\\s+(.+)";
+	private final String key = "ws.chat";
 	private final int length = 18;
     @Override
     public HttpHandler getHandler() {
         return path()
                 .addPrefixPath("/ws/chat", websocket(chat))
-                .addPrefixPath("/ws/logs", websocket(logs))
                 .addPrefixPath("/ws/", resource(new ClassPathResourceManager(WebSocketHandlerProvider.class.getClassLoader(), "public")));
     }
     
@@ -64,14 +56,12 @@ public class WebSocketHandlerProvider implements HandlerProvider {
             	private String muteKey = "ws.chat.mute", muteCmd = "mute", historyCmd = "history";
                 @Override
                 protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) {
-                	String txt = message.getData(), search = null;
+                	String txt = message.getData();
                     String msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), txt);
                     if(!mute) {
                     	channel.getPeerConnections().parallelStream().forEach(c -> WebSockets.sendText(msg, c, null));
                     }else if(StringUtil.isUrl(txt)) {
                     	download(txt, channel);
-                    }else if(StringUtil.hasLength(search = StringUtil.getPatternString(txt, searchPattern))) {
-                    	search(search, channel);
                     }
                     log.info(msg);
                     if(StringUtil.firstNotBlank(RedisConfig.get(muteKey), muteCmd).equals(txt)) {
@@ -147,56 +137,6 @@ public class WebSocketHandlerProvider implements HandlerProvider {
         	TaskUtil.scheduleAtFixedRate(notice, 5, 10, TimeUnit.SECONDS);
         }
         
-        private void search(final String search, final WebSocketChannel channel) {
-        	String txt = "search: "+search;
-        	String msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), txt);
-        	WebSockets.sendText(msg, channel, null);
-        	String logfile = StringUtil.firstNotBlank(RedisConfig.get("logserver.file"), "logs/light4j.log");
-        	List<String> list = ExecUtil.list(FilenameUtils.getFullPathNoEndSeparator(logfile), search);
-        	txt = CollUtil.isEmpty(list) ? "no results" : Joiner.on("<br>").join(list);
-        	msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), txt);
-        	WebSockets.sendText(msg, channel, null);
-        }
     };
     
-    private WebSocketConnectionCallback logs = new WebSocketConnectionCallback() {
-    	private Tailer tailer = null;
-    	@Override
-    	public void onConnect(WebSocketHttpExchange exchange, WebSocketChannel channel) {
-    		log.info("tailer logs on connect");
-    		if(tailer == null) {
-    			File logs = new File(StringUtil.firstNotBlank(RedisConfig.get("logserver.file"), "logs/light4j.log"));
-    			if(logs.exists()) {
-        			tailer = new Tailer(logs, StandardCharsets.UTF_8, new TailerListenerAdapter() {
-						@Override
-						public void handle(String line) {
-							if(channel.getPeerConnections().isEmpty()) {
-								log.info("tailer no connections and stop");
-								tailer.stop();
-								tailer = null;
-							}else {
-								channel.getPeerConnections().parallelStream().forEach(c -> WebSockets.sendText(line, c, null));
-							}
-						}
-        			}, 1000, true, false, 4096);
-        			TaskUtil.submit(tailer);
-        			log.info("tailer init and start");
-    			}else {
-    				log.info("tailer logs not exist");
-    			}
-    		}
-    		channel.getReceiveSetter().set(new AbstractReceiveListener() {
-				@Override
-				protected void onCloseMessage(CloseMessage cm, WebSocketChannel channel) {
-					if(tailer!=null && channel.getPeerConnections().isEmpty()) {
-						tailer.stop();
-						tailer = null;
-						log.info("tailer stop and end");
-					}
-				}
-    		});
-    		channel.resumeReceives();
-    	}
-    	
-    };
 }
