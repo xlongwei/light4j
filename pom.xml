@@ -24,7 +24,7 @@
         <version.jpwgen>1.2.0</version.jpwgen>
         <version.aes>1.6</version.aes>
         <version.jedis>2.1.0</version.jedis>
-        <version.guava>18.0</version.guava>
+        <version.guava>26.0-jre</version.guava>
         <version.beanutils>1.9.4</version.beanutils>
         <version.janino>2.6.1</version.janino>
         <version.poi>3.17</version.poi>

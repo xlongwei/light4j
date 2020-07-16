@@ -239,7 +239,8 @@ public class HandlerUtil {
 		String mimeType = MIMETYPE_JSON;
 		if(resp != null) {
 			if(resp instanceof Map) {
-				Map map = (Map)resp;
+				//handler可能返回的是不可修改的Collections.singletonMap
+				Map map = new HashMap<>((Map)resp);
 				Object domain = map.get(UploadUtil.DOMAIN), path = map.get(UploadUtil.PATH);
 				if(domain!=null && path!=null) {
 					//接口响应了domain+path，添加响应参数url

@@ -18,6 +18,7 @@ handlers:
 
 chains:
   service:
+    - exception
     - cors
     - service
   openapi:
