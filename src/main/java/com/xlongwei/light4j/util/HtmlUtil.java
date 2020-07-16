@@ -1,6 +1,7 @@
 package com.xlongwei.light4j.util;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -17,6 +18,8 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+
+import cn.hutool.core.io.BOMInputStream;
 
 //import com.ibm.icu.text.CharsetDetector;
 //import com.ibm.icu.text.CharsetMatch;
@@ -35,12 +38,14 @@ public class HtmlUtil {
 
 	/** 探测字节文本的编码 */
 	public static String charset(byte[] bs) {
-		if(bs==null || bs.length==0) {
+		if(bs==null || bs.length<4) {
 			return null;
 		}
 		try {
-			String string = new String(bs, StandardCharsets.ISO_8859_1);
-			String charset = StringUtil.getPatternString(string, pattern);
+			//https://stackoverflow.com/questions/1835430/byte-order-mark-screws-up-file-reading-in-java
+			BOMInputStream bom = new BOMInputStream(new ByteArrayInputStream(bs, 0, 4), null);
+			String charset = bom.getCharset();
+			bom.close();
 			//charset声明编码可以优先确定探测编码正确com.ibm.icu:icu4j:64.2
 //			CharsetDetector charsetDetector = new CharsetDetector();
 //			charsetDetector.setText(bs);
@@ -57,7 +62,11 @@ public class HtmlUtil {
 //				}
 //				return matchs[len].getName();
 //			}
-			return charset;
+			if(charset == null) {
+				String string = new String(bs, StandardCharsets.ISO_8859_1);
+				charset = StringUtil.getPatternString(string, pattern);
+			}
+			return charset != null ? charset : FileUtil.CharsetNames.UTF_8;
 		}catch(Exception e) {
 			log.info("fail to charset bs, ex: {}", e.getMessage());
 		}
