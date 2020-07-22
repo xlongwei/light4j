@@ -20,6 +20,8 @@ import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.ZhDate;
 
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateRange;
 import cn.hutool.core.date.Week;
 import io.undertow.server.HttpServerExchange;
 
@@ -64,15 +66,9 @@ public class DatetimeHandler extends AbstractHandler {
 		Date day = DateUtil.parseNow(HandlerUtil.getParam(exchange, "day")), start = null, end = null;
 		Map<String, Object> map = new HashMap<>(4);
 		switch(path) {
-		case "isworkday":
-			map.put("isworkday", HolidayUtil.isworkday(day));
-			break;
-		case "isholiday":
-			map.put("isholiday", HolidayUtil.isholiday(day));
-			break;
-		case "isweekend":
-			map.put("isweekend", HolidayUtil.isweekend(day));
-			break;
+		case "isworkday": map.put("isworkday", HolidayUtil.isworkday(day)); break;
+		case "isholiday": map.put("isholiday", HolidayUtil.isholiday(day)); break;
+		case "isweekend": map.put("isweekend", HolidayUtil.isweekend(day)); break;
 		case "nextworkday":
 			day = HolidayUtil.nextworkday(day, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
 			map.put("nextworkday", DateUtil.dateFormat.format(day));
@@ -85,12 +81,8 @@ public class DatetimeHandler extends AbstractHandler {
 			day = cn.hutool.core.date.DateUtil.offsetDay(day, NumberUtil.parseInt(HandlerUtil.getParam(exchange, "offset"), 0));
 			map.put("offsetday", DateUtil.dateFormat.format(day));
 			break;
-		case "holiday":
-			holiday(exchange, day, map);
-			break;
-		case "age":
-			map.put("age", cn.hutool.core.date.DateUtil.age(DateUtil.parseNow(HandlerUtil.getParam(exchange, "birth")), day));
-			break;
+		case "holiday": holiday(exchange, day, map); break;
+		case "age": map.put("age", cn.hutool.core.date.DateUtil.age(DateUtil.parseNow(HandlerUtil.getParam(exchange, "birth")), day)); break;
 		case "betweenday":
 		case "betweenworkday":
 			start = DateUtil.parse(HandlerUtil.getParam(exchange, "start")); end = DateUtil.parse(HandlerUtil.getParam(exchange, "end"));
@@ -105,26 +97,40 @@ public class DatetimeHandler extends AbstractHandler {
 			map.put("start", DateUtil.dayFormat.format(start));
 			map.put("end", DateUtil.dayFormat.format(end));
 			break;
-		case "workday":
-			workday(exchange, day, map);
-			break;
+		case "workday": workday(exchange, day, map); break;
 		case "nongli":
-			convert(exchange, day, map);
-			break;
 		case "yangli":
-			convert(exchange, null, map);
-			break;
 		case "convert":
-			convert(exchange, StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null, map);
-			break;
+			convert(exchange, "nongli".equals(path) ? day : ("yangli".equals(path) ? null : (StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null)), map); break;
 		case "ganzhi":
 		case "shengxiao":
-			shengxiao(exchange, day, map);
-			break;
-		default:
-			break;
+			shengxiao(exchange, day, map); break;
+		case "calendar": calendar(exchange, day, map); break;
+		case "info": info(exchange, day, map); break;
+		default: break;
 		}
 		HandlerUtil.setResp(exchange, map);
+	}
+
+	private void info(HttpServerExchange exchange, Date day, Map<String, Object> map) {
+		map.put("isworkday", HolidayUtil.isworkday(day));
+		map.put("isholiday", HolidayUtil.isholiday(day));
+		Week week = cn.hutool.core.date.DateUtil.dayOfWeekEnum(day);
+		map.put("week", week.getValue()==1 ? 7 : week.getValue()-1);
+		map.put("isweekend", week==Week.SATURDAY || week==Week.SUNDAY);
+		convert(exchange, day, map);
+		shengxiao(exchange, day, map);
+		holiday(exchange, day, map);
+	}
+
+	private void calendar(HttpServerExchange exchange, Date day, Map<String, Object> map) {
+		DateRange dateRange = cn.hutool.core.date.DateUtil.range(cn.hutool.core.date.DateUtil.beginOfMonth(day), cn.hutool.core.date.DateUtil.endOfMonth(day), DateField.DAY_OF_MONTH);
+		while(dateRange.hasNext()) {
+			Map<String, Object> infoMap = new HashMap<>(32);
+			Date infoDay = dateRange.next().toJdkDate();
+			info(exchange, infoDay, infoMap);
+			map.put(cn.hutool.core.date.DateUtil.formatDate(infoDay), infoMap);
+		}
 	}
 
 	private void shengxiao(HttpServerExchange exchange, Date day, Map<String, Object> map) {
@@ -194,11 +200,7 @@ public class DatetimeHandler extends AbstractHandler {
 		}else if("ganzhi".equals(type) || "shengxiao".equals(type)){
 			shengxiao(exchange, day, map);
 		}else {
-			map.put("isworkday", HolidayUtil.isworkday(day));
-			map.put("isholiday", HolidayUtil.isholiday(day));
-			Week week = cn.hutool.core.date.DateUtil.dayOfWeekEnum(day);
-			map.put("week", week.getValue()==1 ? 7 : week.getValue()-1);
-			map.put("isweekend", week==Week.SATURDAY || week==Week.SUNDAY);
+			info(exchange, day, map);
 		}
 	}
 

@@ -104,7 +104,9 @@ public class BankUtilTest {
 	
 	@Test public void testData() throws Exception {
 		File data = new File("target/cardBin.txt");
-		Files.lines(data.toPath(), StandardCharsets.UTF_8).forEach(row -> BankUtil.addData(new CardInfo().rowIn(row)));
+		try(Stream<String> lines = Files.lines(data.toPath(), StandardCharsets.UTF_8)){
+			lines.forEach(row -> BankUtil.addData(new CardInfo().rowIn(row)));
+		}
 		Assert.assertNotNull(BankUtil.cardInfo("63535914241"));
 		Assert.assertEquals("交通银行", BankUtil.cardInfo("625138").getBankName());
 		Assert.assertEquals("16214339", BankUtil.cardInfo("623558613").getBankId());

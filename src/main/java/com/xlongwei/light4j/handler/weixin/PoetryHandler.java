@@ -78,7 +78,7 @@ public class PoetryHandler extends AbstractTextHandler {
 		try{
 			ExcelUtil.readBySax(new BufferedInputStream(ConfigUtil.stream("ts300.xlsx")), 0, new RowHandler() {
 				@Override
-				public void handle(int i, int j, List<Object> list) {
+				public void handle(int i, long j, List<Object> list) {
 					if(j > 0) {
 						poetrys.add(list.toArray(new String[list.size()]));
 					}

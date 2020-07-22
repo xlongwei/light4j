@@ -41,7 +41,7 @@
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.dbutils>1.7</version.dbutils>
         <version.commons-io>2.6</version.commons-io>
-        <version.hutool>4.6.8</version.hutool>
+        <version.hutool>5.3.9</version.hutool>
         <version.shiro>1.4.2</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
         <version.bouncycastle>1.64</version.bouncycastle>
