@@ -27,7 +27,7 @@
         <version.guava>26.0-jre</version.guava>
         <version.beanutils>1.9.4</version.beanutils>
         <version.janino>2.6.1</version.janino>
-        <version.poi>3.17</version.poi>
+        <version.poi>4.1.2</version.poi>
         <version.itext>2.0.8.1</version.itext>
         <version.httpmime>4.5.2</version.httpmime>
         <version.fastjson>1.2.70</version.fastjson>
