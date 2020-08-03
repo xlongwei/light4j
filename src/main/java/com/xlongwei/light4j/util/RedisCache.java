@@ -28,7 +28,6 @@ public class RedisCache {
 			//host:port:1.2.3.4.5-8:password:timeout:weight
 			nodes.addAll(nodes(hostAndPort));
 		}
-		RedisUtil.poolConfig.setMinIdle(3);
 		SHARDED_JEDIS_POOL = new ShardedJedisPool(RedisUtil.poolConfig, nodes);
 		log.info("redis cache loaded");
 		

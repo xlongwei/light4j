@@ -1,6 +1,7 @@
 package com.xlongwei.light4j.util;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
@@ -15,7 +16,6 @@ import org.jose4j.json.internal.json_simple.JSONObject;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler;
 
-import cn.hutool.core.util.CharsetUtil;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
 import io.undertow.server.HttpServerExchange;
@@ -127,7 +127,7 @@ public class HandlerUtil {
 		        }else {
 		        	InputStream inputStream = exchange.getInputStream();
 					String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
-		        	body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, CharsetUtil.UTF_8));
+		        	body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, StandardCharsets.UTF_8));
 		        }
 			}else if(StringUtils.isBlank(contentType) || StringUtil.containsOneOfIgnoreCase(contentType, TEXT, JSON, XML)) {
 				InputStream inputStream = exchange.getInputStream();
@@ -137,7 +137,7 @@ public class HandlerUtil {
 					if(bodyMap!=null && bodyMap.size()>0) {
 						body.putAll(bodyMap);
 					}else if(string.indexOf('=')>0){
-						body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, CharsetUtil.UTF_8));
+						body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, StandardCharsets.UTF_8));
 					}
 					body.put(BODYSTRING, string);
 				}

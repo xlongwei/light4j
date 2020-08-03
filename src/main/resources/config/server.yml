@@ -10,5 +10,6 @@ enableRegistry: ${enableRegistry:false}
 dynamicPort: ${dynamicPort:false}
 minPort: ${minPort:12400}
 maxPort: ${maxPort:12500}
-workerThreads: ${workerThreads:18}
+ioThreads: ${ioThreads:2}
+workerThreads: ${workerThreads:3}
 alwaysSetDate: false

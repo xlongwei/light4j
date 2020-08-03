@@ -17,6 +17,12 @@ import redis.clients.jedis.JedisPoolConfig;
 public class RedisUtil {
 	
 	static JedisPoolConfig poolConfig = new JedisPoolConfig();
+	
+	static {
+		poolConfig.setMinIdle(Integer.getInteger("redis.minIdle", 1));
+		//<=0时，不启动Timer-0线程
+		poolConfig.setTimeBetweenEvictionRunsMillis(Integer.getInteger("redis.timeBetweenEvictionRunsMillis", 0));
+	}
 
 	/** 获取字节key */
 	public static byte[] byteKey(String key) {
