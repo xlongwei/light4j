@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -240,7 +241,7 @@ public class HandlerUtil {
 		if(resp != null) {
 			if(resp instanceof Map) {
 				//handler可能返回的是不可修改的Collections.singletonMap
-				Map map = new HashMap<>((Map)resp);
+				Map map = new LinkedHashMap<>((Map)resp);
 				Object domain = map.get(UploadUtil.DOMAIN), path = map.get(UploadUtil.PATH);
 				if(domain!=null && path!=null) {
 					//接口响应了domain+path，添加响应参数url

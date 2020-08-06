@@ -3,6 +3,7 @@ package com.xlongwei.light4j.handler.service;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -64,7 +65,7 @@ public class DatetimeHandler extends AbstractHandler {
 			return;
 		}
 		Date day = DateUtil.parseNow(HandlerUtil.getParam(exchange, "day")), start = null, end = null;
-		Map<String, Object> map = new HashMap<>(4);
+		Map<String, Object> map = new LinkedHashMap<>(4);
 		switch(path) {
 		case "isworkday": map.put("isworkday", HolidayUtil.isworkday(day)); break;
 		case "isholiday": map.put("isholiday", HolidayUtil.isholiday(day)); break;
@@ -102,9 +103,6 @@ public class DatetimeHandler extends AbstractHandler {
 		case "yangli":
 		case "convert":
 			convert(exchange, "nongli".equals(path) ? day : ("yangli".equals(path) ? null : (StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null)), map); break;
-		case "ganzhi":
-		case "shengxiao":
-			shengxiao(exchange, day, map); break;
 		case "calendar": calendar(exchange, day, map); break;
 		case "info": info(exchange, day, map); break;
 		default: break;
@@ -119,7 +117,6 @@ public class DatetimeHandler extends AbstractHandler {
 		map.put("week", week.getValue()==1 ? 7 : week.getValue()-1);
 		map.put("isweekend", week==Week.SATURDAY || week==Week.SUNDAY);
 		convert(exchange, day, map);
-		shengxiao(exchange, day, map);
 		holiday(exchange, day, map);
 	}
 
@@ -131,13 +128,6 @@ public class DatetimeHandler extends AbstractHandler {
 			info(exchange, infoDay, infoMap);
 			map.put(cn.hutool.core.date.DateUtil.formatDate(infoDay), infoMap);
 		}
-	}
-
-	private void shengxiao(HttpServerExchange exchange, Date day, Map<String, Object> map) {
-		int year = NumberUtil.parseInt(StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "year"), DateUtil.yearFormat.format(day)), 2020);
-		map.put("ganzhi", ZhDate.ganzhi(year));
-		map.put("shengxiao", ZhDate.shengxiao(year));
-		map.put("year", year);
 	}
 
 	private void holiday(HttpServerExchange exchange, Date day, Map<String, Object> map) {
@@ -197,10 +187,10 @@ public class DatetimeHandler extends AbstractHandler {
 			convert(exchange, null, map);
 		}else if("convert".equals(type)){
 			convert(exchange, StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null, map);
-		}else if("ganzhi".equals(type) || "shengxiao".equals(type)){
-			shengxiao(exchange, day, map);
-		}else {
+		}else if("info".equals(type)) {
 			info(exchange, day, map);
+		}else if("calendar".equals(type)) {
+			calendar(exchange, day, map);
 		}
 	}
 

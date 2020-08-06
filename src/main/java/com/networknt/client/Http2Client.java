@@ -19,7 +19,11 @@
 package com.networknt.client;
 
 import com.networknt.client.circuitbreaker.CircuitBreaker;
-import com.networknt.client.http.*;
+import com.networknt.client.http.Http2ClientCompletableFutureNoRequest;
+import com.networknt.client.http.Http2ClientCompletableFutureWithRequest;
+import com.networknt.client.http.Http2ClientConnectionPool;
+import com.networknt.client.http.Light4jHttp2ClientProvider;
+import com.networknt.client.http.Light4jHttpClientProvider;
 import com.networknt.client.listener.ByteBufferReadChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
@@ -46,7 +50,6 @@ import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.StringReadChannelListener;
 import io.undertow.util.StringWriteChannelListener;
-import org.omg.SendingContext.RunTime;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +77,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Steve Hu
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Http2Client {
     private static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
 
@@ -445,7 +449,6 @@ public class Http2Client {
      * @return SSLContext
      * @throws IOException IOException
      */
-    @SuppressWarnings("unchecked")
 	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
@@ -588,11 +591,14 @@ public class Http2Client {
 
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
+        	@Override
             public void completed(ClientExchange result) {
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
+                	@Override
                     public void completed(final ClientExchange result) {
                         reference.set(result.getResponse());
                         (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
+                        	@Override
                             protected void bufferDone(List<Byte> out) {
                                 byte[] byteArray = new byte[out.size()];
                                 int index = 0;
@@ -602,12 +608,13 @@ public class Http2Client {
                                 result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
                                 latch.countDown();
                             }
-
+                        	@Override
                             protected void error(IOException e) {
                                 latch.countDown();
                             }
                         }).setup(result.getResponseChannel());
                     }
+                	@Override
                     public void failed(IOException e) {
                         latch.countDown();
                     }
@@ -624,7 +631,7 @@ public class Http2Client {
                 }
 
             }
-
+            @Override
             public void failed(IOException e) {
                 latch.countDown();
             }
