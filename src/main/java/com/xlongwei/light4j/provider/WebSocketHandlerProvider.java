@@ -23,6 +23,7 @@ import com.xlongwei.light4j.util.TaskUtil.Callback;
 import com.xlongwei.light4j.util.UploadUtil;
 
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import io.undertow.websockets.core.AbstractReceiveListener;
@@ -45,6 +46,7 @@ public class WebSocketHandlerProvider implements HandlerProvider {
     public HttpHandler getHandler() {
         return path()
                 .addPrefixPath("/ws/chat", websocket(chat))
+                .addPrefixPath("/ws/ok", ResponseCodeHandler.HANDLE_200)
                 .addPrefixPath("/ws/", resource(new ClassPathResourceManager(WebSocketHandlerProvider.class.getClassLoader(), "public")));
     }
     

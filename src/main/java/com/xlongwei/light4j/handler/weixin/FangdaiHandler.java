@@ -1,6 +1,8 @@
 package com.xlongwei.light4j.handler.weixin;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.time.DateUtils;
 
@@ -14,11 +16,14 @@ import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * fangdai handler
  * @author xlongwei
  *
  */
+@Slf4j
 public class FangdaiHandler extends AbstractTextHandler {
 	private static final String TAG = "房贷";
 	
@@ -61,24 +66,35 @@ public class FangdaiHandler extends AbstractTextHandler {
 				boolean after = y2>y || (y2==y && m2>=m);
 				if(after) {
 					int n = 12*(y2 - y) + (m2 - m);
+					String endYearMonth = DateUtil.format(DateUtils.addMonths(DateUtil.parse(ym+"01"), json.getIntValue(mKey)), "yyyyMMdd").substring(0, 6);
 					if(n > json.getIntValue(mKey)) {
-						return "已过还款截止年月："+DateUtil.format(DateUtils.addMonths(DateUtil.parse(ym+"01"), json.getIntValue(mKey)), "yyyyMMdd").substring(0, 6);
+						return "已过还款截止年月："+endYearMonth+"，本金："+NumberUtil.format(json.getDoubleValue("A"),"#")+"，期数："+json.getIntValue("M")+"，月息："+NumberUtil.format(json.getDoubleValue("B"),".######");
 					}
-					String x = NumberUtil.format(ExpUtil.exp("(A-A/M*N)*B")
-							.context("A", json.getDouble("A"))
-							.context(mKey, json.getInteger(mKey))
-							.context("N", n)
-							.context("B", json.getDouble("B"))
-							.parse().getResult(), ".##");
+					Map<String, Number> ctx = new HashMap<>();
+					ctx.put("A", json.getDouble("A"));
+					ctx.put("M", json.getInteger("M"));
+					ctx.put("B", json.getDouble("B"));
+					String x = NumberUtil.format(ExpUtil.exp("(A-A/M*N)*B").context(ctx).context(mKey, json.getInteger(mKey)).context("N", n).parse().getResult(), ".##");
 					String bj = NumberUtil.format(json.getDoubleValue("A") / json.getIntValue(mKey), ".##");
 					String bx = NumberUtil.format(Double.parseDouble(x)+Double.parseDouble(bj), ".##");
-					return new StringBuilder(ym2).append("(").append(n+1).append("/").append(json.getString(mKey)).append(")：本金").append(bj).append("，利息").append(x).append("，本息").append(bx).toString();
+					//本息总额=〔(总贷款额÷还款月数+总贷款额×月利率)+总贷款额÷还款月数×(1+月利率)〕÷2×还款月数
+					String bxze = NumberUtil.format(ExpUtil.exp("((A/M+A*B)+A/M*(1+B))/2*M").context(ctx).parse().getResult(), ".##");
+					double yhlx = 0;
+					for(int i=1;i<n;i++) {
+						yhlx += ExpUtil.exp("(A-A/M*N)*B").context(ctx).context("N", i).parse().getResult().doubleValue();
+					}
+					String yhbj = NumberUtil.format(n*json.getDoubleValue("A")/json.getIntValue(mKey), ".##");
+					String dhbj = NumberUtil.format(json.getDouble("A") - n*json.getDoubleValue("A")/json.getIntValue(mKey), ".##");
+					String dhlx = NumberUtil.format(Double.parseDouble(bxze) - json.getDouble("A") - yhlx, ".##");
+					return new StringBuilder(ym2).append("(").append(n+1).append("/").append(json.getString(mKey)).append(")：本金").append(bj).append("，利息").append(x).append("，本息").append(bx)
+							.append("\n\n本息总额：").append(bxze).append("，已还本金：").append(yhbj).append("，已还利息：").append(NumberUtil.format(yhlx, ".##"))
+							.append("\n\n截至年月：").append(endYearMonth).append("，待还本金：").append(dhbj).append("，待还利息：").append(dhlx).toString();
 				}
 			}catch(Exception e) {
-				e.printStackTrace();
+				log.warn("{} {}", e.getClass().getSimpleName(), e.getMessage());
 			}
 		}
-		return null;
+		return RedisConfig.get("weixin.key.房贷");
 	}
 
 	private String yearMonth(String str) {
