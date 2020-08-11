@@ -71,15 +71,23 @@ public class RedisConfig {
 	}
 	
 	public static <T> T execute(JedisCallback<T> callback) {
+		return execute(callback, 1);
+	}
+	
+	public static <T> T execute(JedisCallback<T> callback, int retries) {
 		Jedis jedis = JEDIS_POOL.getResource();
+		T t = null;
 		try {
-			return callback.doInJedis(jedis);
+			t = callback.doInJedis(jedis);
+			JEDIS_POOL.returnResource(jedis);
 		}catch(Exception e){
 			log.warn("redis config fail: {}", e.getMessage());
-			return null;
-		}finally {
-			JEDIS_POOL.returnResource(jedis);
+			JEDIS_POOL.returnBrokenResource(jedis);
+			if(retries > 0) {
+				t = execute(callback, retries - 1);
+			}
 		}
+		return t;
 	}
 	
 	public static String get(final String cache, final String key) {

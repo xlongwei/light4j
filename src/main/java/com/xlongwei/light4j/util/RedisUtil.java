@@ -20,7 +20,7 @@ public class RedisUtil {
 	
 	static {
 		poolConfig.setMinIdle(Integer.getInteger("redis.minIdle", 1));
-		//<=0时，不启动Timer-0线程
+		//<=0时，不启动Timer-0线程，容易出现SocketException，因此RedisCache、RedisConfig默认重试一次
 		poolConfig.setTimeBetweenEvictionRunsMillis(Integer.getInteger("redis.timeBetweenEvictionRunsMillis", 0));
 	}
 

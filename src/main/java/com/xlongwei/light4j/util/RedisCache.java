@@ -50,15 +50,24 @@ public class RedisCache {
 	}
 	
 	public static <T> T execute(ShardedJedisCallback<T> callback) {
+		return execute(callback, 1);
+	}
+	
+	public static <T> T execute(ShardedJedisCallback<T> callback, int retries) {
 		ShardedJedis shardedJedis = SHARDED_JEDIS_POOL.getResource();
+		T t = null;
 		try {
-			return callback.doInShardedJedis(shardedJedis);
+			t = callback.doInShardedJedis(shardedJedis);
+			SHARDED_JEDIS_POOL.returnResource(shardedJedis);
+			return t;
 		}catch(Exception e){
 			log.warn("redis cache fail: {}", e.getMessage());
-			return null;
-		}finally {
-			SHARDED_JEDIS_POOL.returnResource(shardedJedis);
+			SHARDED_JEDIS_POOL.returnBrokenResource(shardedJedis);
+			if(retries > 0) {
+				t = execute(callback, retries - 1);
+			}
 		}
+		return t;
 	}
 	
 	public static String get(final String cache, final String key) {
