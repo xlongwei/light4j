@@ -153,7 +153,7 @@ public class QnObject {
 	}
 
 	private static int fromVar(QnObject obj, String qn, int from) {
-		int p = qn.indexOf(VAR_END);
+		int p = qn.indexOf(VAR_END, from);
 		if(p==-1) {
 			throw new QnException(from+1, QnException.MISS_VAR_END);
 		}else if(p==from+1) {
