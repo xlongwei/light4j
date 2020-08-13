@@ -14,6 +14,7 @@ import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.HolidayUtil;
+import com.xlongwei.light4j.util.HolidayUtil.Holiday;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.NumberUtil;
@@ -86,13 +87,15 @@ public class DatetimeHandler extends AbstractHandler {
 		case "age": map.put("age", cn.hutool.core.date.DateUtil.age(DateUtil.parseNow(HandlerUtil.getParam(exchange, "birth")), day)); break;
 		case "betweenday":
 		case "betweenworkday":
+		case "countday":
+		case "countworkday":
 			start = DateUtil.parse(HandlerUtil.getParam(exchange, "start")); end = DateUtil.parse(HandlerUtil.getParam(exchange, "end"));
 			if(start==null && end==null) {
 				start = cn.hutool.core.date.DateUtil.beginOfYear(day);
 			}
 			start = start==null ? day : start;
 			end = end==null ? day : end;
-			long between = "betweenday".equals(path) ? cn.hutool.core.date.DateUtil.betweenDay(start, end, true)
+			long between = "betweenday".equals(path)||"countday".equals(path) ? cn.hutool.core.date.DateUtil.betweenDay(start, end, true)
 					: HolidayUtil.betweenworkday(start, end, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false));
 			map.put(path, between);
 			map.put("start", DateUtil.dayFormat.format(start));
@@ -105,7 +108,7 @@ public class DatetimeHandler extends AbstractHandler {
 			convert(exchange, "nongli".equals(path) ? day : ("yangli".equals(path) ? null : (StringUtil.isBlank(HandlerUtil.getParam(exchange, "lunarYear")) ? day : null)), map); break;
 		case "calendar": calendar(exchange, day, map); break;
 		case "info": info(exchange, day, map); break;
-		default: break;
+		default: info(exchange, day, map); break;
 		}
 		HandlerUtil.setResp(exchange, map);
 	}
@@ -138,12 +141,17 @@ public class DatetimeHandler extends AbstractHandler {
 			if(flag!=null && flag.intValue()>0) {
 				name = HolidayUtil.nameOf(flag);
 				plan = StringUtil.isBlank(name) ? null : HolidayUtil.plans.get(DateUtil.yearFormat.format(day)+"."+name);
+			}else {
+				Holiday guessHoliday = HolidayUtil.guessHoliday(day);
+				if(null != guessHoliday) {
+					name = guessHoliday.name();
+				}
 			}
 		}
-		if(StringUtil.hasLength(plan)) {
+		if(StringUtil.hasLength(name)) {
 			map.put("year", year);
 			map.put("holiday", name);
-			map.put("remark", plan);
+			map.put("remark", plan==null ? "" : plan);
 		}
 	}
 
@@ -167,6 +175,8 @@ public class DatetimeHandler extends AbstractHandler {
 		}else if("offsetday".equals(type)) {
 			day = cn.hutool.core.date.DateUtil.offsetDay(day, NumberUtil.parseInt(HandlerUtil.getParam(exchange, "offset"), 0));
 			map.put("day", DateUtil.dateFormat.format(day));
+		}else if("holiday".equals(type)) {
+			holiday(exchange, day, map);
 		}else if("countday".equals(type) || "countworkday".equals(type)) {
 			start = DateUtil.parse(HandlerUtil.getParam(exchange, "start")); end = DateUtil.parse(HandlerUtil.getParam(exchange, "end"));
 			if(start==null && end==null) {
@@ -197,14 +207,16 @@ public class DatetimeHandler extends AbstractHandler {
 	private void convert(HttpServerExchange exchange, Date day, Map<String, Object> map) {
 		if(day!=null) {
 			ZhDate zhDate = ZhDate.fromDate(day);
-			map.put("nongli", zhDate.toString());
-			map.put("chinese", zhDate.chinese());
-			map.put("ganzhi", zhDate.ganzhi());
-			map.put("shengxiao", zhDate.shengxiao());
-			map.put("lunarYear", zhDate.getLunarYear());
-			map.put("lunarMonth", zhDate.getLunarMonth());
-			map.put("lunarDay", zhDate.getLunarDay());
-			map.put("isLeapMonth", zhDate.isLeapMonth());
+			if(zhDate != null) {
+				map.put("nongli", zhDate.toString());
+				map.put("chinese", zhDate.chinese());
+				map.put("ganzhi", zhDate.ganzhi());
+				map.put("shengxiao", zhDate.shengxiao());
+				map.put("lunarYear", zhDate.getLunarYear());
+				map.put("lunarMonth", zhDate.getLunarMonth());
+				map.put("lunarDay", zhDate.getLunarDay());
+				map.put("isLeapMonth", zhDate.isLeapMonth());
+			}
 		}else {
 			int lunarYear = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "lunarYear"), 2020);
 			int lunarMonth = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "lunarMonth"), 1);

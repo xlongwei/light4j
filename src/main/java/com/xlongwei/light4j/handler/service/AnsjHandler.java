@@ -1,10 +1,10 @@
-//package com.xlongwei.light4j.handler.service;
+package com.xlongwei.light4j.handler.service;
 //
 //import java.util.List;
 //import java.util.ListIterator;
 //
 //import com.networknt.utility.StringUtils;
-//import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
+import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 //import com.xlongwei.light4j.util.FenciUtil;
 //import com.xlongwei.light4j.util.FenciUtil.Method;
 //import com.xlongwei.light4j.util.HandlerUtil;
@@ -13,12 +13,12 @@
 //
 //import io.undertow.server.HttpServerExchange;
 //
-///**
-// * ansj handler
-// * @author xlongwei
-// *
-// */
-//public class AnsjHandler extends AbstractHandler {
+/**
+ * ansj handler
+ * @author xlongwei
+ *
+ */
+public class AnsjHandler extends AbstractHandler {
 //
 //	@Override
 //	public void handleRequest(HttpServerExchange exchange) throws Exception {
@@ -69,4 +69,4 @@
 //		}
 //	}
 //
-//}
+}

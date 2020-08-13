@@ -20,41 +20,45 @@ public class ZhDate {
 	/**
 	 * 从公历日期生成农历日期
 	 * @param dt 公历的日期
-	 * @return 生成的农历日期对象
+	 * @return 生成的农历日期对象或null（日期不支持）
 	 */
 	public static ZhDate fromDate(Date dt) {
-		Calendar c = Calendar.getInstance();
-		c.setTime(dt);
-		int lunarYear = c.get(Calendar.YEAR);
-		Date newyear = parse(CHINESENEWYEAR[lunarYear - 1900]);
-		if(Duration.ofMillis(newyear.getTime()-dt.getTime()).toDays()>0) {
-			lunarYear -= 1;
-			newyear = parse(CHINESENEWYEAR[lunarYear - 1900]);
-		}
-		int daysPassed = (int)Duration.ofMillis(dt.getTime() - newyear.getTime()).toDays();
-		int yearCode = CHINESEYEARCODE[lunarYear - 1900];
-		List<Integer> monthDays = ZhDate.decode(yearCode);
-		
-		int lunarMonth = 0, lunarDay = 0, month = 0;
-		List<Integer> accumulateDays = accumulate(monthDays);
-		for(int pos = 0; pos < accumulateDays.size(); pos++) {
-			int days = accumulateDays.get(pos);
-			if(daysPassed + 1 <= days) {
-				month = pos+1;
-				lunarDay = monthDays.get(pos) - (days-daysPassed) + 1;
-				break;
+		try {
+			Calendar c = Calendar.getInstance();
+			c.setTime(dt);
+			int lunarYear = c.get(Calendar.YEAR);
+			Date newyear = parse(CHINESENEWYEAR[lunarYear - 1900]);
+			if(Duration.ofMillis(newyear.getTime()-dt.getTime()).toDays()>0) {
+				lunarYear -= 1;
+				newyear = parse(CHINESENEWYEAR[lunarYear - 1900]);
 			}
+			int daysPassed = (int)Duration.ofMillis(dt.getTime() - newyear.getTime()).toDays();
+			int yearCode = CHINESEYEARCODE[lunarYear - 1900];
+			List<Integer> monthDays = ZhDate.decode(yearCode);
+			
+			int lunarMonth = 0, lunarDay = 0, month = 0;
+			List<Integer> accumulateDays = accumulate(monthDays);
+			for(int pos = 0; pos < accumulateDays.size(); pos++) {
+				int days = accumulateDays.get(pos);
+				if(daysPassed + 1 <= days) {
+					month = pos+1;
+					lunarDay = monthDays.get(pos) - (days-daysPassed) + 1;
+					break;
+				}
+			}
+			boolean leapMonth = false;
+			if((yearCode & 0xf) == 0 || month <= (yearCode & 0xf)) {
+				lunarMonth = month;
+			}else {
+				lunarMonth = month - 1;
+			}
+			if((yearCode & 0xf) != 0 && month == (yearCode & 0xf) + 1) {
+				leapMonth = true;
+			}
+			return new ZhDate(lunarYear, lunarMonth, lunarDay, leapMonth);
+		}catch(Exception e) {
+			return null;
 		}
-		boolean leapMonth = false;
-		if((yearCode & 0xf) == 0 || month <= (yearCode & 0xf)) {
-			lunarMonth = month;
-		}else {
-			lunarMonth = month - 1;
-		}
-		if((yearCode & 0xf) != 0 && month == (yearCode & 0xf) + 1) {
-			leapMonth = true;
-		}
-		return new ZhDate(lunarYear, lunarMonth, lunarDay, leapMonth);
 	}
 	
 	/**

@@ -1,4 +1,4 @@
-//package com.xlongwei.light4j.util;
+package com.xlongwei.light4j.util;
 //
 //import java.io.InputStream;
 //import java.util.ArrayList;
@@ -33,15 +33,15 @@
 //import org.nlpcn.commons.lang.pinyin.PinyinFormatter;
 //import org.nlpcn.commons.lang.pinyin.ToneType;
 //import org.nlpcn.commons.lang.pinyin.YuCharType;
-//
+
 //import com.xlongwei.light4j.util.AdtUtil.PairList;
-//
-///**
-// * ansj_seg分词封装
-// * @author xlongwei
-// *
-// */
-//public class FenciUtil {
+
+/**
+ * ansj_seg分词封装
+ * @author xlongwei
+ *
+ */
+public class FenciUtil {
 //	public static final List<String> EMPTY_STRING_LIST = Collections.emptyList();
 //	private static final InputStream STOPWORDS_STREAM = ConfigUtil.stream("stopwords.txt");
 //	private static final Map<String, Analysis> METHODS = new HashMap<>();
@@ -230,4 +230,4 @@
 //		}
 //		return list;
 //	}
-//}
+}

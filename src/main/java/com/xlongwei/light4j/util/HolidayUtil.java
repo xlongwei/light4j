@@ -59,7 +59,7 @@ public class HolidayUtil {
 		if(flag != null) {
 			return flag.intValue() < 0;
 		}else {
-			return !isweekend(day);
+			return !isweekend(day) && null==guessHoliday(day);
 		}
 	}
 	
@@ -70,7 +70,36 @@ public class HolidayUtil {
 	 */
 	public static boolean isholiday(Date day) {
 		Integer flag = holidays.get(dateFormat.format(day));
-		return flag!=null && flag.intValue()>0;
+		return (flag!=null && flag.intValue()>0) || null!=guessHoliday(day);
+	}
+	
+	/**
+	 * 尝试猜测法定节假日
+	 * @param day
+	 * @return
+	 */
+	public static Holiday guessHoliday(Date day) {
+		String format = dateFormat.format(day);
+		String monthDay = format.substring(5);
+		if("01.01".equals(monthDay)) {
+			return Holiday.元旦节;
+		}else if("05.01".equals(monthDay) && Integer.parseInt(format.substring(0, 4))>=1889) {
+			return Holiday.劳动节;
+		}else if("10.01".equals(monthDay) && Integer.parseInt(format.substring(0, 4))>=1949) {
+			return Holiday.国庆节;
+		}
+		ZhDate zhDate = ZhDate.fromDate(day);
+		if(zhDate != null) {
+			if(zhDate.getLunarMonth()==1 && zhDate.getLunarDay()==1) {
+				return Holiday.春节;
+			}else if(zhDate.getLunarMonth()==5 && zhDate.getLunarDay()==5) {
+				return Holiday.端午节;
+			}else if(zhDate.getLunarMonth()==8 && zhDate.getLunarDay()==15) {
+				return Holiday.中秋节;
+			}
+		}
+		//清明=春分+15日，比较复杂，后续再实现
+		return null;
 	}
 	
 	/**
