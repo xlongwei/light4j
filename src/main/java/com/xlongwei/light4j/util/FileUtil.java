@@ -60,14 +60,14 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public final class FileUtil {
-	public static String	unixLineSeparator		= "\n";
-	public static String	dosLineSeparator		= "\r\n";
-	public static String	defaultlineSeparator	= System.getProperty("line.separator");
-	public static String	lineSeparator		= defaultlineSeparator;
-	public static String	defaultCharsetName	= Charset.defaultCharset().name();
+	public static final String	unixLineSeparator		= "\n";
+	public static final String	dosLineSeparator		= "\r\n";
+	public static final String	defaultlineSeparator	= System.getProperty("line.separator");
+	public static final String	lineSeparator		= defaultlineSeparator;
+	public static final String	defaultCharsetName	= Charset.defaultCharset().name();
 	public static SSLContext sslContext = null;
-	public static TrustManager[] trustAllCerts = Server.TRUST_ALL_CERTS;
-	public static HostnameVerifier verifyAllHosts = new NoopHostnameVerifier();
+	public static final TrustManager[] trustAllCerts = Server.TRUST_ALL_CERTS;
+	public static final HostnameVerifier verifyAllHosts = new NoopHostnameVerifier();
 	
 	static {
 		try {
@@ -202,22 +202,16 @@ public final class FileUtil {
 		if(!in.exists() || !in.isFile()) {
 			return false;
 		}
-		if(out.exists()) {
-			out.delete();
-		}
-		FileInputStream fis = null;
-		FileOutputStream fos = null;
-		try {
-			fis = new FileInputStream(in);
-			fos= new FileOutputStream(out);
+		tryDeleteFile(out, 1);
+		try(
+				FileInputStream fis = new FileInputStream(in);
+				FileOutputStream fos = new FileOutputStream(out)
+		) {
 			copyStream(fis, fos);
 			return true;
 		}catch(IOException e) {
 			log.warn("fail to copy small file: {} to: {}, ex: {}", in, out, e.getMessage());
 			return false;
-		}finally {
-			close(fis);
-			close(fos);
 		}
 	}
 	
@@ -246,14 +240,8 @@ public final class FileUtil {
 		if(!in.exists() || !in.isFile()) {
 			return false;
 		}
-		if(out.exists()) {
-			out.delete();
-		}
-		FileInputStream fis = null;
-		FileOutputStream fos = null;
-		try {
-			fis = new FileInputStream(in);
-			fos= new FileOutputStream(out);
+		tryDeleteFile(out, 1);
+		try(FileInputStream fis = new FileInputStream(in); FileOutputStream fos = new FileOutputStream(out)) {
 			int bufSize = 4 * 1024 * 1024, bytesRead = -1;
 			byte[] buf = new byte[bufSize];
 			while((bytesRead = fis.read(buf, 0, bufSize)) != -1) {
@@ -263,9 +251,6 @@ public final class FileUtil {
 		}catch(IOException e) {
 			log.warn("fail to copy big file: {} to: {}, ex: {}", in, out, e.getMessage());
 			return false;
-		}finally {
-			close(fis);
-			close(fos);
 		}
 	}
 	
@@ -714,27 +699,27 @@ public final class FileUtil {
 		/**
 		 * 变长字节通用性强的国际编码
 		 */
-		public static String UTF_8 = "UTF-8";
+		public static final String UTF_8 = "UTF-8";
 		/**
 		 * 7 bytes for alphabets, numbers and punctuations
 		 */
-		public static String US_ASCII = "US-ASCII";
+		public static final String US_ASCII = "US-ASCII";
 		/**
 		 * http响应内容编码
 		 */
-		public static String ISO_88591 = "ISO-8859-1";
+		public static final String ISO_88591 = "ISO-8859-1";
 		/**
 		 * 区位码，可推算出汉字拼音
 		 */
-		public static String GB2312 = "GB2312";
+		public static final String GB2312 = "GB2312";
 		/**
 		 * 兼容区位码，添加了CJK汉字等
 		 */
-		public static String GBK = "GBK";
+		public static final String GBK = "GBK";
 		/**
 		 * unicode 3.1，包括少数民族字符等
 		 */
-		public static String GB18030 = "GB18030";
+		public static final String GB18030 = "GB18030";
 	}
 	public static class Charsets {
 		public static final Charset UTF_8 = Charset.forName("UTF-8");
@@ -1015,11 +1000,8 @@ public final class FileUtil {
 		public static final ExtFileFilter FOLDERS = new ExtFileFilter("none").acceptDirectory(true);
 		public static final ExtFileFilter FILES = new ExtFileFilter("").acceptDirectory(false);
 		public FilenameFilter filenameFilter() {
-			return new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
+			return (File dir, String name) -> {
 					return ExtFileFilter.this.accept(dir, name);
-				}
 			};
 		}
 	}
@@ -1028,20 +1010,7 @@ public final class FileUtil {
 		public String name;
 		public File file;
 	}
-	public static Comparator<File> fileComparator = new Comparator<File>() {
-		@Override
-		public int compare(File o1, File o2) {
-			if(o1==null) {
-				return o2==null ? 0 : -1;
-			} else if(o2==null) {
-				return 1;
-			}
-			return fileNameComparator.compare(o1.getName(), o2.getName());
-		}
-	};
-	public static Comparator<String> fileNameComparator = new Comparator<String>() {
-		@Override
-		public int compare(String o1, String o2) {
+	public static final Comparator<String> fileNameComparator = (o1, o2) -> {
 			if(o1==null) {
 				return o2==null ? 0 : -1;
 			} else if(o2==null) {
@@ -1078,6 +1047,13 @@ public final class FileUtil {
 				}
 			}
 			return 0;
+	};
+	public static final Comparator<File> fileComparator = (o1, o2) -> {
+		if(o1==null) {
+			return o2==null ? 0 : -1;
+		} else if(o2==null) {
+			return 1;
 		}
+		return fileNameComparator.compare(o1.getName(), o2.getName());
 	};
 }

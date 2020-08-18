@@ -109,26 +109,27 @@ public class HandlerUtil {
 				Builder builder = FormParserFactory.builder();
 				builder.setDefaultCharset(CharEncoding.UTF_8);
 				FormParserFactory formParserFactory = builder.build();
-		        FormDataParser parser = formParserFactory.createParser(exchange);
-		        if (parser != null) {
-		            FormData formData = parser.parseBlocking();
-		            for(String name : formData) {
-		            	Deque<FormValue> deque = formData.get(name);
-		            	if(deque.size() > 1) {
-		            		List<Object> list = new ArrayList<>();
-		            		for(FormValue formValue : deque) {
-		            			list.add(formValue.isFileItem() ? formValue : formValue.getValue());
-		            		}
-		            		body.put(name, list);
-		            	}else {
-		            		FormValue formValue = deque.getFirst();
-		            		body.put(name, formValue.isFileItem() ? formValue : formValue.getValue());
-		            	}
-		            }
-		        }else {
-		        	InputStream inputStream = exchange.getInputStream();
-					String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
-		        	body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, StandardCharsets.UTF_8));
+		        try(FormDataParser parser = formParserFactory.createParser(exchange)){
+			        if (parser != null) {
+			            FormData formData = parser.parseBlocking();
+			            for(String name : formData) {
+			            	Deque<FormValue> deque = formData.get(name);
+			            	if(deque.size() > 1) {
+			            		List<Object> list = new ArrayList<>();
+			            		for(FormValue formValue : deque) {
+			            			list.add(formValue.isFileItem() ? formValue : formValue.getValue());
+			            		}
+			            		body.put(name, list);
+			            	}else {
+			            		FormValue formValue = deque.getFirst();
+			            		body.put(name, formValue.isFileItem() ? formValue : formValue.getValue());
+			            	}
+			            }
+			        }else {
+			        	InputStream inputStream = exchange.getInputStream();
+						String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
+			        	body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, StandardCharsets.UTF_8));
+			        }
 		        }
 			}else if(StringUtils.isBlank(contentType) || StringUtil.containsOneOfIgnoreCase(contentType, TEXT, JSON, XML)) {
 				InputStream inputStream = exchange.getInputStream();

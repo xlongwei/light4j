@@ -26,15 +26,15 @@ public class TokenCounter {
 	public int expireCount = 20;
 	public long expireTime = TimeUnit.SECONDS.toMillis(60);
 	private String date = getDate();
-	private BlockingQueue<String> removeTokens = new LinkedBlockingQueue<String>();
-	private BlockingQueue<TokenType> tokenTypes = new LinkedBlockingQueue<TokenType>();
+	private final BlockingQueue<String> removeTokens = new LinkedBlockingQueue<String>();
+	private final BlockingQueue<TokenType> tokenTypes = new LinkedBlockingQueue<TokenType>();
 	private final Map<String, TokenCount> tokenCounts = new HashMap<String, TokenCount>();
-	private Map<String, Integer> idCaches = new ExpireTimeMap<String, Integer>(new HashMap<String, Integer>(), TimeUnit.MINUTES.toMillis(3));
+	private final Map<String, Integer> idCaches = new ExpireTimeMap<String, Integer>(new HashMap<String, Integer>(), TimeUnit.MINUTES.toMillis(3));
 	
 	public void init(){
-		TaskUtil.submitKeepRunning(new TokenTypesConsumer());
-		TaskUtil.submitKeepRunning(new RemoveKeysConsumer());
-		TaskUtil.scheduleAtFixedRate(new ExpireTimeChecker(), expireTime, expireTime, TimeUnit.MILLISECONDS);
+		TaskUtil.submitKeepRunning(tokenTypesConsumer);
+		TaskUtil.submitKeepRunning(removeKeysConsumer);
+		TaskUtil.scheduleAtFixedRate(expireTimeChecker, expireTime, expireTime, TimeUnit.MILLISECONDS);
 	}
 	
 	public void count(String token, String type) {
@@ -113,9 +113,7 @@ public class TokenCounter {
 		}
 	}
 	
-	class TokenTypesConsumer implements Runnable {
-		@Override
-		public void run() {
+	final Runnable tokenTypesConsumer = () -> {
 			while(true) {
 				try {
 					TokenType tokenType = tokenTypes.take();
@@ -134,15 +132,12 @@ public class TokenCounter {
 					}
 				} catch (InterruptedException e) {
 					log.error("TokenCountUtil.ClickTokensConsumer has unexpectedly exception.", e);
-					continue;
+					Thread.currentThread().interrupt();
 				}
 			}
-		}
-	}
+	};
 	
-	class RemoveKeysConsumer implements Runnable {
-		@Override
-		public void run() {
+	final Runnable removeKeysConsumer = () -> {
 			while(true) {
 				try {
 					String key = removeTokens.take();
@@ -156,15 +151,12 @@ public class TokenCounter {
 					}
 				} catch (InterruptedException e) {
 					log.error("TokenCountUtil.RemoveKeysConsumer has unexpectedly exception.", e);
-					continue;
+					Thread.currentThread().interrupt();
 				}
 			}
-		}
-	}
+	};
 	
-	class ExpireTimeChecker implements Runnable {
-		@Override
-		public void run() {
+	final Runnable expireTimeChecker = () -> {
 			synchronized (tokenCounts) {
 				for(TokenCount tokenCount : tokenCounts.values()) {
 					if(tokenCount.expireTime()) {
@@ -174,6 +166,5 @@ public class TokenCounter {
 				}
 			}
 			date = getDate();
-		}
-	}
+	};
 }

@@ -165,7 +165,7 @@ public class WordUtil {
 				break;
 			}
 		}
-		if (tableIndex == index) {
+		if (tableIndex==index && table!=null) {
 			table(table, data);
 			log.info("table doc file ok, index: " + index);
 		} else {
@@ -184,7 +184,7 @@ public class WordUtil {
 				break;
 			}
 		}
-		if (tableIndex == index) {
+		if (tableIndex==index && table!=null) {
 			tablex(table, data);
 			log.info("table docx file ok, index: " + index);
 		} else {

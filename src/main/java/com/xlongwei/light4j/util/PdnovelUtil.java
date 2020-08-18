@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class PdnovelUtil {
-	public static Map<Integer, Book> books = new LinkedHashMap<>();
-	private static Pattern chapterNamePattern = Pattern.compile("[^']+'([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)'\\);");
+	public static final Map<Integer, Book> books = new LinkedHashMap<>();
+	private static final Pattern chapterNamePattern = Pattern.compile("[^']+'([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)'\\);");
 
 	static {
 		reload();

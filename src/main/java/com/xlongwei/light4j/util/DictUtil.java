@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,13 +87,13 @@ public class DictUtil {
 	
 	public static boolean dumpToDat() {
 		String dat = ConfigUtil.DIRECTORY+"dict.dat";
-		new File(dat).renameTo(new File(dat+"."+System.currentTimeMillis()));
-		log.info("dumpToDat: "+dat);
+		boolean renameTo = new File(dat).renameTo(new File(dat+"."+System.currentTimeMillis()));
+		log.info("dumpToDat: {}, renameTo: {}", dat, renameTo);
 		try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(dat))){
-			out.writeObject(wordMapParts);
-			out.writeObject(wordsMapPiece);
-			out.writeObject(simMapRowWords);
-			out.writeObject(simMapRowNumber);
+			out.writeObject((Serializable)wordMapParts);
+			out.writeObject((Serializable)wordsMapPiece);
+			out.writeObject((Serializable)simMapRowWords);
+			out.writeObject((Serializable)simMapRowNumber);
 			return true;
 		}catch (Exception e) {
 			return false;
@@ -200,7 +201,7 @@ public class DictUtil {
 					continue;
 				}
 				List<WordScore> parse = parse(parts.get(3)+" "+parts.get(4));
-				if(parse.size()!=1) {
+				if(parse!=null && parse.size()!=1) {
 					continue;
 				}
 				simpleWords.add(word);

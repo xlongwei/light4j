@@ -34,13 +34,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @SuppressWarnings({"rawtypes","unchecked"})
 public class WeixinUtil {
-	public static String service = "https://api.weixin.qq.com/cgi-bin/", appid = "wx78b808148023e9fa";
-	public static String appidTest = "wx5bb3e90365f54b7a", touserTest = "gh_f6216a9ae70b", appsecretTest = "d4624c36b6795d1d99dcf0547af5443d";
-	public static String cache = "weixin", accessTokenKey = "access_token", jsapiTicketKey = "jsapi_ticket";
-	private static Map<Class<?>,Field[]> fieldsCache = new HashMap<>(32);
-	private static Map<String, Class<? extends AbstractMessage>> classCache = new HashMap<>(16);
-	private static Map<String, WXBizMsgCrypt> wxBizMsgCrypts = new HashMap<>(1);
-	private static Map<Class, List<AbstractMessageHandler>> handlers = new HashMap<>(16);
+	public static final String service = "https://api.weixin.qq.com/cgi-bin/", appid = "wx78b808148023e9fa";
+	public static final String appidTest = "wx5bb3e90365f54b7a", touserTest = "gh_f6216a9ae70b", appsecretTest = "d4624c36b6795d1d99dcf0547af5443d";
+	public static final String cache = "weixin", accessTokenKey = "access_token", jsapiTicketKey = "jsapi_ticket";
+	private static final Map<Class<?>,Field[]> fieldsCache = new HashMap<>(32);
+	private static final Map<String, Class<? extends AbstractMessage>> classCache = new HashMap<>(16);
+	private static final Map<String, WXBizMsgCrypt> wxBizMsgCrypts = new HashMap<>(4);
+	private static final Map<Class, List<AbstractMessageHandler>> handlers = new HashMap<>(16);
 	
 	/** 获取access_token */
 	public static String accessToken(String appid, String appsecret) {
@@ -305,14 +305,14 @@ public class WeixinUtil {
 			return fields;
 		}
 		public static class Type {
-			public static String text = "text";
-			public static String image = "image";
-			public static String voice = "voice";
-			public static String video = "video";
-			public static String shortvideo = "shortvideo";
-			public static String location = "location";
-			public static String link = "link";
-			public static String event = "event";
+			public static final String text = "text";
+			public static final String image = "image";
+			public static final String voice = "voice";
+			public static final String video = "video";
+			public static final String shortvideo = "shortvideo";
+			public static final String location = "location";
+			public static final String link = "link";
+			public static final String event = "event";
 		}
 		public static Map<String, Class<? extends AbstractMessage>> getMessages(){
 			Map<String, Class<? extends AbstractMessage>> map = new HashMap<>(8);
@@ -397,12 +397,12 @@ public class WeixinUtil {
 		public AbstractEvent() { this.msgType = AbstractMessage.Type.event; }
 		
 		public static class Type {
-			public static String subscribe = "subscribe";
-			public static String unsubscribe = "unsubscribe";
-			public static String SCAN = "SCAN";
-			public static String LOCATION = "LOCATION";
-			public static String CLICK = "CLICK";
-			public static String VIEW = "VIEW";
+			public static final String subscribe = "subscribe";
+			public static final String unsubscribe = "unsubscribe";
+			public static final String SCAN = "SCAN";
+			public static final String LOCATION = "LOCATION";
+			public static final String CLICK = "CLICK";
+			public static final String VIEW = "VIEW";
 		}
 		public static Map<String, Class<? extends AbstractEvent>> getEvents() {
 			Map<String, Class<? extends AbstractEvent>> map = new HashMap<>(6);

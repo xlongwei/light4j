@@ -100,7 +100,7 @@ public class PinyinUtil {
 		if(caseType==1 || caseType==two) {
 			for(int i=0; i<pinyin.length; i++) {
 				if(caseType==1) {
-					pinyin[i] = pinyin[i];
+					//pinyin[i] = pinyin[i];
 				} else {
 					pinyin[i] = pinyin[i].toUpperCase();
 				}
@@ -169,9 +169,7 @@ public class PinyinUtil {
 	/**
 	 * 中文拼音字符串比较器
 	 */
-	public static final Comparator<String> ZH_COMPARATOR = new Comparator<String>() {
-		@Override
-		public int compare(String o1, String o2) {
+	public static final Comparator<String> ZH_COMPARATOR = (o1, o2) -> {
 			if (o1 == null) {
 				if (o2 == null) {
 					// 空 = 空
@@ -214,25 +212,21 @@ public class PinyinUtil {
 					return o1.length() < min ? -1 : (o2.length() < min ? 1 : 0);
 				}
 			}
-		}
 	};
 	
 	/**
 	 * 获取实体某个中文字段的比较器
 	 */
 	public static <Entity> Comparator<Entity> zhStringFieldComparator(Class<Entity> clazz, final String zhStringField){
-		return new Comparator<Entity>() {
-			@Override
-			public int compare(Entity o1, Entity o2) {
+		return (o1, o2) -> {
 				try{
 					String left = (String)FieldUtils.readField(o1, zhStringField, true);
 					String right = (String)FieldUtils.readField(o2, zhStringField, true);
 					return ZH_COMPARATOR.compare(left, right);
 				}catch(Exception e) {
-					e.printStackTrace();
+					log.warn("fail to zhCompare, ex={}, msg={}", e.getClass().getSimpleName(), e.getMessage());
 				}
 				return 0;
-			}
 		};
 	}
 	

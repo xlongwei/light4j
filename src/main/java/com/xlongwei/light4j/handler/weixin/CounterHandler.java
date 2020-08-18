@@ -137,13 +137,11 @@ public class CounterHandler extends AbstractTextHandler {
 		/**
 		 * 保留所有redis访问统计信息property:service{day}
 		 */
-		public static Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
+		public static final Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
 		static {
 			reload();
 			//每天凌晨更新昨天数据
-			TaskUtil.scheduleAtFixedRate(new Runnable() {
-				@Override
-				public void run() {
+			TaskUtil.scheduleAtFixedRate(() -> {
 					String day = DateUtil.format(DateUtils.addDays(SystemClock.date(),-1), "yyyy-MM-dd"), key = "service"+day, value = RedisConfig.get(key);
 					if(StringUtil.hasLength(value)) {
 						Map<String, Integer> count = ConfigUtil.stringMapInteger(value);
@@ -151,14 +149,11 @@ public class CounterHandler extends AbstractTextHandler {
 							counts.put(day, count);
 						}
 					}
-				}
 			}, 24-DateUtils.getFragmentInHours(SystemClock.date(), Calendar.DATE), 24, TimeUnit.HOURS);
 		}
 		public static void reload() {
 			//等3秒再加载缓存数据
-			TaskUtil.schedule(new Runnable() {
-				@Override
-				public void run() {
+			TaskUtil.schedule(() -> {
 					Date date = SystemClock.date();
 					String day, key, value;
 					do {
@@ -175,7 +170,6 @@ public class CounterHandler extends AbstractTextHandler {
 						}
 						break;
 					}while(true);
-				}
 			}, 3, TimeUnit.SECONDS);
 		}
 		public static boolean refresh() {

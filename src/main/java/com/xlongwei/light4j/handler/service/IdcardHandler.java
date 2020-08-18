@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -112,14 +113,14 @@ public class IdcardHandler extends AbstractHandler {
 	public void areas(HttpServerExchange exchange) throws Exception {
 		String area = HandlerUtil.getParam(exchange, "area");
 		if(StringUtil.isBlank(area)) {
-			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().endsWith("0000")).collect(Collectors.toMap(e -> e.getKey().substring(0, 2), e -> e.getValue(), (v1,v2) -> v1));
+			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().endsWith("0000")).collect(Collectors.toMap(e -> e.getKey().substring(0, 2), Entry::getValue, (v1,v2) -> v1));
 			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}else if(area.matches("\\d{2}")) {
-			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().startsWith(area) && e.getKey().endsWith("00")).collect(Collectors.toMap(e -> e.getKey().substring(2, 4), e -> e.getValue(), (v1,v2) -> v1));
+			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().startsWith(area) && e.getKey().endsWith("00")).collect(Collectors.toMap(e -> e.getKey().substring(2, 4), Entry::getValue, (v1,v2) -> v1));
 			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}else if(area.matches("\\d{4}")) {
 			String prefix = area.endsWith("00") ? area.substring(0, 2) : area;
-			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().startsWith(prefix)).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), (v1,v2) -> v1));
+			Map<String, String> map = IdCardUtil.areas.entrySet().stream().filter(e -> e.getKey().startsWith(prefix)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (v1,v2) -> v1));
 			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}else {
 			Set<String> areas = new LinkedHashSet<String>(IdCardUtil.areas(area));
@@ -134,7 +135,7 @@ public class IdcardHandler extends AbstractHandler {
 		String area = HandlerUtil.getParam(exchange, "area"), birthday = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "birth"), HandlerUtil.getParam(exchange, "birthday")), serial = HandlerUtil.getParam(exchange, "serial"), sex = HandlerUtil.getParam(exchange, "sex");
 		if(StringUtil.isBlank(area) || !StringUtil.isNumbers(area) || area.length()>6 || area.endsWith("00") || IdCardUtil.areas.get(area=StringUtils.rightPad(area, 6, '0'))==null) {
 			String prefix = !StringUtil.isBlank(area)&&IdCardUtil.areas.get(area)!=null ? (area.endsWith("0000") ? area.substring(0, 2) : (area.endsWith("00") ? area.substring(0, 4) : area)) : null;
-			List<String> list = IdCardUtil.areas.entrySet().stream().filter(e -> !e.getKey().endsWith("00") && (prefix==null||e.getKey().startsWith(prefix))).map(e -> e.getKey()).collect(Collectors.toList());
+			List<String> list = IdCardUtil.areas.entrySet().stream().filter(e -> !e.getKey().endsWith("00") && (prefix==null||e.getKey().startsWith(prefix))).map(Entry::getKey).collect(Collectors.toList());
 			area = list.get(RandomUtils.nextInt(0, list.size()));
 		}
 		if(!StringUtil.isBlank(birthday)) {

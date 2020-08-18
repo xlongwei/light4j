@@ -156,6 +156,9 @@ public class RsaUtil {
 	
 	/** 校验公钥与私钥是否匹配 */
 	public static boolean verify(PublicKey publicKey, PrivateKey privateKey) {
+		if(publicKey==null || privateKey==null) {
+			return false;
+		}
 		String data = publicKey.toString()+privateKey.toString();
 		String sign = RsaUtil.sign(privateKey, data);
 		return RsaUtil.verify(publicKey, data, sign);

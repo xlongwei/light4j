@@ -453,7 +453,7 @@ public class ExpUtil {
 	/** 批量设置上下文 */
 	public ExpUtil context(Map<String, Number> ctx) {
 		if(ctx!=null && ctx.size()>0) {
-			ctx.forEach((k,v) -> context(k, v));
+			ctx.forEach(this::context);
 		}
 		return this;
 	}

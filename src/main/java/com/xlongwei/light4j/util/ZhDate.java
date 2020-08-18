@@ -206,13 +206,13 @@ public class ZhDate {
 	};
 	
 	/** 天干 */
-	public static String TIANGAN = "甲乙丙丁戊己庚辛壬癸";
+	public static final String TIANGAN = "甲乙丙丁戊己庚辛壬癸";
 	/** 地址 */
-	public static String DIZHI = "子丑寅卯辰巳午未申酉戌亥";
+	public static final String DIZHI = "子丑寅卯辰巳午未申酉戌亥";
 	/** 生肖 */
-	public static String SHENGXIAO = "鼠牛虎兔龙蛇马羊猴鸡狗猪";
+	public static final String SHENGXIAO = "鼠牛虎兔龙蛇马羊猴鸡狗猪";
 	/** 中文数字 */
-	public static String ZHNUMS = "零一二三四五六七八九十";
+	public static final String ZHNUMS = "零一二三四五六七八九十";
 	
 	public static String ganzhi(int year) {
 		int anum = year - 1900 + 36;

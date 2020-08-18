@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class IdCardUtil {
-	public static Map<String, String> areas = new HashMap<>();
+	public static final Map<String, String> areas = new HashMap<>();
 
 	static {
 		try {

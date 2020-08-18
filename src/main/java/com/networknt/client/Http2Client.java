@@ -96,7 +96,7 @@ public class Http2Client {
     @Deprecated
     public static XnioSsl SSL;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
-    public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
+    public static final AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
 
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";

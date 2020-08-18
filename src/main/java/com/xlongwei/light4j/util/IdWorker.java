@@ -71,11 +71,8 @@ public class IdWorker {
         }
 
         private void scheduleClockUpdating() {
-            TaskUtil.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
+            TaskUtil.scheduleAtFixedRate(() -> {
                     now.set(System.currentTimeMillis());
-                }
             }, period, period, TimeUnit.MILLISECONDS);
         }
 

@@ -18,7 +18,7 @@ import redis.clients.jedis.JedisPool;
  */
 @Slf4j
 public class RedisConfig {
-	public static int DEFAULT_SECONDS = 604800;
+	public static final int DEFAULT_SECONDS = 604800;
 	public static final String CACHE = "property";
 	public static final String LOCK = "lock";
 	public static final JedisPool JEDIS_POOL;
@@ -36,12 +36,9 @@ public class RedisConfig {
 		JEDIS_POOL = new JedisPool(RedisUtil.poolConfig, host, port, timeout, password, db);
 		log.info("redis config loaded");
 		
-		TaskUtil.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
+		TaskUtil.addShutdownHook((Runnable)() -> {
 				JEDIS_POOL.destroy();
 				log.info("redis config shutdown");
-			}
 		});
 	}
 	
@@ -61,6 +58,7 @@ public class RedisConfig {
 		RedisConfig.persist(CACHE, key, value);
 	}
 	
+	@FunctionalInterface
 	public interface JedisCallback<T> {
 		/**
 		 * 操作Jedis，必要时返回对象
@@ -91,13 +89,10 @@ public class RedisConfig {
 	}
 	
 	public static String get(final String cache, final String key) {
-		return execute(new JedisCallback<String>() {
-			@Override
-			public String doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteValue = jedis.get(byteKey);
 				return RedisUtil.stringValue(byteValue);
-			}
 		});
 	}
 	
@@ -108,9 +103,7 @@ public class RedisConfig {
 	 * @return Map&lt;String, String>={key:value}，key去掉了cache前缀
 	 */
 	public static Map<String, String> gets(final String cache, final String pattern) {
-		return execute(new JedisCallback<Map<String, String>>() {
-			@Override
-			public Map<String, String> doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, pattern);
 				Set<byte[]> keys = jedis.keys(byteKey);
 				Map<String, String> map = new HashMap<>(16);
@@ -123,26 +116,20 @@ public class RedisConfig {
 					map.put(stringKey, stringValue);
 				}
 				return map;
-			}
 		});
 	}
 	
 	public static String hget(final String cache, final String key, final String field) {
-		return execute(new JedisCallback<String>() {
-			@Override
-			public String doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteField = RedisUtil.byteKey(field);
 				byte[] byteValue = jedis.hget(byteKey, byteField);
 				return RedisUtil.stringValue(byteValue);
-			}
 		});
 	}
 	
 	public static Map<String, String> hgetAll(final String cache, final String key) {
-		return execute(new JedisCallback<Map<String, String>>() {
-			@Override
-			public Map<String, String> doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				Map<byte[], byte[]> hgetAll = jedis.hgetAll(byteKey);
 				Map<String, String> hgetMap = new HashMap<>(16);
@@ -151,7 +138,6 @@ public class RedisConfig {
 					hgetMap.put(RedisUtil.stringKey(field), RedisUtil.stringValue(value));
 				}
 				return hgetMap;
-			}
 		});
 	}
 	
@@ -163,9 +149,7 @@ public class RedisConfig {
 	 * @return
 	 */
 	public static String get(final String cache, final String key, final Supplier<String> supplier) {
-		return execute(new JedisCallback<String>() {
-			@Override
-			public String doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteValue = jedis.get(byteKey);
 				String value = RedisUtil.stringValue(byteValue);
@@ -177,7 +161,6 @@ public class RedisConfig {
 					}
 				}
 				return value;
-			}
 		});
 	}
 	
@@ -186,22 +169,17 @@ public class RedisConfig {
 	}
 	
 	public static void set(final String cache, final String key, final String value, final int seconds) {
-		execute(new JedisCallback<String>() {
-			@Override
-			public String doInJedis(Jedis jedis) {
+		execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteValue = RedisUtil.byteValue(value);
 				jedis.set(byteKey, byteValue);
 				expire(jedis, byteKey, seconds);
 				return null;
-			}
 		});
 	}
 	
 	public static void hset(final String cache, final String key, final String field, final String value) {
-		execute(new JedisCallback<Boolean>() {
-			@Override
-			public Boolean doInJedis(Jedis jedis) {
+		execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteField = RedisUtil.byteKey(field);
 				if(value == null) {
@@ -211,7 +189,6 @@ public class RedisConfig {
 					jedis.hset(byteKey, byteField, byteValue);
 				}
 				return Boolean.TRUE;
-			}
 		});
 	}
 	
@@ -220,53 +197,39 @@ public class RedisConfig {
 	}
 	
 	public static void expire(final String cache, final String key, final int expire) {
-		execute(new JedisCallback<String>() {
-			@Override
-			public String doInJedis(Jedis jedis) {
+		execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				expire(jedis, byteKey, expire);
 				return null;
-			}
 		});
 	}
 	
 	public static Long ttl(final String cache, final String key) {
-		return execute(new JedisCallback<Long>() {
-			@Override
-			public Long doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				return jedis.ttl(byteKey);
-			}
 		});
 	}
 	
 	public static void delete(final String cache, final String key) {
-		execute(new JedisCallback<Long>() {
-			@Override
-			public Long doInJedis(Jedis jedis) {
+		execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				jedis.del(byteKey);
 				return null;
-			}
 		});
 	}
 	
 	/** 加入列表头部 */
 	public static Long lpush(final String cache, final String key, final String value) {
-		return execute(new JedisCallback<Long>() {
-			@Override
-			public Long doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				return jedis.lpush(byteKey, RedisUtil.byteValue(value));
-			}
 		});
 	}
 	
 	/** 获取列表范围 */
 	public static List<String> lrange(final String cache, final String key, final int start, final int end) {
-		return execute(new JedisCallback<List<String>>() {
-			@Override
-			public List<String> doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				List<byte[]> lrange = jedis.lrange(byteKey, start, end);
 				List<String> list = new ArrayList<>(lrange.size());
@@ -274,18 +237,14 @@ public class RedisConfig {
 					list.add(RedisUtil.stringValue(bs));
 				}
 				return list;
-			}
 		});
 	}
 	
 	/** 加入列表头部 */
 	public static String ltrim(final String cache, final String key, final int start, final int end) {
-		return execute(new JedisCallback<String>() {
-			@Override
-			public String doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				return jedis.ltrim(byteKey, start, end);
-			}
 		});
 	}
 	
@@ -302,12 +261,10 @@ public class RedisConfig {
 	 * */
 	public static boolean lock(String cache, String key, final int seconds, final int wait) {
 		final byte[] fk = RedisUtil.byteKey(cache, key);
-		return execute(new JedisCallback<Boolean>() {
-			@Override
-			public Boolean doInJedis(Jedis jedis) {
+		return execute((jedis) -> {
 				long setnx = jedis.setnx(fk, fk);
 				boolean locked = setnx==1;
-				long totalWait = 0, tw = 31, fw = wait*1000;
+				long totalWait = 0, tw = 31, fw = wait*1000L;
 				while(!locked) {
 					TaskUtil.sleep(tw);
 					setnx = jedis.setnx(fk, fk);
@@ -323,7 +280,6 @@ public class RedisConfig {
 				}
 				expire(jedis, fk, seconds);
 				return true;
-			}
 		});
 	}
 	

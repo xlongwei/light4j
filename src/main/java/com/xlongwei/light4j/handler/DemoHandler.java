@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class DemoHandler implements LightHttpHandler {
-	public static TemplateEngine engine = TemplateUtil.createEngine(new TemplateConfig("beetl/demo", ResourceMode.CLASSPATH));
+	public static final TemplateEngine engine = TemplateUtil.createEngine(new TemplateConfig("beetl/demo", ResourceMode.CLASSPATH));
 	private Map<String, AbstractHandler> handlers = new HashMap<>();
 	
 	public DemoHandler() {

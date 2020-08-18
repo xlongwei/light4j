@@ -280,15 +280,14 @@ public class TaskUtil {
 			if(callbackdTasks.size() > 0) {
 				synchronized (callbackdTasks) {
 					List<Future<?>> callbackedFutures = null;
-					for(Future<?> future : callbackdTasks.keySet()) {
-						final Callback callback = callbackdTasks.get(future);
+					for(Map.Entry<Future<?>, Callback> entry : callbackdTasks.entrySet()) {
+						Future<?> future = entry.getKey();
+						Callback callback = entry.getValue();
 						if(future.isDone()) {
 							try{
 								final Object result = future.get(5, TimeUnit.SECONDS);
-								submit(new Runnable() {
-									@Override public void run() {
+								submit(() -> {
 										callback.handle(result);
-									}
 								});
 								if(callbackedFutures == null) {
 									callbackedFutures = new LinkedList<Future<?>>();

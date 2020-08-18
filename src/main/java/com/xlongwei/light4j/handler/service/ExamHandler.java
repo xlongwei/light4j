@@ -162,7 +162,7 @@ public class ExamHandler extends AbstractHandler {
 	        }, false);
 	        List<Sheet> sheets = excelReader.getSheets();
 	        JsonBuilder jb = JsonUtil.builder(false).put("sheets", sheets.size());
-	        Set<String> sheetNames = sheets.stream().map(s -> s.getSheetName()).collect(Collectors.toSet());
+	        Set<String> sheetNames = sheets.stream().map(Sheet::getSheetName).collect(Collectors.toSet());
 			for(Sheet sheet : sheets) {
 				jb = handleSheet(sheet, excelReader, sheetNames, rows, jb);
 			}

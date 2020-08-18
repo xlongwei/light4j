@@ -11,6 +11,7 @@ import static io.undertow.server.handlers.ResponseCodeHandler.HANDLE_200;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import com.networknt.cors.CorsUtil;
 
@@ -26,7 +27,7 @@ import io.undertow.util.Headers;
  */
 public class MyCorsHttpHandler extends DummyMiddlewareHandler {
 	private static final Collection<String> ALLOWED_METHODS = Arrays.asList("GET", "POST");
-	private static final long ONE_HOUR_IN_SECONDS = 60 * 60;
+	private static final long ONE_HOUR_IN_SECONDS = TimeUnit.HOURS.toSeconds(1);
 
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {

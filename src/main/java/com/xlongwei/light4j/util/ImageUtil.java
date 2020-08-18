@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ImageUtil {
-	public static String attr = "imgCode";
+	public static final String attr = "imgCode";
 	private static char[] normalChars = "ABCDEFGHJKLMNPRSTUWX3456789".toCharArray();
 	private static char[] specialChars = "@#$%&3456789ABCDEFGHJKMNPQRSTUWX@#$%&3456789".toCharArray();
 	private static char[] chineseChars = DictUtil.frequent().toCharArray();

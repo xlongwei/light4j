@@ -176,10 +176,14 @@ public class JsonUtil {
 	/** modify json string directly */
 	public static String append(String json, Map<String, String> params) {
 		JSONObject parse = parse(json);
-		for(String param : params.keySet()) {
-			parse.put(param, params.get(param));
+		if(parse != null) {
+			for(String param : params.keySet()) {
+				parse.put(param, params.get(param));
+			}
+			return parse.toJSONString();
+		}else {
+			return "{}";
 		}
-		return parse.toJSONString();
 	}
 	
 	/** return true is json is one of: blank, {}, [] */

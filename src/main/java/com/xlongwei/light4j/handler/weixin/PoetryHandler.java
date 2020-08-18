@@ -11,7 +11,6 @@ import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextH
 
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.poi.excel.ExcelUtil;
-import cn.hutool.poi.excel.sax.handler.RowHandler;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -76,13 +75,10 @@ public class PoetryHandler extends AbstractTextHandler {
 	static List<String[]> poetrys = new ArrayList<>();
 	static {
 		try{
-			ExcelUtil.readBySax(new BufferedInputStream(ConfigUtil.stream("ts300.xlsx")), 0, new RowHandler() {
-				@Override
-				public void handle(int i, long j, List<Object> list) {
+			ExcelUtil.readBySax(new BufferedInputStream(ConfigUtil.stream("ts300.xlsx")), 0, (int i, long j, List<Object> list) -> {
 					if(j > 0) {
 						poetrys.add(list.toArray(new String[list.size()]));
 					}
-				}
 			});
 			log.info("poetrys loaded, record={}", poetrys.size());
 		}catch(Exception e) {

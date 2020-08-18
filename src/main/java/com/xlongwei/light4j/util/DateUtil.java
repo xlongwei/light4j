@@ -21,16 +21,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DateUtil {
 	/** yyyy */
-	public static FastDateFormat yearFormat = FastDateFormat.getInstance("yyyy");
+	public static final FastDateFormat yearFormat = FastDateFormat.getInstance("yyyy");
 	/** yyyy年M月d日 */
-	public static FastDateFormat dayFormat = FastDateFormat.getInstance("yyyy年M月d日");
+	public static final FastDateFormat dayFormat = FastDateFormat.getInstance("yyyy年M月d日");
 	/** yyyy-MM-dd */
-	public static FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd");
+	public static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd");
 	/** yyyy-MM-dd HH:mm:ss */
-	public static FastDateFormat datetimeFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
-	public static FastDateFormat httpHeader = FastDateFormat.getInstance("EEE, dd MMM yyyy HH:mm:ss zzz",
+	public static final FastDateFormat datetimeFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss");
+	public static final FastDateFormat httpHeader = FastDateFormat.getInstance("EEE, dd MMM yyyy HH:mm:ss zzz",
 			TimeZone.getTimeZone("GMT"), Locale.US);
-	private static List<FastDateFormat> fastDateFormats = new ArrayList<>();
+	private static final List<FastDateFormat> fastDateFormats = new ArrayList<>();
 
 	static {
 		String[] strings = { "yyyyMMdd", "yyyy-MM-dd", "yyyy.MM.dd", "yyyy/MM/dd", "yyyyMMddHHmmss",

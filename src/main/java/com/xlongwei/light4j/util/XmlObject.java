@@ -252,7 +252,7 @@ public class XmlObject implements Cloneable {
 					hasCDATA = true;
 				}else {
 					tag = start = true;
-					if(field.length()>0 && value.length()==0) {
+					if(field.length()>0 && value.length()==0 && obj!=null) {
 						String fieldWithAttrs = field.toString(), name = attrName(fieldWithAttrs);
 						int end = xml.indexOf("</"+name+">", i);
 						if(hasCDATA) {
@@ -289,7 +289,7 @@ public class XmlObject implements Cloneable {
 						//去掉标签之间的空格<response>    <service>test</service></response>
 						value.delete(0, value.length());
 					}
-				}else if(field.length()>0 && value.length()>0) {
+				}else if(field.length()>0 && value.length()>0 && obj!=null) {
 					obj.add(field.toString(), value.toString());
 					field.delete(0, field.length());
 					value.delete(0, value.length());

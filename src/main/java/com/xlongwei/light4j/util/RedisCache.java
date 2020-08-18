@@ -16,9 +16,9 @@ import redis.clients.jedis.ShardedJedisPool;
  */
 @Slf4j
 public class RedisCache {
-	public static int DEFAULT_SECONDS = 604800;
-	public static ShardedJedisPool SHARDED_JEDIS_POOL;
-	private static List<JedisShardInfo> nodes = new LinkedList<>();
+	public static final int DEFAULT_SECONDS = 604800;
+	public static final ShardedJedisPool SHARDED_JEDIS_POOL;
+	private static final List<JedisShardInfo> nodes = new LinkedList<>();
 	static {
 		String hostAndPorts = ConfigUtil.config("redis").get("cacheDbs");
 		log.info("redis.cacheDbs={}", hostAndPorts);
@@ -31,15 +31,13 @@ public class RedisCache {
 		SHARDED_JEDIS_POOL = new ShardedJedisPool(RedisUtil.poolConfig, nodes);
 		log.info("redis cache loaded");
 		
-		TaskUtil.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
+		TaskUtil.addShutdownHook((Runnable)() -> {
 				SHARDED_JEDIS_POOL.destroy();
 				log.info("redis cache shutdown");
-			}
 		});
 	}
 	
+	@FunctionalInterface
 	public interface ShardedJedisCallback<T> {
 		/**
 		 * 操作ShardedJedis
@@ -71,13 +69,10 @@ public class RedisCache {
 	}
 	
 	public static String get(final String cache, final String key) {
-		return execute(new ShardedJedisCallback<String>() {
-			@Override
-			public String doInShardedJedis(ShardedJedis shardedJedis) {
+		return execute((shardedJedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteValue = shardedJedis.get(byteKey);
 				return RedisUtil.stringValue(byteValue);
-			}
 		});
 	}
 	
@@ -86,49 +81,37 @@ public class RedisCache {
 	}
 	
 	public static void set(final String cache, final String key, final String value, final int seconds) {
-		execute(new ShardedJedisCallback<String>() {
-			@Override
-			public String doInShardedJedis(ShardedJedis shardedJedis) {
+		execute((shardedJedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				byte[] byteValue = RedisUtil.byteValue(value);
 				shardedJedis.set(byteKey, byteValue);
 				expire(shardedJedis, byteKey, seconds);
 				return null;
-			}
 		});
 	}
 	
 	/** 超时过期 */
 	public static void expire(final String cache, final String key, final int seconds) {
-		execute(new ShardedJedisCallback<String>() {
-			@Override
-			public String doInShardedJedis(ShardedJedis shardedJedis) {
+		execute((shardedJedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				expire(shardedJedis, byteKey, seconds);
 				return null;
-			}
 		});
 	}
 	
 	/** 超时获取 */
 	public static Long ttl(final String cache, final String key) {
-		return execute(new ShardedJedisCallback<Long>() {
-			@Override
-			public Long doInShardedJedis(ShardedJedis shardedJedis) {
+		return execute((shardedJedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				return shardedJedis.ttl(byteKey);
-			}
 		});
 	}
 	
 	/** 获取分片 */
 	public static MyJedisShardInfo shardInfo(final String cache, final String key) {
-		return execute(new ShardedJedisCallback<MyJedisShardInfo>() {
-			@Override
-			public MyJedisShardInfo doInShardedJedis(ShardedJedis shardedJedis) {
+		return execute((shardedJedis) -> {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				return (MyJedisShardInfo)shardedJedis.getShardInfo(byteKey);
-			}
 		});
 	}
 	

@@ -16,8 +16,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class PostUtil {
-	public static Relation1N<String, String> posts = new Relation1N<>();
-	public static Relation1N<String, String> areas = new Relation1N<>();
+	public static final Relation1N<String, String> posts = new Relation1N<>();
+	public static final Relation1N<String, String> areas = new Relation1N<>();
 	
 	public static class Info {
 		public static final String 区号 = "区号";

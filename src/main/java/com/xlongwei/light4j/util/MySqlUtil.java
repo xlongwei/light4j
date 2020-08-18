@@ -58,16 +58,14 @@ public class MySqlUtil {
 		SQLMANAGER = new SQLManager(new MySqlStyle(),new ClasspathLoader("/beetl/sql"),ConnectionSourceHelper.getSingle(DATASOURCE),new  UnderlinedNameConversion(),new Interceptor[]{new DebugInterceptor()});
 		log.info("mysql config loaded");
 		
-		TaskUtil.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
+		TaskUtil.addShutdownHook((Runnable)() -> {
 				log.info("mysql config shutdown");
 				DATASOURCE.close();
-			}
 		});
 	}
 	
 	/** QueryRunner回调 */
+	@FunctionalInterface
 	public interface QueryRunnerCallback<T> {
 		/**
 		 * 操作QueryRunner，必要时返回值

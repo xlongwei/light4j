@@ -3,9 +3,7 @@ package com.xlongwei.light4j.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
@@ -24,13 +22,10 @@ import com.artofsolving.jodconverter.openoffice.connection.SocketOpenOfficeConne
 import com.artofsolving.jodconverter.openoffice.converter.OpenOfficeDocumentConverter;
 import com.artofsolving.jodconverter.openoffice.converter.StreamOpenOfficeDocumentConverter;
 import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
 import com.lowagie.text.Image;
 import com.lowagie.text.Rectangle;
-import com.lowagie.text.pdf.AcroFields;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfCopy;
-import com.lowagie.text.pdf.PdfPKCS7;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfSignatureAppearance;
 import com.lowagie.text.pdf.PdfSmartCopy;
@@ -117,12 +112,9 @@ public class PdfUtil {
 			}
 		}
 		roundGet = new Round<>(soffices);
-		TaskUtil.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
+		TaskUtil.addShutdownHook((Runnable)() -> {
 				log.info("soffices shutdown");
 				PdfUtil.soffices.values().parallelStream().map(tuple -> tuple.first).forEach(OpenOfficeConnection::disconnect);
-			}
 		});
 	}
 	/** 转换文件格式，支持OpenOffice和LibreOffice代理转换
@@ -442,51 +434,6 @@ public class PdfUtil {
 			log.warn("fail to sign pdf: "+fromPdf+", ex: "+e.getMessage());
 		}		
 		return false;
-	}
-	
-	/** 校验pdf的签名 */
-	@SuppressWarnings("unchecked")
-	public static boolean verify(File pdf) {
-		PdfReader reader = null;
-		try {
-			reader = new PdfReader(pdf.getAbsolutePath());
-			AcroFields af = reader.getAcroFields();
-			ArrayList<String> names = af.getSignatureNames();
-			for (String name : names) {
-				PdfPKCS7 pk = af.verifySignature(name);
-				boolean verify = pk.verify();
-				log.info("Subject: "+PdfPKCS7.getSubjectFields(pk.getSigningCertificate())+", verify: "+verify);
-				return verify;
-			}
-		}catch(Exception e) {
-			log.warn("fail to verify pdf: "+pdf+", ex: "+e.getMessage());
-		}finally {
-			if(reader!=null) {
-				reader.close();
-			}
-		}
-		return false;
-	}
-	
-	/** 填充pdf表单域 */
-	public static void pdf2fill(File in, File out, Map<String, String> data) {
-		try{
-			PdfReader pdfReader = new PdfReader(new FileInputStream(in));
-			PdfStamper pdfStamper = new PdfStamper(pdfReader, new FileOutputStream(out));
-			
-			if(data!=null && data.size()>0) {
-				AcroFields form = pdfStamper.getAcroFields();
-				for(String key : data.keySet()) {
-					String value = data.get(key);
-					form.setField(key, value);
-				}
-			}
-
-			pdfStamper.close();
-			log.info("success to fill2form with data: "+data);
-		}catch(DocumentException | IOException e) {
-			log.warn("fail to convert html to pdf", e);
-		}
 	}
 	
 	private static class MyOpenOfficeDocumentConverter extends OpenOfficeDocumentConverter {

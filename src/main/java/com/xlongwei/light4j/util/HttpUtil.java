@@ -27,8 +27,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class HttpUtil {
-	public static HttpClient httpClient = null;
-	public static ContentType txtUtf8 = ContentType.create("text/plain", StandardCharsets.UTF_8);
+	public static final HttpClient httpClient;
+	public static final ContentType txtUtf8 = ContentType.create("text/plain", StandardCharsets.UTF_8);
 	
 	private static int connectionRequestTimeout = 10000;
 	private static int connectionTimeout = 20000;

@@ -32,9 +32,9 @@ public class LogHandler extends AbstractHandler {
 		Deque<String> loggerParams = queryParameters.get("logger");
 		List<ch.qos.logback.classic.Logger> loggers = null;
 		if(loggerParams!=null && loggerParams.size()>0) {
-			Set<String> loggerNames = loggerParams.stream().map(loggerName -> StringUtils.trimToEmpty(loggerName)).collect(Collectors.toSet());
+			Set<String> loggerNames = loggerParams.stream().map(StringUtils::trimToEmpty).collect(Collectors.toSet());
 			if(!loggerNames.isEmpty()) {
-				loggers = loggerNames.stream().map(loggerName -> (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(loggerName)).filter(logger -> logger!=null).collect(Collectors.toList());
+				loggers = loggerNames.stream().map(loggerName -> (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(loggerName)).filter(Objects::nonNull).collect(Collectors.toList());
 				if(!loggers.isEmpty()) {
 					Deque<String> levelParams = queryParameters.get("level");
 					if(levelParams!=null && levelParams.size()>0) {

@@ -6,7 +6,6 @@ import static io.undertow.Handlers.websocket;
 
 import java.io.File;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FilenameUtils;
@@ -19,7 +18,6 @@ import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
-import com.xlongwei.light4j.util.TaskUtil.Callback;
 import com.xlongwei.light4j.util.UploadUtil;
 
 import io.undertow.server.HttpHandler;
@@ -116,25 +114,11 @@ public class WebSocketHandlerProvider implements HandlerProvider {
 					round++;
 				}
         	};
-        	TaskUtil.submit(new Callable<Boolean>() {
-        		int trys = 1, maxTrys = 3;
-				@Override
-				public Boolean call() throws Exception {
-					boolean down = false;
-					while((down=FileUtil.down(url, target))==false){
-						WebSockets.sendText("trys: "+trys+"/"+maxTrys+" failed", channel, null);
-						if(trys++ >= maxTrys) {
-							break;
-						}
-					};
-					return down;
-				}
-        	}, new Callback() {
-				@Override
-				public void handle(Object result) {
+        	TaskUtil.submit(() -> {
+					return FileUtil.down(url, target);
+        	}, (result) -> {
 					TaskUtil.cancel(notice);
 					WebSockets.sendText(UploadUtil.URL_TEMP+path, channel, null);
-				}
         	});
         	TaskUtil.scheduleAtFixedRate(notice, 5, 10, TimeUnit.SECONDS);
         }

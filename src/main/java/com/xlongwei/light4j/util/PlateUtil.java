@@ -6,7 +6,6 @@ import java.util.List;
 
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.poi.excel.ExcelUtil;
-import cn.hutool.poi.excel.sax.handler.RowHandler;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -61,13 +60,10 @@ public class PlateUtil {
 	static final String YUN_A_V = "云A-?V[0-9A-Z]{0,4}";
 	static {
 		try{
-			ExcelUtil.readBySax(new BufferedInputStream(ConfigUtil.stream("chepaihao.xlsx")), 0, new RowHandler() {
-				@Override
-				public void handle(int i, long j, List<Object> list) {
+			ExcelUtil.readBySax(new BufferedInputStream(ConfigUtil.stream("chepaihao.xlsx")), 0, (int i, long j, List<Object> list) -> {
 					if(j > 0) {
 						plates.add(list.toArray(new String[list.size()]));
 					}
-				}
 			});
 			log.info("chepaihao loaded, record={}", plates.size());
 		}catch(Exception e) {

@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -56,6 +57,7 @@ import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import com.networknt.utility.TlsUtil;
 import com.networknt.utility.Util;
+import com.xlongwei.light4j.util.TaskUtil;
 
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -84,13 +86,13 @@ public class Servers {
 
     static final String SID = "sId";
 
-    public static ServerConfig config = getServerConfig();
+    public static final ServerConfig config = getServerConfig();
 
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
     /** a list of service ids populated by startup hooks that want to register to the service registry */
-    public static List<String> serviceIds = new ArrayList<>();
+    public static final List<String> serviceIds = new ArrayList<>();
     /** a list of service urls kept in memory so that they can be unregistered during server shutdown */
-    public static List<URL> serviceUrls;
+    public static final List<URL> serviceUrls = new ArrayList<>();
 
     static protected boolean shutdownRequested = false;
     static Undertow server = null;
@@ -132,7 +134,7 @@ public class Servers {
      * Locate the Config Loader class, instantiate it and then call init() method on it.
      * Uses DefaultConfigLoader if startup.yml is missing or configLoaderClass is missing in startup.yml
      */
-    static public void loadConfigs(){
+    public static void loadConfigs(){
         IConfigLoader configLoader;
         Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(STARTUP_CONFIG_NAME);
         if(startupConfig ==null || startupConfig.get(CONFIG_LOADER_CLASS) ==null){
@@ -148,14 +150,14 @@ public class Servers {
         configLoader.init();
     }
 
-    static public void start() {
+    public static void start() {
         // add shutdown hook here.
         addDaemonShutdownHook();
 
         // add startup hooks here.
         StartupHookProvider[] startupHookProviders = SingletonServiceFactory.getBeans(StartupHookProvider.class);
         if (startupHookProviders != null) {
-			Arrays.stream(startupHookProviders).forEach(s -> s.onStartup());
+			Arrays.stream(startupHookProviders).forEach(StartupHookProvider::onStartup);
 		}
 
         // For backwards compatibility, check if a handler.yml has been included. If
@@ -226,7 +228,7 @@ public class Servers {
             	port = serverConfig.getHttpPort();
                 builder.addHttpListener(serverConfig.getHttpPort(), serverConfig.getIp());
             }
-            if(serverConfig.enableHttps==false && serverConfig.enableHttp==false) {
+            if(!serverConfig.enableHttps && !serverConfig.enableHttp) {
                 throw new RuntimeException("Unable to start the server as both http and https are disabled in server.yml");
             }
             if (serverConfig.enableHttp2) {
@@ -253,7 +255,7 @@ public class Servers {
             return false;
         }
         if (serverConfig.enableRegistry) {
-            serviceUrls = new ArrayList<>();
+            //serviceUrls = new ArrayList<>();
             serviceUrls.add(register(serverConfig.getServiceId(), port));
             if(serviceIds.size() > 0) {
                 for(String id: serviceIds) {
@@ -292,13 +294,13 @@ public class Servers {
         return true;
     }
 
-    static public void stop() {
+    public static void stop() {
         if (server != null) {
 			server.stop();
 		}
     }
 
-    static public void shutdown() {
+    public static void shutdown() {
         // need to unregister the service
         if (getServerConfig().enableRegistry && registry != null && serviceUrls != null) {
             for(URL serviceUrl: serviceUrls) {
@@ -316,8 +318,8 @@ public class Servers {
             logger.info("Starting graceful shutdown.");
             gracefulShutdownHandler.shutdown();
             try {
-                gracefulShutdownHandler.awaitShutdown(60 * 1000);
-            } catch (InterruptedException e) {
+                gracefulShutdownHandler.awaitShutdown(TimeUnit.SECONDS.toMillis(60));
+            } catch (Exception e) {
                 logger.error("Error occurred while waiting for pending requests to complete.", e);
             }
             logger.info("Graceful shutdown complete.");
@@ -325,7 +327,7 @@ public class Servers {
 
         ShutdownHookProvider[] shutdownHookProviders = SingletonServiceFactory.getBeans(ShutdownHookProvider.class);
         if (shutdownHookProviders != null) {
-			Arrays.stream(shutdownHookProviders).forEach(s -> s.onShutdown());
+			Arrays.stream(shutdownHookProviders).forEach(ShutdownHookProvider::onShutdown);
 		}
 
         stop();
@@ -333,12 +335,7 @@ public class Servers {
     }
 
     static protected void addDaemonShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                Servers.shutdown();
-            }
-        });
+        TaskUtil.addShutdownHook((Runnable)Servers::shutdown);
     }
 
     protected static KeyStore loadKeyStore() {
@@ -475,7 +472,6 @@ public class Servers {
             // handle the registration exception separately to eliminate confusion
         } catch (Exception e) {
             System.out.println("Failed to register service, the server stopped.");
-            e.printStackTrace();
             if (logger.isInfoEnabled()) {
 				logger.info("Failed to register service, the server stopped.", e);
 			}

@@ -14,7 +14,7 @@ import io.undertow.server.HttpServerExchange;
  *
  */
 public class DummyMiddlewareHandler implements MiddlewareHandler {
-	private volatile HttpHandler next;
+	private HttpHandler next;
 	
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {

@@ -153,15 +153,15 @@ public class SealUtil {
 	
 					double radians = Math.toRadians(a);
 					g2d.rotate(radians);
-					float x = r - h;
-					g2d.translate(x, 0);
+					double x = (double)r - h;
+					g2d.translate(x, 0.0);
 					g2d.rotate(vr);
-					g2d.scale(firmScale, 1);
+					g2d.scale(firmScale, 1.0);
 					g2d.drawString(String.valueOf(c), -cw / 2, 0);
 					// 将所有设置还原,等待绘制下一个
-					g2d.scale(1 / firmScale, 1);
+					g2d.scale(1 / firmScale, 1.0);
 					g2d.rotate(-vr);
-					g2d.translate(-x, 0);
+					g2d.translate(-x, 0.0);
 					g2d.rotate(-radians);
 				}
 			}
@@ -182,19 +182,19 @@ public class SealUtil {
 				for (int i = 0; i < count; i++) {
 					char c = chars[i];
 					int cw = fm.charWidth(c);
-					float a = start - angle * i;
+					double a = start - angle * i;
 					
 					double radians = Math.toRadians(a);
 					g2d.rotate(radians);
-					float x = r - h;
-					g2d.translate(x, 0);
+					double x = (double)r - h;
+					g2d.translate(x, 0.0);
 					g2d.rotate(vr);
 					g2d.scale(licenseScale, 1);
 					g2d.drawString(String.valueOf(c), -cw / 2, 0);
 					// 将所有设置还原,等待绘制下一个
-					g2d.scale(1 / licenseScale, 1);
+					g2d.scale(1 / licenseScale, 1.0);
 					g2d.rotate(-vr);
-					g2d.translate(-x, 0);
+					g2d.translate(-x, 0.0);
 					g2d.rotate(-radians);
 				}
 			}

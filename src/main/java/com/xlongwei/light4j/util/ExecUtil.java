@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ExecUtil {
-	public static boolean isWindows = OS.isFamilyWindows();
+	public static final boolean isWindows = OS.isFamilyWindows();
 	
 	/**
 	 * 搜索dir目录下的日志文件，列出包含search文本的文件名

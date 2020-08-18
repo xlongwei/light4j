@@ -23,9 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TrainUtil {
 	/** K487 =>  {info} */
-	public static Map<String, JSONObject> trains = new HashMap<>(15000);
+	public static final Map<String, JSONObject> trains = new HashMap<>(15000);
 	/** 重庆  =>  {T10,K587,...} */
-	public static Map<String, List<String>> stations = new HashMap<>(4000);
+	public static final Map<String, List<String>> stations = new HashMap<>(4000);
 
 	public static class Line {
 		public static final String 车次 = "车次";

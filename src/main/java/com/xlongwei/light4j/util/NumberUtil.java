@@ -243,7 +243,7 @@ public class NumberUtil {
 		try {
 			ExpUtil expUtil = ExpUtil.exp(exp);
 			if(context!=null && context.size()>0) {
-				context.forEach((k, v) -> expUtil.context(k, v));
+				context.forEach(expUtil::context);
 			}
 			return expUtil.parse().getResult().toString();
 		} catch (Exception e) {

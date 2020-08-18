@@ -869,7 +869,7 @@ public class StringUtil {
 	public static boolean isIdNumber(String idNumber) {
 		int idLength1 = 15, idLength2 = 18, idLength = idNumber==null?0:idNumber.length();
 		boolean idType1 = idLength==idLength1, idType2 = idLength==idLength2;
-		if(idType1==false && idType2==false) {
+		if(idNumber==null || (!idType1 && !idType2)) {
 			return false;
 		}
 		

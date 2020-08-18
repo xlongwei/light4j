@@ -33,8 +33,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class HtmlUtil {
-	public static String cache = "html";
-	public static Pattern pattern = Pattern.compile("<meta.*charset=[\"\']?([0-9a-zA-Z-]+)[\"\']", Pattern.CASE_INSENSITIVE);
+	public static final String cache = "html";
+	public static final Pattern pattern = Pattern.compile("<meta.*charset=[\"\']?([0-9a-zA-Z-]+)[\"\']", Pattern.CASE_INSENSITIVE);
 
 	/** 探测字节文本的编码 */
 	public static String charset(byte[] bs) {

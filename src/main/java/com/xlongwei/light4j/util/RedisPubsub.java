@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.xlongwei.light4j.util.RedisConfig.JedisCallback;
-
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
@@ -18,8 +16,8 @@ import redis.clients.jedis.JedisPubSub;
 @Slf4j
 public class RedisPubsub {
 	public static final String CHANNEL = "pubsub";
-	private static List<MessageListener> listeners = new CopyOnWriteArrayList<>();
-	private static Map<String, JedisPubSub> pubsubs = new ConcurrentHashMap<>();
+	private static final List<MessageListener> listeners = new CopyOnWriteArrayList<>();
+	private static final Map<String, JedisPubSub> pubsubs = new ConcurrentHashMap<>();
 	
 	/** 发布消息到默认渠道 */
 	public static void pub(final String message) {
@@ -28,12 +26,9 @@ public class RedisPubsub {
 	
 	/** 发布消息到指定渠道 */
 	public static void pub(final String channel, final String message) {
-		RedisConfig.execute(new JedisCallback<String>() {
-			@Override
-			public String doInJedis(Jedis jedis) {
+		RedisConfig.execute((jedis) -> {
 				jedis.publish(channel, message);
 				return null;
-			}
 		});
 	}
 	
@@ -47,9 +42,7 @@ public class RedisPubsub {
 		if(StringUtil.isBlank(channel) || pubsub==null) {
 			return;
 		}
-		TaskUtil.submitKeepRunning(new Runnable() {
-			@Override
-			public void run() {
+		TaskUtil.submitKeepRunning(() -> {
 				Jedis jedis = null;
 				try {
 					jedis = RedisConfig.JEDIS_POOL.getResource();
@@ -57,7 +50,6 @@ public class RedisPubsub {
 				}finally {
 					RedisConfig.JEDIS_POOL.returnBrokenResource(jedis);
 				}
-			}
 		});
 		pubsubs.put(channel, pubsub);
 	}
@@ -66,6 +58,7 @@ public class RedisPubsub {
 	 * 默认渠道消息监听器
 	 * @author xlongwei
 	 */
+	@FunctionalInterface
 	public static interface MessageListener {
 		/**
 		 * 接收消息通知
@@ -102,14 +95,11 @@ public class RedisPubsub {
 			}
 		};
 		sub(CHANNEL, pubsub);
-		TaskUtil.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
+		TaskUtil.addShutdownHook((Runnable)() -> {
 				log.info("redis pubsub shutdown");
 				for(Map.Entry<String, JedisPubSub> entry : pubsubs.entrySet()) {
 					entry.getValue().unsubscribe(entry.getKey());
 				}
-			}
 		});
 	}
 }
