@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
+import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TrainUtil;
 
@@ -26,7 +27,7 @@ public class TrainHandler extends AbstractHandler {
 		if(StringUtil.isBlank(line)) {
 			return;
 		}
-		JSONObject json = TrainUtil.trains.get(line.toUpperCase());
+		JSONObject json = JsonUtil.parse(TrainUtil.trains.get(line.toUpperCase()));
 		if(json != null) {
 			HandlerUtil.setResp(exchange, json);
 		}
@@ -96,7 +97,7 @@ public class TrainHandler extends AbstractHandler {
 		JSONObject json = new JSONObject();
 		JSONArray array = new JSONArray();
 		for(String line : lines) {
-			JSONObject item = TrainUtil.trains.get(line);
+			JSONObject item = JsonUtil.parse(TrainUtil.trains.get(line));
 			if(item!=null) {
 				array.add(item);
 			}

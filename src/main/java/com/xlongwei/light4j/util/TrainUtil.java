@@ -1,6 +1,5 @@
 package com.xlongwei.light4j.util;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,9 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TrainUtil {
 	/** K487 =>  {info} */
-	public static final Map<String, JSONObject> trains = new HashMap<>(15000);
+	public static final Map<String, String> trains = new HashMap<>(16384);
 	/** 重庆  =>  {T10,K587,...} */
-	public static final Map<String, List<String>> stations = new HashMap<>(4000);
+	public static final Map<String, List<String>> stations = new HashMap<>(4096);
 
 	public static class Line {
 		public static final String 车次 = "车次";
@@ -52,7 +51,7 @@ public class TrainUtil {
 	public static List<String> filter(String from, String to, List<String> lines) {
 		List<String> list2 = new LinkedList<>();
 		for (String line : lines) {
-			JSONObject info = TrainUtil.trains.get(line);
+			JSONObject info = JsonUtil.parse(TrainUtil.trains.get(line));
 			JSONArray stations = info.getJSONArray(Line.经过站点);
 			boolean fromFind = false, toFind = false;
 			for (int i = 0; i < stations.size(); i++) {
@@ -81,14 +80,12 @@ public class TrainUtil {
 
 	static {
 		String line = null;
-		File train = new File(ConfigUtil.DIRECTORY, "trains.json");
-		log.info("train file: {}", train);
-		TextReader reader = new TextReader(train, CharsetNames.UTF_8);
+		TextReader reader = new TextReader(ConfigUtil.stream("trains.json"), CharsetNames.UTF_8);
 		while ((line = reader.read()) != null) {
 			JSONObject info = JSON.parseObject(line);
 			String key = info.getString(Line.车次);
 			if (StringUtil.hasLength(key)) {
-				trains.put(key, info);
+				trains.put(key, line);
 				initStations(info);
 			}
 		}

@@ -70,7 +70,7 @@ public class FangdaiHandler extends AbstractTextHandler {
 					if(n > json.getIntValue(mKey)) {
 						return "已过还款截止年月："+endYearMonth+"，本金："+NumberUtil.format(json.getDoubleValue("A"),"#")+"，期数："+json.getIntValue("M")+"，月息："+NumberUtil.format(json.getDoubleValue("B"),".######");
 					}
-					Map<String, Number> ctx = new HashMap<>();
+					Map<String, Number> ctx = new HashMap<>(8);
 					ctx.put("A", json.getDouble("A"));
 					ctx.put("M", json.getInteger("M"));
 					ctx.put("B", json.getDouble("B"));

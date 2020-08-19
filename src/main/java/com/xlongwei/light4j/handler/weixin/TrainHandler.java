@@ -9,6 +9,7 @@ import org.apache.commons.collections.CollectionUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.util.AdtUtil.PairList;
+import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TrainUtil;
 import com.xlongwei.light4j.util.TrainUtil.Info;
@@ -93,7 +94,7 @@ public class TrainHandler extends AbstractTextHandler {
 	}
 
 	private String info(String line) {
-		JSONObject train = TrainUtil.trains.get(line.toUpperCase());
+		JSONObject train = JsonUtil.parse(TrainUtil.trains.get(line.toUpperCase()));
 		if (train == null) {
 			return null;
 		}
@@ -126,7 +127,7 @@ public class TrainHandler extends AbstractTextHandler {
 		int size = lines.size();
 		for (int i = 0; i < size; i++) {
 			String line = lines.get(i);
-			JSONObject info = TrainUtil.trains.get(line);
+			JSONObject info = JsonUtil.parse(TrainUtil.trains.get(line));
 			JSONArray stations = info.getJSONArray(Line.经过站点);
 			for (int j = 0; j < stations.size(); j++) {
 				JSONObject station = stations.getJSONObject(j);

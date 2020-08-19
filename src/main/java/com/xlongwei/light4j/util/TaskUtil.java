@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,8 +34,8 @@ public class TaskUtil {
 	private static Map<Future<?>, Callback> callbackdTasks = null;
 	private static List<Object> shutdownHooks = new LinkedList<>();
 	static {
-		cachedExecutor = Executors.newCachedThreadPool(new TaskUtilThreadFactory("cached"));
-		scheduledExecutor = Executors.newScheduledThreadPool(1, new TaskUtilThreadFactory("scheduled"));
+		cachedExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new TaskUtilThreadFactory("cached"));
+		scheduledExecutor = new ScheduledThreadPoolExecutor(1, new TaskUtilThreadFactory("scheduled"));
 		Runtime.getRuntime().addShutdownHook(new Thread() { @Override public void run() { TaskUtil.shutdown(); } });
 	}
 	
@@ -346,6 +348,7 @@ public class TaskUtil {
 	/**
 	 * 等待结果回调接口
 	 */
+	@FunctionalInterface
 	public static interface Callback {
 		/**
 		 * 回调处理结果对象

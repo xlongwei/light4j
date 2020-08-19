@@ -108,10 +108,9 @@ public class Http2Client {
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
-    // TokenManager is to manage cached jwt tokens for this client.
+    /** TokenManager is to manage cached jwt tokens for this client. */
     private TokenManager tokenManager = TokenManager.getInstance();
 
-    // Initialize connection pool
     private Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
 
     static {
@@ -157,7 +156,7 @@ public class Http2Client {
     }
 
     private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
-    	if (System.getProperty("java.version").startsWith("1.8.")) {// Java 8
+    	if (System.getProperty("java.version").startsWith("1.8.")) {
         	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
         		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
         	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
@@ -203,12 +202,16 @@ public class Http2Client {
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && ssl == null) {
+			ssl = getDefaultXnioSsl();
+		}
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && ssl == null) {
+			ssl = getDefaultXnioSsl();
+		}
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
             provider.connect(new ClientCallback<ClientConnection>() {
@@ -235,12 +238,16 @@ public class Http2Client {
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && ssl == null) {
+			ssl = getDefaultXnioSsl();
+		}
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && ssl == null) {
+			ssl = getDefaultXnioSsl();
+		}
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
         provider.connect(new ClientCallback<ClientConnection>() {
@@ -266,13 +273,17 @@ public class Http2Client {
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && ssl == null) {
+			ssl = getDefaultXnioSsl();
+		}
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, uri, worker, ssl, bufferPool, options);
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && ssl == null) {
+			ssl = getDefaultXnioSsl();
+		}
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, bindAddress, uri, worker, ssl, bufferPool, options);
     }
@@ -287,13 +298,17 @@ public class Http2Client {
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && ssl == null) {
+			ssl = getDefaultXnioSsl();
+		}
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, uri, ioThread, ssl, bufferPool, options);
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && ssl == null) {
+			ssl = getDefaultXnioSsl();
+		}
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, bindAddress, uri, ioThread, ssl, bufferPool, options);
     }
@@ -461,11 +476,15 @@ public class Http2Client {
                     String keyStoreName = System.getProperty(KEY_STORE_PROPERTY);
                     String keyStorePass = System.getProperty(KEY_STORE_PASSWORD_PROPERTY);
                     if (keyStoreName != null && keyStorePass != null) {
-                        if(logger.isInfoEnabled()) logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
+                        if(logger.isInfoEnabled()) {
+							logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
+						}
                     } else {
                         keyStoreName = (String) tlsMap.get(KEY_STORE);
                         keyStorePass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
-                        if(logger.isInfoEnabled()) logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
+                        if(logger.isInfoEnabled()) {
+							logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
+						}
                     }
                     if (keyStoreName != null && keyStorePass != null) {
                         String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
@@ -489,11 +508,15 @@ public class Http2Client {
                     String trustStoreName = System.getProperty(TRUST_STORE_PROPERTY);
                     String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
                     if (trustStoreName != null && trustStorePass != null) {
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
+                        if(logger.isInfoEnabled()) {
+							logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
+						}
                     } else {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
                         trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
+                        if(logger.isInfoEnabled()) {
+							logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
+						}
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
@@ -525,10 +548,11 @@ public class Http2Client {
         StringBuilder result = new StringBuilder();
         boolean first = true;
         for(Map.Entry<String, String> entry : params.entrySet()){
-            if (first)
-                first = false;
-            else
-                result.append("&");
+            if (first) {
+				first = false;
+			} else {
+				result.append("&");
+			}
             result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
             result.append("=");
             result.append(URLEncoder.encode(entry.getValue(), "UTF-8").replaceAll("\\+", "%20"));
@@ -846,13 +870,17 @@ public class Http2Client {
      * @return CompletableFuture
      */
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
-        if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && SSL == null) {
+			SSL = getDefaultXnioSsl();
+		}
         return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
                 ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
     public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
+        if("https".equals(uri.getScheme()) && SSL == null) {
+			SSL = getDefaultXnioSsl();
+		}
         CompletableFuture<ClientConnection> completableFuture = new CompletableFuture<>();
             ClientProvider provider = clientProviders.get(uri.getScheme());
             try {

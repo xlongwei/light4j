@@ -1,7 +1,5 @@
 package com.xlongwei.light4j.util;
 
-import java.io.File;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.util.FileUtil.CharsetNames;
@@ -27,7 +25,7 @@ public class PostUtil {
 	
 	static {
 		String line = null;
-		TextReader reader = new TextReader(new File(ConfigUtil.DIRECTORY, "posts.json"), CharsetNames.UTF_8);
+		TextReader reader = new TextReader(ConfigUtil.stream("posts.json"), CharsetNames.UTF_8);
 		while((line=reader.read())!=null) {
 				JSONObject info = JSON.parseObject(line);
 				String post = info.getString(Info.邮编);
