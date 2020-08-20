@@ -3,7 +3,6 @@ package com.xlongwei.light4j.handler.service;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,17 +56,14 @@ public class ExamHandler extends AbstractHandler {
 			}
 		}else if(!StringUtil.isBlank(type)) {
 			Map<String, String> map = RedisConfig.gets(RedisConfig.CACHE, "exam."+type+"*");
-			List<String> keys = new ArrayList<>(map.keySet());
-			Collections.sort(keys, ((o1,o2) -> {
-				String s1 = (String)o1, s2 = (String) o2;
+			map.entrySet().stream().sorted((e1, e2) -> {
+				String s1 = e1.getKey(), s2 = e2.getKey();
 				Integer v1 = Integer.valueOf(s1.substring(s1.lastIndexOf('.')+1));
 				Integer v2 = Integer.valueOf(s2.substring(s1.lastIndexOf('.')+1));
 				return v1.compareTo(v2);
-			}));
-			for(String key : keys) {
-				String value = map.get(key);
-				addQuestion(jsonBuilder, key, value);
-			}
+			}).forEach(e -> {
+				addQuestion(jsonBuilder, e.getKey(), e.getValue());
+			});
 		}else if(!StringUtil.isBlank(answer)) {
 			String answers = RedisConfig.get(PREFIX+"answer."+answer);
 			JSONObject json = JsonUtil.parseNew(answers);

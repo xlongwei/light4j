@@ -2,6 +2,7 @@ package com.xlongwei.light4j.handler.weixin;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -9,7 +10,6 @@ import org.apache.commons.collections.CollectionUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.util.AdtUtil.PairList;
-import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TrainUtil;
 import com.xlongwei.light4j.util.TrainUtil.Info;
@@ -73,11 +73,12 @@ public class TrainHandler extends AbstractTextHandler {
 
 		list1 = new LinkedList<>();
 		list2 = new LinkedList<>();
-		for (String key : TrainUtil.stations.keySet()) {
+		for (Entry<String, List<String>> entry : TrainUtil.stations.entrySet()) {
+			String key = entry.getKey();
 			if (key.startsWith(from)) {
-				list1.addAll(TrainUtil.stations.get(key));
+				list1.addAll(entry.getValue());
 			} else if (key.startsWith(to)) {
-				list2.addAll(TrainUtil.stations.get(key));
+				list2.addAll(entry.getValue());
 			}
 		}
 		if (CollectionUtils.isNotEmpty(list1) && CollectionUtils.isNotEmpty(list2)) {
@@ -94,7 +95,7 @@ public class TrainHandler extends AbstractTextHandler {
 	}
 
 	private String info(String line) {
-		JSONObject train = JsonUtil.parse(TrainUtil.trains.get(line.toUpperCase()));
+		JSONObject train = TrainUtil.info(line.toUpperCase());
 		if (train == null) {
 			return null;
 		}
@@ -127,7 +128,7 @@ public class TrainHandler extends AbstractTextHandler {
 		int size = lines.size();
 		for (int i = 0; i < size; i++) {
 			String line = lines.get(i);
-			JSONObject info = JsonUtil.parse(TrainUtil.trains.get(line));
+			JSONObject info = TrainUtil.info(line);
 			JSONArray stations = info.getJSONArray(Line.经过站点);
 			for (int j = 0; j < stations.size(); j++) {
 				JSONObject station = stations.getJSONObject(j);

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.function.Supplier;
 
 import lombok.extern.slf4j.Slf4j;
@@ -133,8 +134,9 @@ public class RedisConfig {
 				byte[] byteKey = RedisUtil.byteKey(cache, key);
 				Map<byte[], byte[]> hgetAll = jedis.hgetAll(byteKey);
 				Map<String, String> hgetMap = new HashMap<>(16);
-				for(byte[] field : hgetAll.keySet()) {
-					byte[] value = hgetAll.get(field);
+				for(Entry<byte[], byte[]> entry : hgetAll.entrySet()) {
+					byte[] field = entry.getKey();
+					byte[] value = entry.getValue();
 					hgetMap.put(RedisUtil.stringKey(field), RedisUtil.stringValue(value));
 				}
 				return hgetMap;

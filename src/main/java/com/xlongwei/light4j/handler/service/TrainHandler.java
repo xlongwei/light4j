@@ -2,6 +2,7 @@ package com.xlongwei.light4j.handler.service;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.commons.collections.CollectionUtils;
 
@@ -9,7 +10,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
-import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TrainUtil;
 
@@ -27,7 +27,7 @@ public class TrainHandler extends AbstractHandler {
 		if(StringUtil.isBlank(line)) {
 			return;
 		}
-		JSONObject json = JsonUtil.parse(TrainUtil.trains.get(line.toUpperCase()));
+		JSONObject json = TrainUtil.info(line.toUpperCase());
 		if(json != null) {
 			HandlerUtil.setResp(exchange, json);
 		}
@@ -67,11 +67,12 @@ public class TrainHandler extends AbstractHandler {
 		}
 		
 		list1 = new LinkedList<>(); list2 = new LinkedList<>();
-		for(String key : TrainUtil.stations.keySet()) {
+		for(Entry<String, List<String>> entry : TrainUtil.stations.entrySet()) {
+			String key = entry.getKey();
 			if(key.startsWith(from)) {
-				list1.addAll(TrainUtil.stations.get(key));
+				list1.addAll(entry.getValue());
 			} else if(key.startsWith(to)) {
-				list2.addAll(TrainUtil.stations.get(key));
+				list2.addAll(entry.getValue());
 			}
 		}
 		if(CollectionUtils.isNotEmpty(list1) && CollectionUtils.isNotEmpty(list2)) {
@@ -97,7 +98,7 @@ public class TrainHandler extends AbstractHandler {
 		JSONObject json = new JSONObject();
 		JSONArray array = new JSONArray();
 		for(String line : lines) {
-			JSONObject item = JsonUtil.parse(TrainUtil.trains.get(line));
+			JSONObject item = TrainUtil.info(line);
 			if(item!=null) {
 				array.add(item);
 			}

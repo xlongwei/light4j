@@ -1,9 +1,18 @@
 package com.xlongwei.light4j.util;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -11,6 +20,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.util.FileUtil.CharsetNames;
 import com.xlongwei.light4j.util.FileUtil.TextReader;
 
+import cn.hutool.cache.impl.LFUCache;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -22,9 +32,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TrainUtil {
 	/** K487 =>  {info} */
-	public static final Map<String, String> trains = new HashMap<>(16384);
+	private static final Map<String, String> trains = new HashMap<>(16384);
 	/** 重庆  =>  {T10,K587,...} */
 	public static final Map<String, List<String>> stations = new HashMap<>(4096);
+	/** trains.tgz更省内存 */
+	private static final InputStream tgzStream = ConfigUtil.stream("trains.tgz");
+	private static final boolean tgzEnabled = NumberUtil.parseBoolean(System.getProperty("trainsTgz"), tgzStream!=null);
+	private static byte[] tgzBytes = null;
+	private static final Set<String> lines = tgzEnabled ? new HashSet<>(16384) : null;
+	private static final LFUCache<String, String> cache = tgzEnabled ? new LFUCache<>(1024) : null;
 
 	public static class Line {
 		public static final String 车次 = "车次";
@@ -46,6 +62,37 @@ public class TrainUtil {
 		public static final String 发车时间 = "发车时间";
 		public static final String 走行时间 = "走行时间（小时）";
 		public static final String 里程 = "里程（公里）";
+	}
+	
+	public static JSONObject info(String line) {
+		if(tgzEnabled) {
+			if(lines.contains(line)) {
+				JSONObject parse = JsonUtil.parse(cache.get(line));
+				if(parse != null) {
+					return parse;
+				}
+				try(BufferedReader reader = new BufferedReader(new InputStreamReader(tgzStream(tgzBytes), CharsetNames.UTF_8))) {
+					String row = null;
+					while((row = reader.readLine())!=null) {
+						JSONObject info = JSON.parseObject(row);
+						String key = info.getString(Line.车次);
+						if(line.equals(key)) {
+							cache.put(key, row);
+							return info;
+						}
+					}
+				}catch (Exception e) {
+					log.warn("{} {}", e.getClass().getSimpleName(), e.getMessage());
+				}
+			}
+		}else {
+			return JsonUtil.parse(trains.get(line));
+		}
+		return null;
+	}
+	
+	public static List<String> station(String station) {
+		return stations.get(station);
 	}
 
 	public static List<String> filter(String from, String to, List<String> lines) {
@@ -80,12 +127,20 @@ public class TrainUtil {
 
 	static {
 		String line = null;
-		TextReader reader = new TextReader(ConfigUtil.stream("trains.json"), CharsetNames.UTF_8);
+		if(tgzEnabled) {
+			tgzBytes = FileUtil.readStream(tgzStream).toByteArray();
+			log.info("trainsTgz={}", tgzBytes.length);
+		}
+		TextReader reader = new TextReader(tgzEnabled ? tgzStream(tgzBytes) : ConfigUtil.stream("trains.json"), CharsetNames.UTF_8);
 		while ((line = reader.read()) != null) {
 			JSONObject info = JSON.parseObject(line);
 			String key = info.getString(Line.车次);
 			if (StringUtil.hasLength(key)) {
-				trains.put(key, line);
+				if(tgzEnabled) {
+					lines.add(key);
+				}else {
+					trains.put(key, line);
+				}
 				initStations(info);
 			}
 		}
@@ -109,6 +164,17 @@ public class TrainUtil {
 				}
 				lines.add(line);
 			}
+		}
+	}
+
+	private static InputStream tgzStream(byte[] tgzBytes) {
+		try{
+			TarArchiveInputStream tgz = new TarArchiveInputStream(new GzipCompressorInputStream(new ByteArrayInputStream(tgzBytes)));
+			tgz.getNextEntry();//trains.json
+			return tgz;
+		}catch(Exception e) {
+			log.warn("{} {}", e.getClass().getSimpleName(), e.getMessage());
+			return null;
 		}
 	}
 

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
@@ -81,8 +82,9 @@ public class ExcelUtil {
 			}
 			col = 0;
 		}
-		for(Integer column : widths.keySet()) {
-			Integer width = widths.get(column);
+		for(Entry<Integer, Integer> entry : widths.entrySet()) {
+			Integer column = entry.getKey();
+			Integer width = entry.getValue();
 			//参数的单位是1/256个字符宽度
 			sheet.setColumnWidth(column, width * 256);
 		}

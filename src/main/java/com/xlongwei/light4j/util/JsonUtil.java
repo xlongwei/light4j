@@ -144,9 +144,8 @@ public class JsonUtil {
 	public static JSONObject convert(Map<String, String> params) {
 		JSONObject json = new JSONObject();
 		if(params!=null && params.size()>0) {
-			for(String param:params.keySet()) {
-				String value=params.get(param);
-				json.put(param, value);
+			for(Entry<String, String> entry:params.entrySet()) {
+				json.put(entry.getKey(), entry.getValue());
 			}
 		}
 		return json;
@@ -177,9 +176,7 @@ public class JsonUtil {
 	public static String append(String json, Map<String, String> params) {
 		JSONObject parse = parse(json);
 		if(parse != null) {
-			for(String param : params.keySet()) {
-				parse.put(param, params.get(param));
-			}
+			params.entrySet().forEach(e -> parse.put(e.getKey(), e.getValue()));
 			return parse.toJSONString();
 		}else {
 			return "{}";

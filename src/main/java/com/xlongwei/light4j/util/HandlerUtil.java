@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.commons.codec.CharEncoding;
 import org.jose4j.json.internal.json_simple.JSONObject;
@@ -93,8 +94,9 @@ public class HandlerUtil {
 	public static void parseBody(HttpServerExchange exchange) {
 		Map<String, Object> body = new HashMap<>(4);
 		Map<String, Deque<String>> params = exchange.getQueryParameters();
-		for(String param : params.keySet()) {
-			Deque<String> deque = params.get(param);
+		for(Entry<String, Deque<String>> entry : params.entrySet()) {
+			String param = entry.getKey();
+			Deque<String> deque = entry.getValue();
 			if(deque.size() > 1) {
 				body.put(param, new ArrayList<>(deque));
 			}else {

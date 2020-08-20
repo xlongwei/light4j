@@ -14,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import com.xlongwei.light4j.util.FileUtil.CharsetNames;
 import com.xlongwei.light4j.util.FileUtil.TextReader;
@@ -139,8 +140,9 @@ public class DictUtil {
 
 	private static void build() {
 		log.info("build partsMapWords...");
-		for (String key : wordMapParts.keySet()) {
-			List<String> value = wordMapParts.get(key);
+		for (Entry<String, List<String>> entry : wordMapParts.entrySet()) {
+			String key = entry.getKey();
+			List<String> value = entry.getValue();
 			int lineNumber = Integer.parseInt(value.get(0));
 			ArrayList<String> parts = getParts(key, lineNumber);
 			if (parts.isEmpty()) {
@@ -367,7 +369,7 @@ public class DictUtil {
 			}
 		}
 		reader.close();
-		log.info("<" + simMapRowWords.keySet().size() + " similar rows>...over!");
+		log.info("<" + simMapRowWords.size() + " similar rows>...over!");
 	}
 
 	private static void parseInput(String line, boolean quick) {

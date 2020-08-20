@@ -3,6 +3,7 @@ package com.xlongwei.light4j.handler.service;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -38,8 +39,9 @@ public class PdnovelHandler extends AbstractHandler {
 		}
 		Map<String, Object> map = new HashMap<>(4);
 		JSONArray books = new JSONArray();
-		for(Integer novelid : PdnovelUtil.books.keySet()) {
-			Book book = PdnovelUtil.books.get(novelid);
+		for(Entry<Integer, Book> entry : PdnovelUtil.books.entrySet()) {
+			Integer novelid = entry.getKey();
+			Book book = entry.getValue();
 			JSONObject item = new JSONObject();
 			item.put("novelid", novelid);
 			item.put("name", book.name);
@@ -56,8 +58,9 @@ public class PdnovelHandler extends AbstractHandler {
 			if(book != null) {
 				Map<String, Object> map = new HashMap<>(1);
 				JSONArray volumes = new JSONArray();
-				for(Integer volumeid : book.volumes.keySet()) {
-					Volume volume = book.volumes.get(volumeid);
+				for(Entry<Integer, Volume> entry : book.volumes.entrySet()) {
+					Integer volumeid = entry.getKey();
+					Volume volume = entry.getValue();
 					JSONObject item = new JSONObject();
 					item.put("volumeid", volumeid);
 					item.put("volumeorder", volume.volumeorder);
@@ -80,8 +83,8 @@ public class PdnovelHandler extends AbstractHandler {
 				if(volume != null) {
 					Map<String, Object> map = new HashMap<>(1);
 					JSONArray chapters = new JSONArray();
-					for(Integer chapterid : volume.chapters.keySet()) {
-						Chapter chapter = volume.chapters.get(chapterid);
+					for(Entry<Integer, Chapter> entry : volume.chapters.entrySet()) {
+						Chapter chapter = entry.getValue();
 						JSONObject item = new JSONObject();
 						item.put("chapterorder", chapter.chapterorder);
 						item.put("chaptername", chapter.chaptername);
