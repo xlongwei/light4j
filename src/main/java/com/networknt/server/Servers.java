@@ -57,6 +57,7 @@ import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import com.networknt.utility.TlsUtil;
 import com.networknt.utility.Util;
+import com.xlongwei.light4j.apijson.DemoApplication;
 import com.xlongwei.light4j.util.TaskUtil;
 
 import io.undertow.Undertow;
@@ -177,6 +178,9 @@ public class Servers {
 
         //bind http or https port
         bind(gracefulShutdownHandler, -1);
+        
+        //start APIJSON
+    	DemoApplication.start();
     }
 
     private static HttpHandler middlewareInit() {

@@ -27,6 +27,10 @@ chains:
     - security
     - shiro
     - openapi
+  demo:
+    - exception
+    - cors
+    - demo
 
 paths:
   - source: com.xlongwei.light4j.handler.ServiceHandler$ServiceEndpointSource

@@ -1,5 +1,27 @@
 # Singleton service factory configuration/IoC injection
 singletons:
+# - com.networknt.server.StartupHookProvider:
+  # If you are using mask module to remove sensitive info before logging, uncomment the following line.
+  # - com.networknt.server.JsonPathStartupHookProvider
+# - com.networknt.server.ShutdownHookProvider:
+  # - com.networknt.server.Test1ShutdownHook
+- javax.sql.DataSource:
+  - com.zaxxer.hikari.HikariDataSource:
+      DriverClassName: com.mysql.jdbc.Driver
+      jdbcUrl: jdbc:mysql://localhost:3306/apijson?useUnicode=true&characterEncoding=UTF8&zeroDateTimeBehavior=convertToNull&serverTimezone=GMT%2B8
+      username: apijson
+      password: apijson
+      minimumIdle: 2
+#      maximumPoolSize: 6
+      autoCommit: true
+      useServerPrepStmts: true
+      cachePrepStmts: true
+      cacheCallableStmts: true
+      cacheResultSetMetadata: true
+      prepStmtCacheSize: 10
+      prepStmtCacheSqlLimit: 2048
+      connectionTestQuery: SELECT 1
+      connectionTimeout: 2000
 #- com.networknt.registry.URL:
 #  - com.networknt.registry.URLImpl:
 #      protocol: light

@@ -1,17 +1,15 @@
 package com.xlongwei.light4j.handler.demo;
 
-import java.util.HashMap;
-import java.util.Set;
+import java.util.Collections;
 
-import org.beetl.sql.core.db.MetadataManager;
-
+import com.xlongwei.light4j.beetl.dao.UserDao;
+import com.xlongwei.light4j.beetl.model.User;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.handler.service.IpHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
-import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 
 /**
@@ -28,11 +26,15 @@ public class IndexHandler extends AbstractHandler {
 	}
 	
 	public void mysql(HttpServerExchange exchange) throws Exception {
-		MetadataManager metaDataManager = MySqlUtil.SQLMANAGER.getMetaDataManager();
-		Set<String> allTable = metaDataManager.allTable();
-		HashMap<String, Object> map = MapUtil.newHashMap();
-		map.put("allTable", allTable);
-		HandlerUtil.setResp(exchange, map);
+		String type = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "type"), "tables");
+		Object obj = null;
+		switch(type) {
+		case "all": obj = MySqlUtil.SQLMANAGER.all(User.class); break;
+		case "sql": obj = MySqlUtil.SQLMANAGER.select("user.sample", User.class); break;
+		case "dao": obj = MySqlUtil.SQLMANAGER.getMapper(UserDao.class).all(); break;
+		default: obj = MySqlUtil.SQLMANAGER.getMetaDataManager().allTable(); break;
+		}
+		HandlerUtil.setResp(exchange, Collections.singletonMap("allTable", obj));
 	}
-
+	
 }

@@ -1,8 +1,6 @@
 package com.xlongwei.light4j.util;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import javax.sql.DataSource;
 
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
@@ -10,58 +8,30 @@ import org.beetl.sql.core.ClasspathLoader;
 import org.beetl.sql.core.ConnectionSourceHelper;
 import org.beetl.sql.core.Interceptor;
 import org.beetl.sql.core.SQLManager;
-import org.beetl.sql.core.UnderlinedNameConversion;
 import org.beetl.sql.core.db.MySqlStyle;
 import org.beetl.sql.ext.DebugInterceptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.networknt.config.Config;
-import com.zaxxer.hikari.HikariConfig;
+import com.networknt.service.SingletonServiceFactory;
 import com.zaxxer.hikari.HikariDataSource;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * mysql util
+ * <li>apijson使用Java风格命名表字段，因此beetlsql也使用默认的DefaultNameConversion
  * @author xlongwei
  */
-@Slf4j
-@SuppressWarnings({"rawtypes", "unchecked"})
 public class MySqlUtil {
-	public static final Map<String, HikariDataSource> DATASOURCEMAP = new HashMap<>();
-	public static final HikariDataSource DATASOURCE;
-	public static final QueryRunner QUERYRUNNER;
-	public static final SQLManager SQLMANAGER;
+	public static final HikariDataSource DATASOURCE = (HikariDataSource)SingletonServiceFactory.getBean(DataSource.class);
+	public static final QueryRunner QUERYRUNNER = new QueryRunner(DATASOURCE);
+	public static final SQLManager SQLMANAGER = new SQLManager(new MySqlStyle(), new ClasspathLoader("/beetl/sql"), ConnectionSourceHelper.getSingle(DATASOURCE));
+	public static final Interceptor[] INTERS = new Interceptor[]{new DebugInterceptor()}, EMPTY_INTERS = new Interceptor[] {};
+	private static final Logger log = LoggerFactory.getLogger(MySqlUtil.class);
 	
 	static {
-		Map<String, Object> dataSourceMap = (Map<String, Object>) Config.getInstance().getJsonMapConfig("mysql");
-		dataSourceMap.forEach((k, v) -> {
-			Properties props = new Properties();
-			Map configs = new HashMap((Map)v);
-			Map<String, ?> params = (Map)configs.remove("parameters");
-            params.forEach((p, q) -> props.setProperty("dataSource."+p, q==null?"":q.toString()));
-            ((Map<String, ?>)configs).forEach((p, q) -> props.setProperty(p, q==null?"":q.toString()));
-            String password = props.getProperty("password");
-            if(StringUtil.isBlank(password)) {
-            	password = RedisConfig.get("ds.password");
-            	if(StringUtil.isBlank(password)) {
-            		props.remove("password");
-            	}else {
-            		props.setProperty("password", password);
-            	}
-            }
-            HikariConfig config = new HikariConfig(props);
-            HikariDataSource ds = new HikariDataSource(config);
-            DATASOURCEMAP.put(k, ds);
-		});
-		DATASOURCE = DATASOURCEMAP.get("mysql");
-		QUERYRUNNER = new QueryRunner(DATASOURCE);
-		SQLMANAGER = new SQLManager(new MySqlStyle(),new ClasspathLoader("/beetl/sql"),ConnectionSourceHelper.getSingle(DATASOURCE),new  UnderlinedNameConversion(),new Interceptor[]{new DebugInterceptor()});
-		log.info("mysql config loaded");
-		
-		TaskUtil.addShutdownHook((Runnable)() -> {
-				log.info("mysql config shutdown");
-				DATASOURCE.close();
-		});
+		if(!SQLMANAGER.isProductMode()) {
+			SQLMANAGER.setInters(INTERS);
+		}
 	}
 	
 	/** QueryRunner回调 */
@@ -133,7 +103,7 @@ public class MySqlUtil {
 		try {
 			return callback.doInQueryRunner(QUERYRUNNER);
 		}catch(Exception e) {
-			log.warn("mysql query fail: {}", e.getMessage());
+			log.warn("mysql query fail: {} {}", e.getClass().getSimpleName(), e.getMessage());
 			return null;
 		}
 	}

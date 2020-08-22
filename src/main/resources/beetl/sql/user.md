@@ -1,29 +1,28 @@
 sample
 ===
-* 注释where #use("condition")#有bug
+* 注释
 
-	select #use("cols")# from user where
-	1 = 1  
-	@if(!isEmpty(userName)){
-	 and `user_name`=#userName#
-	@}
-	@if(!isEmpty(email)){
-	 and `email`=#email#
-	@}
+	select #use("cols")# from user  where  #use("condition")#
 
 cols
 ===
 
-	id,user_name,email
+	id,name,age,createDate
 
 condition
 ===
 
 	1 = 1  
-	@if(!isEmpty(userName)){
-	 and `user_name`=#userName#
+	@if(!isEmpty(id)){
+	 and id=#id#
 	@}
-	@if(!isEmpty(email)){
-	 and `email`=#email#
+	@if(!isEmpty(name)){
+	 and name=#name#
+	@}
+	@if(!isEmpty(age)){
+	 and age=#age#
+	@}
+	@if(!isEmpty(createDate)){
+	 and createDate=#createDate#
 	@}
 

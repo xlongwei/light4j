@@ -15,12 +15,15 @@ import com.xlongwei.light4j.util.AdtUtil.PairList.PriorityPairList.PriorityCompa
 import com.xlongwei.light4j.handler.ServiceHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.DateUtil;
+import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
+
+import apijson.Log;
 
 /**
  * echo counter info
@@ -78,6 +81,14 @@ public class CounterHandler extends AbstractTextHandler {
 				}
 			}
 			return String.valueOf(ServiceHandler.serviceCount);
+		}else if("debugOn".equals(content)) {
+			Log.DEBUG = true;
+			MySqlUtil.SQLMANAGER.setInters(MySqlUtil.INTERS);
+			return "debug="+Log.DEBUG;
+		}else if("debugOff".equals(content)) {
+			Log.DEBUG = false;
+			MySqlUtil.SQLMANAGER.setInters(MySqlUtil.EMPTY_INTERS);
+			return "debug="+Log.DEBUG;
 		}
 		return null;
 	}

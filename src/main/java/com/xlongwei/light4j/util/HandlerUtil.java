@@ -261,7 +261,7 @@ public class HandlerUtil {
 		}
 		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, mimeType);
 		exchange.setStatusCode(200);
-		log.info("response({}): {}", (System.nanoTime()-exchange.getRequestStartTime())/1000, response);
+		log.info("res({}): {}", (System.nanoTime()-exchange.getRequestStartTime())/1000, response);
 		exchange.getResponseSender().send(response);
 	}
 	
