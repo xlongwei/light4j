@@ -34,6 +34,7 @@ import java.rmi.ServerException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.servlet.http.HttpSession;
@@ -43,6 +44,7 @@ import com.networknt.service.SingletonServiceFactory;
 import com.xlongwei.light4j.apijson.model.Privacy;
 import com.xlongwei.light4j.apijson.model.User;
 import com.xlongwei.light4j.apijson.model.Verify;
+import com.xlongwei.light4j.util.NumberUtil;
 
 import apijson.JSON;
 import apijson.JSONResponse;
@@ -69,6 +71,7 @@ import apijson.orm.exception.OutOfRangeException;
 public class DemoController extends APIJSONController {
 	private static final String TAG = "DemoController";
 
+	private static final long VERIFY_CODE_LIVE_MILLIS = TimeUnit.SECONDS.toMillis(NumberUtil.parseLong(System.getProperty("apijson.verify"), 60L));
 	public static final String USER_;
 	public static final String PRIVACY_;
 	public static final String VERIFY_; //加下划线后缀是为了避免 Verify 和 verify 都叫VERIFY，分不清
@@ -277,7 +280,7 @@ public class DemoController extends APIJSONController {
 		//验证码过期
 		long time = BaseModel.getTimeMillis(verify.getDate());
 		long now = System.currentTimeMillis();
-		if (now > 60*1000 + time) {
+		if (!Log.DEBUG && now > VERIFY_CODE_LIVE_MILLIS + time) {
 			new DemoParser(DELETE, false).parseResponse(
 					new JSONRequest(new Verify(type, phone)).setTag(VERIFY_)
 					);
@@ -317,6 +320,11 @@ public class DemoController extends APIJSONController {
 			"password": "1234567",
 			"version": 1 //全局版本号，非必须
 		}
+		或使用verify验证码登录
+		{
+			"phone": "13000038710",
+			"verify": "2859"
+		}
 	 * </pre>
 	 */
 	public JSONObject login(String request, HttpSession session) {
@@ -324,6 +332,7 @@ public class DemoController extends APIJSONController {
 		boolean isPassword;
 		String phone;
 		String password;
+		String verify;
 		int version;
 		Boolean format;
 		boolean remember;
@@ -331,9 +340,10 @@ public class DemoController extends APIJSONController {
 		try {
 			requestObject = DemoParser.parseRequest(request);
 
-			isPassword = requestObject.getIntValue(TYPE) == LOGIN_TYPE_PASSWORD;//登录方式
 			phone = requestObject.getString(PHONE);//手机
 			password = requestObject.getString(PASSWORD);//密码
+			verify = requestObject.getString(VERIFY);//验证码
+			isPassword = StringUtil.isNotEmpty(verify, true) ? false : (requestObject.getIntValue(TYPE) == LOGIN_TYPE_PASSWORD);//登录方式
 
 			if (StringUtil.isPhone(phone) == false) {
 				throw new IllegalArgumentException("手机号不合法！");
@@ -344,6 +354,9 @@ public class DemoController extends APIJSONController {
 					throw new IllegalArgumentException("密码不合法！");
 				}
 			} else {
+				if(StringUtil.isEmpty(password, true) && StringUtil.isNotEmpty(verify, true)) {
+					password = verify;
+				}
 				if (StringUtil.isVerify(password) == false) {
 					throw new IllegalArgumentException("验证码不合法！");
 				}
@@ -447,10 +460,12 @@ public class DemoController extends APIJSONController {
 		}
 
 		JSONObject result = DemoParser.newSuccessResult();
-		JSONObject user = DemoParser.newSuccessResult();
-		user.put(ID, userId);
-		user.put(COUNT, 1);
-		result.put(StringUtil.firstCase(USER_), user);
+		if(userId > 0) {
+			JSONObject user = DemoParser.newSuccessResult();
+			user.put(ID, userId);
+			user.put(COUNT, 1);
+			result.put(StringUtil.firstCase(USER_), user);
+		}
 
 		return result;
 	}

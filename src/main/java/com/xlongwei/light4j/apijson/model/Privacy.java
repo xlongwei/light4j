@@ -18,11 +18,13 @@ import static apijson.RequestRole.ADMIN;
 import static apijson.RequestRole.OWNER;
 import static apijson.RequestRole.UNKNOWN;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import apijson.MethodAccess;
 import apijson.framework.BaseModel;
 
 /**
- * TODO 漏洞：如果GETS允许CONTACT，则CONTACT能看到自己的余额，tag可以不是Privacy-circle。
+ * 漏洞：如果GETS允许CONTACT，则CONTACT能看到自己的余额，tag可以不是Privacy-circle。
  * 所以需要在Request表中增加role字段。或者干脆这里GETS只允许OWNER, ADMIN，需要用其它角色查时走独立接口。
  */
 /**用户隐私信息
@@ -70,10 +72,9 @@ public class Privacy extends BaseModel {
 		return this;
 	}
 
-	/**get_password会转为password
-	 * @return
-	 */
-	public String getPassword() {
+	/**fastjson-1.2.71会解析为__password，因此使用注解指定名称*/
+	@JSONField(name="_password")
+	public String get__password() {
 		return password;
 	}
 	public Privacy setPassword(String password) {
@@ -81,10 +82,9 @@ public class Privacy extends BaseModel {
 		return this;
 	}
 
-	/**get_PayPassword会转为PayPassword
-	 * @return
-	 */
-	public String getPayPassword() {
+	/**fastjson-1.2.71会解析为__password，因此使用注解指定名称*/
+	@JSONField(name="_payPassword")
+	public String get__payPassword() {
 		return payPassword;
 	}
 	public Privacy setPayPassword(String payPassword) {

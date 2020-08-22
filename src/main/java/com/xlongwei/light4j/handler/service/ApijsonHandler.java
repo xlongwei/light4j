@@ -34,12 +34,12 @@ public class ApijsonHandler extends AbstractHandler {
 			return;
 		}
 		String path = exchange.getAttachment(AbstractHandler.PATH), request = HandlerUtil.getBodyString(exchange);
-		if(StringUtils.isBlank(path) || StringUtils.isBlank(request)) {
+		if(StringUtils.isBlank(path) || (StringUtils.isBlank(request) && !"logout".equals(path))) {
 			HandlerUtil.setResp(exchange, Collections.singletonMap("error", StringUtils.isBlank(path) ? "apijson/{path} is required" : "body is required"));
 			return;
 		}
 		sessionAttachmentHandler.handleRequest(exchange);
-		HttpSession session = new HttpSessionWrapper(Sessions.getOrCreateSession(exchange));
+		HttpSession session = new HttpSessionWrapper(Sessions.getOrCreateSession(exchange), exchange);
 		String json = null;
 		switch(path) {
 		case "get": json = apijson.get(request, session); break;
@@ -75,8 +75,10 @@ public class ApijsonHandler extends AbstractHandler {
 	 */
 	public static class HttpSessionWrapper implements HttpSession {
 		private Session session;
-		public HttpSessionWrapper(Session session) {
+		private HttpServerExchange exchange;
+		public HttpSessionWrapper(Session session, HttpServerExchange exchange) {
 			this.session = session;
+			this.exchange = exchange;
 		}
 		@Override
 		public long getCreationTime() {
@@ -116,7 +118,8 @@ public class ApijsonHandler extends AbstractHandler {
 		}
 		@Override
 		public void invalidate() {
-			
+			session.getAttributeNames().forEach(session::removeAttribute);
+			session.invalidate(exchange);
 		}
 		@Override
 		public boolean isNew() {

@@ -1,12 +1,27 @@
+### apijson配置选项
+
+  * -Dapijson.enabled=true，配置false停用apijson
+  * -Dapijson.debug=false，配置true开启调试
+  * -Dapijson.test=false，配置true开启框架测试
+  * -Dapijson.verify=60，配置验证码有效期（秒），非调试时有效
+
+### apijson框架引用
+
+  * git clone https://gitee.com/APIJSON/APIJSON.git
+  * 导入脚本MySQL/sys.sql，老版本MySQL也可以选择apijson/apijson.sql
+  * vi APIJSON-Java-Server/APIJSONORM/pom.xml，groupId=apijson.orm，artifactId=apijson-orm
+  * mvn install -f APIJSON-Java-Server/APIJSONORM/pom.xml
+  * vi APIJSON-Java-Server/APIJSONFramework/pom.xml，groupId=apijson.framework，artifactId=apijson-framework
+  * mvn install -f APIJSON-Java-Server/APIJSONFramework/pom.xml
+
 ### apijson.sql与sys.sql的差异
 
   * APIJSONSQLConfig默认MySQL为5.7.22，light4j的MySQL版本为5.1.63
   * json类型替换为varchar(65535)，apijson.JSON.getCorrectJson正确处理String="[1,2,3]"为JSONArray=[1,2,3]
   * sys.sql表名首字母为大写，apijson.sql表名统一为小写字母，/etc/my.cnf需配置`lower_case_table_names=1`
-  * apijson_privacy字段pasword、payPassword去掉下划线，相应修改Privacy类
+  * apijson_privacy字段pasword、payPassword添加注解@JSONField，避免fastjson解析报错，密码启用加密，修改字段长度
   * apijson.sql增加了beetlsql示例里的user表
-  * apijson权限管理：优先开放指定ip权限：grant all on apijson.* to apijson@'localhost' identified by 'apijson';
-  * apijson有很多测试数据，暂不清理
+  * apijson权限管理：优先开放指定ip权限：grant all on apijson.* to apijson@'127.0.0.1' identified by 'apijson';
 
 ### apijson请求示例
 
@@ -26,10 +41,24 @@
   * 排序：{"[]":{"Moment":{"@column":"id,date,content","@order":"date-,id,content+"}}}
   * 关联查询（Access表控制权限和实际表名）：{"[]":{"Moment":{"@column":"id,date,userId","id":12},"User":{"id@":"/Moment/userId","@column":"id,name"}}}
   * 最大值：{"[]":{"Moment":{"@column":"max(id):maxid"}}}
-  * http://localhost:8080/service/apijson/login
-  * 登录：{"phone":"13000038710","password":"666666"}
-  * http://localhost:8080/service/apijson/post
-  * 新增：{"Moment":{"content":"今天天气不错，到处都是提拉米苏雪","userId":38710},"tag":"Moment"}
-  * http://localhost:8080/service/apijson/put
-  * 修改：{"Moment":{"id":1508072491570,"content":"海洋动物数量减少，如果非吃不可，不点杀也是在保护它们"},"tag":"Moment"}
 
+### apijson账户管理
+
+  * 生成验证码：http://localhost:8080/service/apijson/postVerify，{"type":1,"phone":"13000038710"}，type=0登录 1注册 2密码 3支付 4重载
+  * 校验验证码：http://localhost:8080/service/apijson/headVerify，{"type":1,"phone":"13000038710","verify":"1979"}，非调试时60秒过期
+  * 注册：http://localhost:8080/service/apijson/register，{"Privacy":{"phone":"18810761776","_password":"666666"},"User":{"name":"xlongwei"},"verify":"1979"}
+  * 原密码改密：http://localhost:8080/service/apijson/putPassword，{"oldPassword":666666,"Privacy":{"id":38710,"_password":"123456"}}
+  * 获取验证码：http://localhost:8080/service/apijson/getVerify，{"type":2,"phone":"13000038710"}，响应报文不出现验证码，适合短信发送等场景
+  * 验证码改密：http://localhost:8080/service/apijson/putPassword，{"verify":"2798","Privacy":{"phone":"13000038710","_password":"666666"}}
+  * 改支付密码：http://localhost:8080/service/apijson/putPassword，{"verify":"2798","Privacy":{"phone":"13000038710","_payPassword":"666666"}}
+  * 登录：http://localhost:8080/service/apijson/login，{"phone":"13000038710","password":"666666"}
+  * 验证码登录：http://localhost:8080/service/apijson/login，{"phone":"13000038710","password":"1979",type:"1"}，或使用"verify":"1979"更合适{"phone":"13000038710","verify":"1979"}
+  * 验证码重载：http://localhost:8080/service/apijson/reload，{"phone":"13000038710","verify":"1950"}，type=ALL, FUNCTION, REQUEST, ACCESS，修改权限之后需要重载或重启
+  * 新增：http://localhost:8080/service/apijson/post，{"Moment":{"content":"今天天气不错，到处都是提拉米苏雪","userId":38710},"tag":"Moment"}，tag为Request表中配置，一般是Table表名
+  * 修改：http://localhost:8080/service/apijson/put，{"Moment":{"id":12,"content":"海洋动物数量减少，如果非吃不可，不点杀也是在保护它们"},"tag":"Moment"}
+  * 登出：http://localhost:8080/service/apijson/logout
+
+### Request请求校验
+
+  * tag表名+method方法+version版本：唯一定位请求配置，版本默认为1
+  * structure：请求参数校验，NECESSARY必填字段，DISALLOW禁止字段，

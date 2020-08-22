@@ -73,8 +73,8 @@ CREATE TABLE `apijson_privacy` (
   `certified` tinyint(2) NOT NULL DEFAULT '0' COMMENT '已认证',
   `phone` bigint(11) NOT NULL COMMENT '手机号，仅支持 11 位数的。不支持 +86 这种国家地区开头的。如果要支持就改为 VARCHAR(14)',
   `balance` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '余额',
-  `password` varchar(20) NOT NULL COMMENT '登录密码',
-  `payPassword` int(6) NOT NULL DEFAULT '123456' COMMENT '支付密码',
+  `_password` varchar(20) NOT NULL COMMENT '登录密码',
+  `_payPassword` int(6) NOT NULL DEFAULT '123456' COMMENT '支付密码',
   PRIMARY KEY (`id`),
   UNIQUE KEY `phone_UNIQUE` (`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户隐私信息表。\n对安全要求高，不想泄漏真实名称。对外名称为 Privacy';

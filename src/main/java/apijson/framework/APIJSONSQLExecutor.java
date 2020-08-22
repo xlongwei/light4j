@@ -19,6 +19,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.postgresql.util.PGobject;
@@ -132,12 +133,18 @@ public class APIJSONSQLExecutor extends AbstractSQLExecutor {
 	 * 从连接池获取连接，不需要单独加载驱动类
 	 */
 	@Override
-	public Connection getConnection(SQLConfig config) throws Exception {
+	public synchronized Connection getConnection(SQLConfig config) throws Exception {
+		//super.close()会设置cacheMap、connectionMap为null，而此方法有可能在close之后再次被调用，因此重新赋值避免空指针
+		if(cacheMap == null) {
+			cacheMap = new HashMap<>();
+		}
+		if(connectionMap == null) {
+			connectionMap = new HashMap<>();
+		}
 		Connection connection = connectionMap.get(config.getDatabase());
 		if(connection == null) {
 			connection = MySqlUtil.DATASOURCE.getConnection();
 			connectionMap.put(config.getDatabase(), connection);
-			System.out.println("borrow");
 		}
 		//AbstractSQLExecutor每次通过DriverManager获取连接，这里提前从连接池获取连接，close方法会释放连接（回到连接池）
 		return super.getConnection(config);
@@ -145,16 +152,20 @@ public class APIJSONSQLExecutor extends AbstractSQLExecutor {
 
 
 	@Override
-	public void close() {
-		connectionMap.values().forEach(conn -> {
-			try {
-				conn.close();
-				System.out.println("return");
-			}catch(Exception e) {
-				System.out.println("error");
-			}
-		});
-		super.close();
+	public synchronized void close() {
+		if(connectionMap!=null && !connectionMap.isEmpty()) {
+			connectionMap.values().forEach(conn -> {
+				try {
+					conn.close();
+				}catch(Exception e) {
+					//此类获取的连接由此类释放
+				}
+			});
+			connectionMap.clear();
+		}
+		if(cacheMap != null) {
+			super.close();
+		}
 	}
 
 }
