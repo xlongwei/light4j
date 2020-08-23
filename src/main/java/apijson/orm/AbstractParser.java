@@ -380,6 +380,8 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		requestObject = error == null ? extendSuccessResult(requestObject) : extendErrorResult(requestObject, error);
 
 		JSONObject res = (globleFormat != null && globleFormat) && JSONResponse.isSuccess(requestObject) ? new JSONResponse(requestObject) : requestObject;
+		//MySQL老版本不支持json类型，因此特殊处理String=\"[1,2,3]\"为JSONArray=[1,2,3]
+		res = (JSONObject)JSON.getCorrectJson(res);
 
 		long endTime = System.currentTimeMillis();
 		long duration = endTime - startTime;

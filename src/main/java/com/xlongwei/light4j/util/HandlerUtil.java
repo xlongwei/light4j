@@ -284,4 +284,12 @@ public class HandlerUtil {
 		}
 		return exchange.getSourceAddress().getAddress().getHostAddress();
 	}
+	
+	public static boolean isShowapiRequest(HttpServerExchange exchange) {
+		return StringUtils.isNotBlank(getParam(exchange, SHOWAPI_USER_ID));
+	}
+	
+	public static boolean isShowapiClient(HttpServerExchange exchange) {
+		return ConfigUtil.isClient(getParam(exchange, SHOWAPI_USER_ID));
+	}
 }

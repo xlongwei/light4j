@@ -5,11 +5,13 @@ import java.util.Enumeration;
 
 import javax.servlet.http.HttpSession;
 
+import com.alibaba.fastjson.JSONObject;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.apijson.DemoApplication;
 import com.xlongwei.light4j.apijson.DemoController;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
+import com.xlongwei.light4j.util.JsonUtil;
 
 import apijson.framework.APIJSONSQLExecutor;
 import io.undertow.server.HttpServerExchange;
@@ -19,6 +21,7 @@ import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.server.session.SessionConfig;
 import io.undertow.server.session.SessionCookieConfig;
 import io.undertow.server.session.SessionManager;
+import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import io.undertow.util.Sessions;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +82,18 @@ public class ApijsonHandler extends AbstractHandler {
 			}
 		}
 		if(json != null) {
-			HandlerUtil.setResp(exchange, Collections.singletonMap("json", json));
+			String response = json;
+			if(HandlerUtil.isShowapiRequest(exchange)) {
+				JSONObject obj = JsonUtil.parse(json);
+				if(obj != null) {
+					obj.put("ret_code", "0");
+					response = obj.toJSONString();
+				}
+			}
+			exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, HandlerUtil.MIMETYPE_JSON);
+			exchange.setStatusCode(200);
+			log.info("res({}): {}", (System.nanoTime()-exchange.getRequestStartTime())/1000, response);
+			exchange.getResponseSender().send(response);
 		}
 	}
 
