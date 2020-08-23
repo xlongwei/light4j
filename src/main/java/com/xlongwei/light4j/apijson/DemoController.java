@@ -708,10 +708,16 @@ public class DemoController extends APIJSONController {
 	 * <pre>
 		{
 			"Privacy": {
-				"id": 82001,
 				"balance+": 100,
 				"_payPassword": "123456"
-			}
+			},"tag":"Privacy"
+		}
+		或使用验证码充值/提现
+		{
+			"Privacy": {
+				"balance+": 100,
+				"verify": "8888"
+			},"tag":"Privacy"
 		}
 	 * </pre>
 	 */
@@ -723,13 +729,18 @@ public class DemoController extends APIJSONController {
 		double change;
 		try {
 			DemoVerifier.verifyLogin(session);
-			requestObject = new DemoParser(PUT).setRequest(DemoParser.parseRequest(request)).parseCorrectRequest();
+			JSONObject parseRequest = DemoParser.parseRequest(request);
+			userId = parseRequest.getLongValue(ID);
+			if(userId <= 0) {
+				userId = DemoVerifier.getVisitorId(session);
+				parseRequest.getJSONObject(PRIVACY_).put(ID, userId);
+			}
+			requestObject = new DemoParser(PUT).setRequest(parseRequest).parseCorrectRequest();
 
 			privacyObj = requestObject.getJSONObject(PRIVACY_);
 			if (privacyObj == null) {
 				throw new NullPointerException("请设置 " + PRIVACY_ + "！");
 			}
-			userId = privacyObj.getLongValue(ID);
 			payPassword = privacyObj.getString(_PAY_PASSWORD);
 			change = privacyObj.getDoubleValue("balance+");
 

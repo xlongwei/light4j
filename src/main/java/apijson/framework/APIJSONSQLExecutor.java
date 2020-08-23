@@ -20,7 +20,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.postgresql.util.PGobject;
 
@@ -28,15 +31,18 @@ import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.util.MySqlUtil;
 
 import apijson.JSON;
+import apijson.Log;
 //import apijson.Log;
 import apijson.NotNull;
 import apijson.orm.AbstractSQLExecutor;
 import apijson.orm.SQLConfig;
+import lombok.extern.slf4j.Slf4j;
 
 
 /**executor for query(read) or update(write) MySQL database
  * @author Lemon
  */
+@Slf4j
 public class APIJSONSQLExecutor extends AbstractSQLExecutor {
 	public static final String TAG = "APIJSONSQLExecutor";
 
@@ -128,7 +134,21 @@ public class APIJSONSQLExecutor extends AbstractSQLExecutor {
 		return value instanceof PGobject ? JSON.parse(((PGobject) value).getValue()) : value;
 	}
 
-
+	/** 用于判断哪个请求会有连接未关闭 */
+	public static final AtomicInteger borrowedConnections = new AtomicInteger(0);
+	/**
+	 * apijson基本上是单线程的，因此可以使用ThreadLocal，如果有较多多线程，那么就更难跟踪已打开的数据库连接了
+	 */
+	public static final ThreadLocal<Connection> threadConnection = ThreadLocal.withInitial(() -> {
+		try{
+			Connection conn = MySqlUtil.DATASOURCE.getConnection();
+			Log.v(TAG, "connection borrowed to {}"+borrowedConnections.incrementAndGet());
+			return conn;
+		}catch(Exception e) {
+			log.info("{} {}", e.getClass().getSimpleName(), e.getMessage());
+			return null;
+		}
+	});
 	/**
 	 * 从连接池获取连接，不需要单独加载驱动类
 	 */
@@ -143,7 +163,7 @@ public class APIJSONSQLExecutor extends AbstractSQLExecutor {
 		}
 		Connection connection = connectionMap.get(config.getDatabase());
 		if(connection == null) {
-			connection = MySqlUtil.DATASOURCE.getConnection();
+			connection = threadConnection.get();
 			connectionMap.put(config.getDatabase(), connection);
 		}
 		//AbstractSQLExecutor每次通过DriverManager获取连接，这里提前从连接池获取连接，close方法会释放连接（回到连接池）
@@ -154,13 +174,28 @@ public class APIJSONSQLExecutor extends AbstractSQLExecutor {
 	@Override
 	public synchronized void close() {
 		if(connectionMap!=null && !connectionMap.isEmpty()) {
-			connectionMap.values().forEach(conn -> {
-				try {
-					conn.close();
-				}catch(Exception e) {
-					//此类获取的连接由此类释放
+			Set<Connection> conns = new HashSet<>(connectionMap.values());
+			Connection conn = threadConnection.get();
+			conns.add(conn);
+			try {
+				if(conns.size() > 1) {
+					log.error("apijson connection leak, conns={}", conns.size());
 				}
-			});
+				for(Connection con : conns) {
+					if(!con.isClosed()) {
+						con.close();
+						borrowedConnections.decrementAndGet();
+					}
+				}
+				if(conns.size() > 1) {
+					log.info("apijson connection return to {}", conns.size());
+				}else {
+					Log.v(TAG, "connection returned to {}"+borrowedConnections.get());
+				}
+			}catch(Exception e) {
+				log.info("{} {}", e.getClass().getSimpleName(), e.getMessage());
+			}
+			threadConnection.remove();
 			connectionMap.clear();
 		}
 		if(cacheMap != null) {

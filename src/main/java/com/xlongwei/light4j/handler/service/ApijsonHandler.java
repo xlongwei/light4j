@@ -11,6 +11,7 @@ import com.xlongwei.light4j.apijson.DemoController;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 
+import apijson.framework.APIJSONSQLExecutor;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.InMemorySessionManager;
 import io.undertow.server.session.Session;
@@ -20,7 +21,9 @@ import io.undertow.server.session.SessionCookieConfig;
 import io.undertow.server.session.SessionManager;
 import io.undertow.util.Methods;
 import io.undertow.util.Sessions;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ApijsonHandler extends AbstractHandler {
 	private static final DemoController apijson = DemoApplication.apijson;
 	private static final SessionManager sessionManager = new InMemorySessionManager("apijson");
@@ -41,6 +44,7 @@ public class ApijsonHandler extends AbstractHandler {
 		sessionAttachmentHandler.handleRequest(exchange);
 		HttpSession session = new HttpSessionWrapper(Sessions.getOrCreateSession(exchange), exchange);
 		String json = null;
+		int borrowedConnections = APIJSONSQLExecutor.borrowedConnections.get();
 		switch(path) {
 		case "get": json = apijson.get(request, session); break;
 		case "head": json = apijson.head(request, session); break;
@@ -62,6 +66,17 @@ public class ApijsonHandler extends AbstractHandler {
 		default: 
 			HandlerUtil.setResp(exchange, Collections.singletonMap("error", "apijson/"+path+" not supported"));
 			return;
+		}
+		//全局监控apijson是否有连接泄露，apijson不抛异常出来因此这里不必try-finally
+		if(APIJSONSQLExecutor.borrowedConnections.get() > borrowedConnections) {
+			log.error("apijson connection leak, path={} borrowedConnections={} -> {}", path, borrowedConnections, APIJSONSQLExecutor.borrowedConnections);
+			try{
+				APIJSONSQLExecutor.threadConnection.get().close();
+				log.info("apijson connection release, returned to {}", APIJSONSQLExecutor.borrowedConnections.decrementAndGet());
+				APIJSONSQLExecutor.threadConnection.remove();
+			}catch(Exception e) {
+				log.info("{} {}", e.getClass().getSimpleName(), e.getMessage());
+			}
 		}
 		if(json != null) {
 			HandlerUtil.setResp(exchange, Collections.singletonMap("json", json));

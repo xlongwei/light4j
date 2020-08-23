@@ -46,16 +46,18 @@
 
   * 生成验证码：http://localhost:8080/service/apijson/postVerify，{"type":1,"phone":"13000038710"}，type=0登录 1注册 2密码 3支付 4重载
   * 校验验证码：http://localhost:8080/service/apijson/headVerify，{"type":1,"phone":"13000038710","verify":"1979"}，非调试时60秒过期
-  * 注册：http://localhost:8080/service/apijson/register，{"Privacy":{"phone":"18810761776","_password":"666666"},"User":{"name":"xlongwei"},"verify":"1979"}
+  * 验证码注册：http://localhost:8080/service/apijson/register，{"Privacy":{"phone":"18810761776","_password":"666666"},"User":{"name":"xlongwei"},"verify":"1979"}
   * 原密码改密：http://localhost:8080/service/apijson/putPassword，{"oldPassword":666666,"Privacy":{"id":38710,"_password":"123456"}}
   * 获取验证码：http://localhost:8080/service/apijson/getVerify，{"type":2,"phone":"13000038710"}，响应报文不出现验证码，适合短信发送等场景
   * 验证码改密：http://localhost:8080/service/apijson/putPassword，{"verify":"2798","Privacy":{"phone":"13000038710","_password":"666666"}}
   * 改支付密码：http://localhost:8080/service/apijson/putPassword，{"verify":"2798","Privacy":{"phone":"13000038710","_payPassword":"666666"}}
-  * 登录：http://localhost:8080/service/apijson/login，{"phone":"13000038710","password":"666666"}
-  * 验证码登录：http://localhost:8080/service/apijson/login，{"phone":"13000038710","password":"1979",type:"1"}，或使用"verify":"1979"更合适{"phone":"13000038710","verify":"1979"}
   * 验证码重载：http://localhost:8080/service/apijson/reload，{"phone":"13000038710","verify":"1950"}，type=ALL, FUNCTION, REQUEST, ACCESS，修改权限之后需要重载或重启
+  * 密码登录：http://localhost:8080/service/apijson/login，{"phone":"13000038710","password":"666666"}
+  * 验证码登录：http://localhost:8080/service/apijson/login，{"phone":"13000038710","password":"1979",type:"1"}，或使用"verify":"1979"更合适{"phone":"13000038710","verify":"1979"}
   * 新增：http://localhost:8080/service/apijson/post，{"Moment":{"content":"今天天气不错，到处都是提拉米苏雪","userId":38710},"tag":"Moment"}，tag为Request表中配置，一般是Table表名
   * 修改：http://localhost:8080/service/apijson/put，{"Moment":{"id":12,"content":"海洋动物数量减少，如果非吃不可，不点杀也是在保护它们"},"tag":"Moment"}
+  * 查询余额：http://localhost:8080/service/apijson/gets，{"Privacy":{"id":38710},"tag":"Privacy"}，根据Access表配置不运行get方法，而gets方法不会返回隐藏字段
+  * 充值提现：http://localhost:8080/service/apijson/putBalance，{"Privacy":{"balance+":-1000,"_payPassword":666666},"tag":"Privacy"}，充值为正数，提现为负数，Privacy.id可以自动获取
   * 登出：http://localhost:8080/service/apijson/logout
 
 ### Request请求校验

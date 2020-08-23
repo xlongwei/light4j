@@ -14,8 +14,11 @@ limitations under the License.*/
 
 package com.xlongwei.light4j.apijson;
 
+import com.alibaba.fastjson.JSONObject;
+
 import apijson.RequestMethod;
 import apijson.framework.APIJSONParser;
+import apijson.orm.SQLCreator;
 import apijson.orm.SQLExecutor;
 
 
@@ -44,6 +47,17 @@ public class DemoParser extends APIJSONParser {
 			return sqlExecutor;
 		}else {
 			return super.createSQLExecutor();
+		}
+	}
+	@Override
+	public JSONObject parseCorrectRequest(RequestMethod method, String tag, int version, String name,
+			JSONObject request, int maxUpdateCount, SQLCreator creator) throws Exception {
+		try{
+			return super.parseCorrectRequest(method, tag, version, name, request, maxUpdateCount, creator);
+		}finally {
+			if(sqlExecutor != null) {
+				sqlExecutor.close();
+			}
 		}
 	}
 

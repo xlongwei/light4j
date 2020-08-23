@@ -12,7 +12,7 @@ singletons:
       username: apijson
       password: apijson
       minimumIdle: 2
-#      maximumPoolSize: 6
+      maximumPoolSize: 6
       autoCommit: true
       useServerPrepStmts: true
       cachePrepStmts: true
@@ -21,7 +21,7 @@ singletons:
       prepStmtCacheSize: 10
       prepStmtCacheSqlLimit: 2048
       connectionTestQuery: SELECT 1
-      connectionTimeout: 2000
+      connectionTimeout: 3000
 #- com.networknt.registry.URL:
 #  - com.networknt.registry.URLImpl:
 #      protocol: light
