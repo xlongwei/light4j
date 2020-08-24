@@ -1420,16 +1420,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			else {
 				result = sqlExecutor.execute(config, false);
 			}
-
-			return parseCorrectResponse(config.getTable(), result);
-		}
-		catch (Exception e) {
-			if (Log.DEBUG == false && e instanceof SQLException) {
-				throw new SQLException("数据库驱动执行异常SQLException，非 Log.DEBUG 模式下不显示详情，避免泄漏真实模式名、表名等隐私信息", e);
-			}
-			throw e;
-		}
-		finally {
+			//不在finally里面抛异常，正常执行时打印SQL条数抛异常，异常执行时仅打印SQL条数，不覆盖当前异常
 			if (config.getPosition() == 0 && config.limitSQLCount()) {
 				int maxSQLCount = getMaxSQLCount();
 				int sqlCount = sqlExecutor.getExecutedSQLCount();
@@ -1438,6 +1429,19 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 					throw new IllegalArgumentException("截至 " + config.getTable() + " 已执行 " + sqlCount + " 条 SQL，数量已超限，必须在 0-" + maxSQLCount + " 内 !");
 				}
 			}
+			
+			return parseCorrectResponse(config.getTable(), result);
+		}
+		catch (Exception e) {
+			if (config.getPosition() == 0 && config.limitSQLCount()) {
+				int maxSQLCount = getMaxSQLCount();
+				int sqlCount = sqlExecutor.getExecutedSQLCount();
+				Log.d(TAG, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n\n\n 已执行 " + sqlCount + "/" + maxSQLCount + " 条 SQL \n\n\n >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			}
+			if (Log.DEBUG == false && e instanceof SQLException) {
+				throw new SQLException("数据库驱动执行异常SQLException，非 Log.DEBUG 模式下不显示详情，避免泄漏真实模式名、表名等隐私信息", e);
+			}
+			throw e;
 		}
 	}
 

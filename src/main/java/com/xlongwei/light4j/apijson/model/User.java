@@ -91,7 +91,7 @@ public class User extends BaseModel implements Visitor<Long> {
 		this.tag = tag;
 		return this;
 	}
-
+	@Override
 	public List<Long> getContactIdList() {
 		return contactIdList;
 	}

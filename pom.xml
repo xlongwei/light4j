@@ -91,6 +91,11 @@
             <version>${version.light-4j}</version>
         </dependency>
         <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>redis-manager</artifactId>
+            <version>${version.light-4j}</version>
+        </dependency>
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${version.logback}</version>

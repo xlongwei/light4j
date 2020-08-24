@@ -22,6 +22,18 @@ singletons:
       prepStmtCacheSqlLimit: 2048
       connectionTestQuery: SELECT 1
       connectionTimeout: 3000
+
+# redis-manager or memory session
+- io.undertow.server.session.SessionConfig:
+  - io.undertow.server.session.SessionCookieConfig
+#- io.undertow.server.session.SessionManager:
+#  - io.undertow.server.session.InMemorySessionManager:
+#    - java.lang.String: INMEMORY-SESSION
+- com.networknt.session.SessionRepository:
+  - com.networknt.session.redis.RedisSessionRepository
+- com.networknt.session.SessionManager:
+  - com.networknt.session.redis.RedisSessionManager
+
 #- com.networknt.registry.URL:
 #  - com.networknt.registry.URLImpl:
 #      protocol: light

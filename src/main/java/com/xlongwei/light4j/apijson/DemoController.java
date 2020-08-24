@@ -820,6 +820,7 @@ public class DemoController extends APIJSONController {
 				);
 	}
 
+	@Override
 	public JSONObject invokeMethod(String request) {
 		try {
 			JSONObject req = JSON.parseObject(request);

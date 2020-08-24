@@ -1,7 +1,6 @@
 package com.xlongwei.light4j.handler.service;
 
 import java.util.Collections;
-import java.util.Enumeration;
 
 import javax.servlet.http.HttpSession;
 
@@ -15,24 +14,14 @@ import com.xlongwei.light4j.util.JsonUtil;
 
 import apijson.framework.APIJSONSQLExecutor;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.session.InMemorySessionManager;
-import io.undertow.server.session.Session;
-import io.undertow.server.session.SessionAttachmentHandler;
-import io.undertow.server.session.SessionConfig;
-import io.undertow.server.session.SessionCookieConfig;
-import io.undertow.server.session.SessionManager;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import io.undertow.util.Sessions;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ApijsonHandler extends AbstractHandler {
 	private static final DemoController apijson = DemoApplication.apijson;
-	private static final SessionManager sessionManager = new InMemorySessionManager("apijson");
-	private static final SessionConfig sessionConfig = new SessionCookieConfig();
-	private static final SessionAttachmentHandler sessionAttachmentHandler = new SessionAttachmentHandler(sessionManager, sessionConfig);
-
+	
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		if(!DemoApplication.apijsonEnabled || !Methods.POST.equals(exchange.getRequestMethod())) {
@@ -44,8 +33,7 @@ public class ApijsonHandler extends AbstractHandler {
 			HandlerUtil.setResp(exchange, Collections.singletonMap("error", StringUtils.isBlank(path) ? "apijson/{path} is required" : "body is required"));
 			return;
 		}
-		sessionAttachmentHandler.handleRequest(exchange);
-		HttpSession session = new HttpSessionWrapper(Sessions.getOrCreateSession(exchange), exchange);
+		HttpSession session = HandlerUtil.getOrCreateSession(exchange);
 		String json = null;
 		int borrowedConnections = APIJSONSQLExecutor.borrowedConnections.get();
 		switch(path) {
@@ -97,68 +85,4 @@ public class ApijsonHandler extends AbstractHandler {
 		}
 	}
 
-	/**
-	 * 包装undertow的Session为apijson所需的HttpSession
-	 * @author xlongwei
-	 *
-	 */
-	public static class HttpSessionWrapper implements HttpSession {
-		private Session session;
-		private HttpServerExchange exchange;
-		public HttpSessionWrapper(Session session, HttpServerExchange exchange) {
-			this.session = session;
-			this.exchange = exchange;
-		}
-		@Override
-		public long getCreationTime() {
-			return session.getCreationTime();
-		}
-		@Override
-		public String getId() {
-			return session.getId();
-		}
-		@Override
-		public long getLastAccessedTime() {
-			return session.getLastAccessedTime();
-		}
-		@Override
-		public void setMaxInactiveInterval(int interval) {
-			session.setMaxInactiveInterval(interval);
-		}
-		@Override
-		public int getMaxInactiveInterval() {
-			return session.getMaxInactiveInterval();
-		}
-		@Override
-		public Object getAttribute(String name) {
-			return session.getAttribute(name);
-		}
-		@Override
-		public Enumeration<String> getAttributeNames() {
-			return Collections.enumeration(session.getAttributeNames());
-		}
-		@Override
-		public void setAttribute(String name, Object value) {
-			session.setAttribute(name, value);
-		}
-		@Override
-		public void removeAttribute(String name) {
-			session.removeAttribute(name);
-		}
-		@Override
-		public void invalidate() {
-			session.getAttributeNames().forEach(session::removeAttribute);
-			session.invalidate(exchange);
-		}
-		@Override
-		public boolean isNew() {
-			return true;
-		}
-		@Deprecated public javax.servlet.http.HttpSessionContext getSessionContext() { return null; }
-		@Deprecated public javax.servlet.ServletContext getServletContext() { return null; }
-		@Deprecated public Object getValue(String name) { return null; }
-		@Deprecated public String[] getValueNames() { return null; }
-		@Deprecated public void putValue(String name, Object value) { }
-		@Deprecated public void removeValue(String name) { }
-	}
 }

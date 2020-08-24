@@ -9,12 +9,17 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.codec.CharEncoding;
 import org.jose4j.json.internal.json_simple.JSONObject;
 
+import com.networknt.service.SingletonServiceFactory;
+import com.networknt.session.Session;
+import com.networknt.session.SessionManager;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler;
 
@@ -26,21 +31,28 @@ import io.undertow.server.handlers.form.FormData.FormValue;
 import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.server.handlers.form.FormParserFactory.Builder;
+import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.MimeMappings;
+import io.undertow.util.Sessions;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * exhange工具类，获取请求参数，设置响应报文，获取会话等
  * @author xlongwei
- *
  */
 @Slf4j
 public class HandlerUtil {
 	public static final String MIMETYPE_JSON = MimeMappings.DEFAULT.getMimeType("json"), MIMETYPE_TXT = MimeMappings.DEFAULT.getMimeType("txt");
 	private static final String TEXT = "text", XML = "xml", JSON = "json";
 	private static final String SHOWAPI_USER_ID = "showapi_userId";
+	private static final SessionManager sessionManager = SingletonServiceFactory.getBean(SessionManager.class);
+	private static final SessionAttachmentHandler sessionAttachmentHandler = sessionManager != null ? null
+			: new SessionAttachmentHandler(
+					SingletonServiceFactory.getBean(io.undertow.server.session.SessionManager.class),
+					SingletonServiceFactory.getBean(io.undertow.server.session.SessionConfig.class));
 	/**
 	 * 请求参数和正文
 	 */
@@ -285,11 +297,37 @@ public class HandlerUtil {
 		return exchange.getSourceAddress().getAddress().getHostAddress();
 	}
 	
+	/** 判断是否showapi用户 */
 	public static boolean isShowapiRequest(HttpServerExchange exchange) {
 		return StringUtils.isNotBlank(getParam(exchange, SHOWAPI_USER_ID));
 	}
 	
+	/** 判断是否showapi客户 */
 	public static boolean isShowapiClient(HttpServerExchange exchange) {
 		return ConfigUtil.isClient(getParam(exchange, SHOWAPI_USER_ID));
+	}
+	
+	/** 获取会话session */
+	public static HttpSession getSession(HttpServerExchange exchange) throws Exception {
+		return getSession(exchange, false);
+	}
+
+	/** 获取或创建会话session */
+	public static HttpSession getOrCreateSession(HttpServerExchange exchange) throws Exception {
+		return getSession(exchange, true);
+	}
+	
+	/** 获取或创建会话session */
+	public static HttpSession getSession(HttpServerExchange exchange, boolean create) throws Exception {
+		if(sessionManager != null) {
+			Session session = sessionManager.getSession(exchange);
+			if(session == null && create) {
+				session = sessionManager.createSession(exchange);
+			}
+			return new HttpSessionNetworknt(session);
+		}else {
+			sessionAttachmentHandler.handleRequest(exchange);
+			return new HttpSessionUndertow(create ? Sessions.getOrCreateSession(exchange) : Sessions.getSession(exchange), exchange);
+		}
 	}
 }
