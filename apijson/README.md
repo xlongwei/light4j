@@ -5,10 +5,17 @@
   * -Dapijson.test=false，配置true开启框架测试
   * -Dapijson.verify=60，配置验证码有效期（秒），非调试时有效
 
-### apijson框架引用
+### apijson框架引用1
+
+  * 创建数据库apijson，创建用户apijson/apijson，导入脚本apijson.sql
+  * 下载[apijson-framework-4.1.0.jar](http://t.xlongwei.com/windows/apijson-framework-4.1.0.jar)、[apijson-orm-4.1.0.jar](http://t.xlongwei.com/windows/apijson-orm-4.1.0.jar)
+  * mvn install:install-file -DgroupId=apijson.orm -DartifactId=apijson-orm -Dversion=4.1.0 -Dpackaging=jar -Dfile=apijson-orm-4.1.0.jar
+  * mvn install:install-file -DgroupId=apijson.framework -DartifactId=apijson-framework -Dversion=4.1.0 -Dpackaging=jar -Dfile=apijson-framework-4.1.0.jar
+
+### apijson框架引用2
 
   * git clone https://gitee.com/APIJSON/APIJSON.git
-  * 导入脚本MySQL/sys.sql，老版本MySQL也可以选择apijson/apijson.sql
+  * 导入脚本MySQL/sys.sql
   * vi APIJSON-Java-Server/APIJSONORM/pom.xml，groupId=apijson.orm，artifactId=apijson-orm
   * mvn install -f APIJSON-Java-Server/APIJSONORM/pom.xml
   * vi APIJSON-Java-Server/APIJSONFramework/pom.xml，groupId=apijson.framework，artifactId=apijson-framework
@@ -51,7 +58,7 @@
   * 获取验证码：http://localhost:8080/service/apijson/getVerify，{"type":2,"phone":"13000038710"}，响应报文不出现验证码，适合短信发送等场景
   * 验证码改密：http://localhost:8080/service/apijson/putPassword，{"verify":"2798","Privacy":{"phone":"13000038710","_password":"666666"}}
   * 改支付密码：http://localhost:8080/service/apijson/putPassword，{"verify":"2798","Privacy":{"phone":"13000038710","_payPassword":"666666"}}
-  * 验证码重载：http://localhost:8080/service/apijson/reload，{"phone":"13000038710","verify":"1950"}，type=ALL, FUNCTION, REQUEST, ACCESS，修改权限之后需要重载或重启
+  * 验证码重载：http://localhost:8080/service/apijson/reload，{"phone":"13000038710","verify":"1950"}，type=ALL, FUNCTION, REQUEST, ACCESS
   * 密码登录：http://localhost:8080/service/apijson/login，{"phone":"13000038710","password":"666666"}
   * 验证码登录：http://localhost:8080/service/apijson/login，{"phone":"13000038710","password":"1979",type:"1"}，或使用"verify":"1979"更合适{"phone":"13000038710","verify":"1979"}
   * 新增：http://localhost:8080/service/apijson/post，{"Moment":{"content":"今天天气不错，到处都是提拉米苏雪","userId":38710},"tag":"Moment"}，tag为Request表中配置，一般是Table表名

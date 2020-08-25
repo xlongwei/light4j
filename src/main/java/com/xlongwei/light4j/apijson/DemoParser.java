@@ -43,11 +43,10 @@ public class DemoParser extends APIJSONParser {
 	 */
 	@Override
 	public SQLExecutor createSQLExecutor() {
-		if(sqlExecutor != null) {
-			return sqlExecutor;
-		}else {
-			return super.createSQLExecutor();
+		if(sqlExecutor == null) {
+			sqlExecutor = super.createSQLExecutor();
 		}
+		return sqlExecutor;
 	}
 	@Override
 	public JSONObject parseCorrectRequest(RequestMethod method, String tag, int version, String name,
@@ -61,10 +60,13 @@ public class DemoParser extends APIJSONParser {
 		}
 	}
 
-	//	//可重写来设置最大查询数量
-	//	@Override
-	//	public int getMaxQueryCount() {
-	//		return 50;
-	//	}
-
+	//可重写来设置最大查询数量
+	@Override
+	public int getMaxQueryCount() {
+		return 1000;
+	}
+	@Override
+	public int getMaxQueryPage() {
+		return 10000;
+	}
 }

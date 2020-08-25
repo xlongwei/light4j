@@ -865,8 +865,8 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			throw new IllegalArgumentException(path + "/" + JSONRequest.KEY_PAGE + ":value 中 value 的值不合法！必须在 0-" + maxPage + " 内 !");
 		}
 
-		//不用total限制数量了，只用中断机制，total只在query = 1,2的时候才获取
-		int count2 = isSubquery || count != null ? (count == null ? 0 : count) : getDefaultQueryCount();
+		//不用total限制数量了，只用中断机制，total只在query = 1,2的时候才获取；提供page参数时，分页大小取默认值，没有count、page参数时，取最大值
+		int count2 = isSubquery || count != null ? (count == null ? 0 : count) : (request.getInteger(JSONRequest.KEY_PAGE)!=null ? getDefaultQueryCount() : getMaxQueryCount());
 		int max = isSubquery ? count2 : getMaxQueryCount();
 
 		if (count2 < 0 || count2 > max) {

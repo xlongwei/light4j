@@ -47,6 +47,7 @@
         <version.beetlsql>2.12.28.RELEASE</version.beetlsql>
         <version.antlr4>4.7.2</version.antlr4>
         <version.apijson>4.1.0</version.apijson>
+        <version.log4jdbc>1.2</version.log4jdbc>
     </properties>
 
     <dependencies>
@@ -261,15 +262,22 @@
 		  <artifactId>antlr4-runtime</artifactId>
 		  <version>${version.antlr4}</version>
 		</dependency>
+		<!-- http://t.xlongwei.com/windows/apijson-orm-4.1.0.jar -->
 		<dependency>
 			<groupId>apijson.orm</groupId>
 			<artifactId>apijson-orm</artifactId>
 			<version>${version.apijson}</version>
 		</dependency>
+		<!-- http://t.xlongwei.com/windows/apijson-framework-4.1.0.jar -->
 		<dependency>
 			<groupId>apijson.framework</groupId>
 			<artifactId>apijson-framework</artifactId>
 			<version>${version.apijson}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.googlecode.log4jdbc</groupId>
+			<artifactId>log4jdbc</artifactId>
+			<version>${version.log4jdbc}</version>
 		</dependency>
         
         <!-- Test Dependencies -->

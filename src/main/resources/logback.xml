@@ -47,6 +47,12 @@
 			</appender>
 	    </then>
     </if>
+    
+    <logger name="jdbc.sqlonly" level="${log4jdbc.sqlonly:-info}"/>
+    <logger name="jdbc.sqltiming" level="${log4jdbc.sqlonly:-off}"/>
+    <logger name="jdbc.audit" level="${log4jdbc.audit:-off}"/>
+    <logger name="jdbc.resultset" level="${log4jdbc.resultset:-off}"/>
+    <logger name="jdbc.connection" level="${log4jdbc.connection:-off}"/>
 
 	<root level="${logLevel}">
 		<if condition='isDefined("logserver")'>

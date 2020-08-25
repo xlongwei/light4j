@@ -749,26 +749,29 @@ public final class FileUtil {
 		public TextReader(String path) { open(path); }
 		public TextReader(String path, String charsetName) { open(path, charsetName); }
 		
-		public void open(File file) { open(file, defaultCharsetName); }
-		public void open(File file, String charsetName) {
+		public TextReader open(File file) { return open(file, defaultCharsetName); }
+		public TextReader open(File file, String charsetName) {
 			try {
 				close();
 				in = new Scanner(file, charsetName);
 			} catch (FileNotFoundException e) {
 				log.warn("fail to open file: {}, charset: {}, ex: {}", file, charsetName, e.getMessage());
 			}
+			return this;
 		}
-		public void open(InputStream is) { open(is, defaultCharsetName); }
-		public void open(InputStream is, String charsetName) {
+		public TextReader open(InputStream is) { return open(is, defaultCharsetName); }
+		public TextReader open(InputStream is, String charsetName) {
 			close();
 			in = new Scanner(new BufferedInputStream(is), charsetName);
+			return this;
 		}
-		public void open(Reader reader) {
+		public TextReader open(Reader reader) {
 			close();
 			in = new Scanner(new BufferedReader(reader));
+			return this;
 		}
-		public void open(String path) { open(path, defaultCharsetName); }
-		public void open(String path, String charsetName) { open(new File(path), charsetName); }
+		public TextReader open(String path) { return open(path, defaultCharsetName); }
+		public TextReader open(String path, String charsetName) { return open(new File(path), charsetName); }
 
 		public void close() { FileUtil.close(in); }
 		
@@ -779,6 +782,15 @@ public final class FileUtil {
 				} catch (Exception e) { }
 			}
 			return null;
+		}
+		
+		public void handleLines(LineHandler lineHandler) {
+			String line = read();
+			while(line != null) {
+				lineHandler.handle(line);
+				line = read();
+			}
+			close();
 		}
 		
 		public String readAsString(File file) {
@@ -802,6 +814,11 @@ public final class FileUtil {
 			close();
 			return sb.toString();
 		}
+	}
+	
+	@FunctionalInterface
+	public interface LineHandler {
+		void handle(String line);
 	}
 	
 	public static class TextWriter {
