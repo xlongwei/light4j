@@ -6,6 +6,7 @@ CREATE TABLE `district` (
   `countyName` varchar(45) NOT NULL COMMENT '区县名称',
   `county` char(6) NOT NULL COMMENT '区县代码',
   PRIMARY KEY (`county`),
-  KEY `idx_city` (`city`) USING BTREE COMMENT '城市索引',
-  KEY `idx_province_city` (`province`,`city`) USING BTREE COMMENT '省市联合索引'
+  KEY `idx_province_city_name` (`province`,`city`,`cityName`),
+  KEY `idx_city_county_name` (`city`,`county`,`countyName`),
+  KEY `idx_province_name` (`province`,`provinceName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='行政区划';
