@@ -61,9 +61,12 @@ public class IpHandler extends AbstractHandler {
 	}
 	
 	public static synchronized DataBlock search(String ip) {
-		if(StringUtil.hasLength(ip) && Util.isIpAddress(ip)) {
+		if(StringUtil.hasLength(ip)) {
+			if("0:0:0:0:0:0:0:1".equals(ip)) {
+				ip = "127.0.0.1";
+			}
 			try{
-				return dbSearcher.memorySearch(ip);
+				return Util.isIpAddress(ip) ? dbSearcher.memorySearch(ip) : null;
 			}catch(Exception e) {
 				log.warn("fail to search ip: {}, ex: {}", ip, e.getMessage());
 			}
