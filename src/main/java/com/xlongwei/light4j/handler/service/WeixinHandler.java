@@ -30,6 +30,7 @@ public class WeixinHandler extends AbstractHandler {
 		
 		TextMessage textMsg = new TextMessage();
 		textMsg.setContent(text);
+		textMsg.setFromUserName(HandlerUtil.getParam(exchange, "openid"));
 		AbstractMessage dispatch = WeixinUtil.dispatch(textMsg);
 		if(dispatch!=null && dispatch instanceof TextMessage) {
 			text = ((TextMessage)dispatch).getContent();

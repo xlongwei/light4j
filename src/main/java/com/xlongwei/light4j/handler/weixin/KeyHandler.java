@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.handler.service.IpHandler;
 import com.xlongwei.light4j.handler.service.MobileHandler;
 import com.xlongwei.light4j.util.JsonUtil;
@@ -12,6 +13,7 @@ import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
 
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
 
 /**
@@ -40,7 +42,18 @@ public class KeyHandler extends AbstractTextHandler {
 					}
 					return response.toString();
 				}
-			}else if(StringUtil.isIp(content)) {
+			}else if(content.startsWith("ip=")){
+				content = content.substring("ip=".length());
+				String openid = message.get().getFromUserName();
+				if(!StringUtil.isBlank(openid)) {
+					JSONObject alidnsConfig = JsonUtil.parseNew(RedisConfig.get("alidns.config"));
+					String token = alidnsConfig.getString("token"), recordId = alidnsConfig.getString(openid);
+					if(!StringUtil.isBlank(recordId)) {
+						String ip = StringUtil.isIp(content) ? content : "";
+						return HttpRequest.get("https://log.xlongwei.com/log?type=alidns&recordId="+recordId+"&ip="+ip).header("X-Request-Token", token).execute().body();
+					}
+				}
+			}else  if(StringUtil.isIp(content)) {
 				Map<String, String> searchToMap = IpHandler.searchToMap(content);
 				if(searchToMap!=null) {
 					return searchToMap.get("region");
