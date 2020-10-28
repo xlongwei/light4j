@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class DemoApplication {
-	public static final boolean apijsonEnabled = NumberUtil.parseBoolean(System.getProperty("apijson.enabled"), true);
+	public static final boolean apijsonEnabled = NumberUtil.parseBoolean(System.getProperty("apijson.enabled"), false);
 	public static final DemoController apijson = new DemoController();
 	
 	public static void start() {

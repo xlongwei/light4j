@@ -2,11 +2,13 @@
 
 daemon=true
 appname=light4j
+#profile="-P mysql5"
 jarfile=target/light4j.jar
 [ ! -e "$jarfile" ] && jarfile=light4j.jar
-#JVM_OPS="-Xmx336m -Xms336m -XX:NewSize=80m -XX:MaxNewSize=80m -Xss228k"
-JVM_OPS="-Djava.compiler=none -Xmx84m -Xms84m -XX:NewSize=20m -XX:MaxNewSize=20m -Xss228k"
+Survivor=2 Old=64 NewSize=$[Survivor*10] Xmx=$[NewSize+Old] #NewSize=Survivor*(1+1+8) Xmx=NewSize+Old
+JVM_OPS="-Djava.compiler=none -Xmx${Xmx}m -Xms${Xmx}m -XX:NewSize=${NewSize}m -XX:MaxNewSize=${NewSize}m -XX:SurvivorRatio=8 -Xss228k"
 JVM_OPS="$JVM_OPS -Dlogserver -DcontextName=light4j"
+#JVM_OPS="$JVM_OPS -Dapijson.enabled=true -Dapijson.debug=false -Dapijson.test=false"
 #ENV_OPS="PATH=/usr/java/jdk1.8.0_161/bin:$PATH"
 JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
 #JVM_OPS="$JVM_OPS -Dredis.configDb=xlongwei:6379:1"
@@ -69,15 +71,15 @@ clean(){
 }
 
 jar(){
-	mvn compile jar:jar
+	mvn $profile compile jar:jar
 }
 
 jars(){
-	mvn dependency:copy-dependencies -DoutputDirectory=target
+	mvn $profile dependency:copy-dependencies -DoutputDirectory=target
 }
 
 deploy(){
-	mvn package -Prelease -Dmaven.test.skip=true -Dmaven.javadoc.skip=true
+	mvn package -Prelease $profile -Dmaven.test.skip=true -Dmaven.javadoc.skip=true
 }
 
 start(){
