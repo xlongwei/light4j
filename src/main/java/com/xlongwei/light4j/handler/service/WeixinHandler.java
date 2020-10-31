@@ -77,7 +77,7 @@ public class WeixinHandler extends AbstractHandler {
 					.putJSON("notice")
 						.put("value", text)
 				.top().json();
-		JSONObject resp = WeixinUtil.templateSend(WeixinUtil.accessToken(WeixinUtil.appidTest, WeixinUtil.appsecretTest), send);
+		JSONObject resp = WeixinUtil.templateSend(WeixinUtil.accessToken(WeixinUtil.appidTest, StringUtil.firstNotBlank(RedisConfig.get(WeixinUtil.cache, "appsecret."+WeixinUtil.appidTest), "d4624c36b6795d1d99dcf0547af5443d")), send);
 		HandlerUtil.setResp(exchange, StringUtil.params("text", StringUtil.firstNotBlank(JsonUtil.get(resp, "errmsg"), "失败")));
 	}
 

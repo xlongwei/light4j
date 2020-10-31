@@ -9,6 +9,7 @@ Survivor=2 Old=64 NewSize=$[Survivor*10] Xmx=$[NewSize+Old] #NewSize=Survivor*(1
 JVM_OPS="-Djava.compiler=none -Xmx${Xmx}m -Xms${Xmx}m -XX:NewSize=${NewSize}m -XX:MaxNewSize=${NewSize}m -XX:SurvivorRatio=8 -Xss228k"
 JVM_OPS="$JVM_OPS -Dlogserver -DcontextName=light4j"
 #JVM_OPS="$JVM_OPS -Dapijson.enabled=true -Dapijson.debug=false -Dapijson.test=false"
+#JVM_OPS="$JVM_OPS -Dweixin.appid=wx78b808148023e9fa -Dweixin.appidTest=wx5bb3e90365f54b7a -Dweixin.touserTest=gh_f6216a9ae70b"
 #ENV_OPS="PATH=/usr/java/jdk1.8.0_161/bin:$PATH"
 JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
 #JVM_OPS="$JVM_OPS -Dredis.configDb=xlongwei:6379:1"
@@ -38,6 +39,7 @@ usage(){
     echo "  deploy      package fat-jar $jarfile"
     echo "  redeploy    package fat-jar $jarfile and restart"
     echo "  keystore    prepare keystore、crt、trustore"
+    echo "  install     download some jars and install to local repository"
 }
 
 status(){
@@ -108,6 +110,28 @@ keystore(){
 	keytool -import -file $cert/xlongwei.pem -alias server -keystore $dir/client.truststore -storepass password
 }
 
+install(){
+	[ ! -e target ] && mkdir target
+	repos=http://nexus.xlongwei.com/repos/
+	install_file "$repos" "de.rrze" "jpwgen" "1.2.0"
+	install_file "$repos" "com.qq.weixin.mp" "aes" "1.6"
+	install_file "$repos" "com.lowagie" "itext" "2.0.8.1"
+	install_file "$repos" "com.lowagie" "itext-asian" "2.0.8.1"
+	repos=https://jitpack.io/
+	install_file "$repos" "com.github.APIJSON" "apijson-framework" "4.2.3"
+	install_file "$repos" "com.github.APIJSON" "apijson-orm" "4.2.3"
+}
+install_file(){
+    groupId="$2" && artifactId="$3" && version="$4" && url="$1${groupId//.//}/${artifactId}/${version}/${artifactId}-${version}.jar"
+    echo "install $url to $groupId:$artifactId:jar:$version"
+    out="target/${artifactId}-${version}.jar"
+    if [ ! -e $out ]; then
+        echo "download jar and install-file"
+        curl -s $url -o $out
+        mvn install:install-file -DgroupId=$groupId -DartifactId=$artifactId -Dversion=$version -Dpackaging=jar -Dfile=$out
+    fi
+}
+
 if [ $# -eq 0 ]; then 
     usage
 else
@@ -125,6 +149,7 @@ else
 	deploy) deploy ;;
 	redeploy) stop && deploy && start ;;
 	keystore) keystore $@;;
+	install) install ;;
 	*) usage ;;
 	esac
 fi

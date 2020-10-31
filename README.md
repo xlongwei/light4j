@@ -4,21 +4,20 @@
 使用light-4j构建的微服务接口应用
 
 #### 本地测试
-1. 项目构建：sh start.sh package
-2. 启动缓存：redis-server
-3. 运行项目：start.bat
-4. 测试访问：[logs](http://localhost:8080/ws/logs.html)，[datetime](http://localhost:8080/service/datetime.json)
+1. 获取依赖：sh start.sh install，项目构建：sh start.sh package
+2. 启动缓存：redis-server，运行项目：start.bat
+3. 测试访问：[chat](http://localhost:8080/ws/chat.html)，[datetime](http://localhost:8080/service/datetime.json)
 
 #### 线上部署
-1. 项目打包：sh start.sh deploy
-2. 提取脚本：jar xvf light4j.jar start.sh
-3. 运行服务：sh start.sh start
+1. 获取依赖：sh start.sh install，项目打包：sh start.sh deploy
+2. 提取脚本：jar xvf light4j.jar start.sh，修改配置：vi start.sh
+3. 启动缓存：redis-server，运行服务：sh start.sh start
 
 #### 配置说明
 vi start.sh
 
-1. -Dredis.configDb，配置redis地址
-2. -Dlight4j.directory，可以从light4j.yml里面的网址下载文件
+1. -Dredis.configDb、-Dredis.cacheDbs，配置redis地址
+2. -Dlight4j.directory，相关资源可在[library](http://t.xlongwei.com/softwares/library/)获取
 3. -Dlogserver，在/etc/hosts配置logserver地址
 4. contextName=light4j，修改应用的日志上下文
 5. -Djava.compiler=none，禁用JIT可节约内存，默认启用JIT可提高性能

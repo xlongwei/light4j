@@ -9,8 +9,9 @@ Software architecture description
 #### Installation
 
 1. redis-server
-2. mvn compile
-3. mvn exec:exec
+2. sh start.sh install
+3. mvn compile
+4. mvn exec:exec
 
 profile "debug" is activated by default.
 

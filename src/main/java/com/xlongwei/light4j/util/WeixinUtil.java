@@ -34,8 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @SuppressWarnings({"rawtypes","unchecked"})
 public class WeixinUtil {
-	public static final String service = "https://api.weixin.qq.com/cgi-bin/", appid = "wx78b808148023e9fa";
-	public static final String appidTest = "wx5bb3e90365f54b7a", touserTest = "gh_f6216a9ae70b", appsecretTest = "d4624c36b6795d1d99dcf0547af5443d";
+	public static final String service = "https://api.weixin.qq.com/cgi-bin/", appid = StringUtil.firstNotBlank(System.getProperty("weixin.appid"), "wx78b808148023e9fa");
+	public static final String appidTest = StringUtil.firstNotBlank(System.getProperty("weixin.appidTest"), "wx5bb3e90365f54b7a"), touserTest = StringUtil.firstNotBlank(System.getProperty("weixin.touserTest"), "gh_f6216a9ae70b");
 	public static final String cache = "weixin", accessTokenKey = "access_token", jsapiTicketKey = "jsapi_ticket";
 	private static final Map<Class<?>,Field[]> fieldsCache = new HashMap<>(32);
 	private static final Map<String, Class<? extends AbstractMessage>> classCache = new HashMap<>(16);
