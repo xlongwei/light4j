@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.jose4j.json.internal.json_simple.JSONObject;
-import org.omg.CORBA.IntHolder;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSONObject;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.util.ConfigUtil;
@@ -164,16 +164,16 @@ public class ServiceHandler implements LightHttpHandler {
 			Map<String, Integer> counts = ConfigUtil.stringMapInteger(string);
 			if(counts == null) {
 				counts = new HashMap<>(tokenCount.counts.size());
-				for(Entry<String, IntHolder> count : tokenCount.counts.entrySet()) {
-					counts.put(count.getKey(), count.getValue().value);
+				for(Entry<String, AtomicInteger> count : tokenCount.counts.entrySet()) {
+					counts.put(count.getKey(), count.getValue().get());
 				}
 			}else {
-				for(Entry<String, IntHolder> count : tokenCount.counts.entrySet()) {
+				for(Entry<String, AtomicInteger> count : tokenCount.counts.entrySet()) {
 					Integer value = counts.get(count.getKey());
 					if(value == null) {
-						counts.put(count.getKey(), count.getValue().value);
+						counts.put(count.getKey(), count.getValue().get());
 					}else {
-						counts.put(count.getKey(), value+count.getValue().value);
+						counts.put(count.getKey(), value+count.getValue().get());
 					}
 				}
 			}

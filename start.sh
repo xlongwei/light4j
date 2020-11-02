@@ -1,6 +1,6 @@
 #!/bin/sh
 
-daemon=true
+daemon=false
 appname=light4j
 #profile="-P mysql5"
 jarfile=target/light4j.jar
@@ -11,6 +11,7 @@ JVM_OPS="$JVM_OPS -Dlogserver -DcontextName=light4j"
 #JVM_OPS="$JVM_OPS -Dapijson.enabled=true -Dapijson.debug=false -Dapijson.test=false"
 #JVM_OPS="$JVM_OPS -Dweixin.appid=wx78b808148023e9fa -Dweixin.appidTest=wx5bb3e90365f54b7a -Dweixin.touserTest=gh_f6216a9ae70b"
 #ENV_OPS="PATH=/usr/java/jdk1.8.0_161/bin:$PATH"
+#ENV_OPS="$ENV_OPS db.hostPort=localhost:3306 db.username=apijson db.password=apijson"
 JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
 #JVM_OPS="$JVM_OPS -Dredis.configDb=xlongwei:6379:1"
 #JVM_OPS="$JVM_OPS -Dredis.cacheDbs=xlongwei:6379:3-7"
@@ -122,13 +123,16 @@ install(){
 	install_file "$repos" "com.github.APIJSON" "apijson-orm" "4.2.3"
 }
 install_file(){
-    groupId="$2" && artifactId="$3" && version="$4" && url="$1${groupId//.//}/${artifactId}/${version}/${artifactId}-${version}.jar"
-    echo "install $url to $groupId:$artifactId:jar:$version"
-    out="target/${artifactId}-${version}.jar"
-    if [ ! -e $out ]; then
-        echo "download jar and install-file"
-        curl -s $url -o $out
-        mvn install:install-file -DgroupId=$groupId -DartifactId=$artifactId -Dversion=$version -Dpackaging=jar -Dfile=$out
+    groupId="$2" && artifactId="$3" && version="$4" && url="$1${groupId//.//}/${artifactId}/${version}/${artifactId}-${version}"
+    echo "install $url.jar to $groupId:$artifactId:jar:$version"
+    out="target/${artifactId}-${version}"
+    if [ ! -e "$out.jar" ]; then
+        echo "download jar ."
+        curl -s "$url.jar" -o "$out.jar"
+        echo "download pom .."
+        curl -s "$url.pom" -o "$out.pom"
+        echo "install-file ..."
+        mvn install:install-file -DgroupId=$groupId -DartifactId=$artifactId -Dversion=$version -Dpackaging=jar -Dfile="$out.jar" -DpomFile="$out.pom"
     fi
 }
 

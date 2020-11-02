@@ -1,6 +1,7 @@
 package com.xlongwei.light4j.util;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -163,7 +164,7 @@ public class NumberUtil {
 			return CN_ZEOR_FULL;
 		}
 	    //这里会进行金额的四舍五入
-	    long number = money.movePointRight(MONEY_PRECISION).setScale(0, 4).abs().longValue();
+	    long number = money.movePointRight(MONEY_PRECISION).setScale(0, RoundingMode.HALF_UP).abs().longValue();
 	    // 得到小数点后两位值
 	    long scale = number % 100;
 	    int numUnit = 0;

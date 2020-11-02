@@ -6,9 +6,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.omg.CORBA.IntHolder;
 
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
 
@@ -68,36 +68,36 @@ public class TokenCounter {
 		public long time;
 		public String token;
 		public String day;
-		public Map<String, IntHolder> counts = new HashMap<String, IntHolder>();
+		public Map<String, AtomicInteger> counts = new HashMap<String, AtomicInteger>();
 		private TokenCount(long time, String token, String date, String type) {
 			this.time = time;
 			this.token = token;
 			this.day = date;
-			this.counts.put(type, new IntHolder(1));
+			this.counts.put(type, new AtomicInteger(1));
 		}
 		public boolean expireTime() {
 			return SystemClock.now() - time >= expireTime;
 		}
 		public boolean expireCount() {
 			int sum = 0;
-			for(IntHolder count : counts.values()) {
-				sum += count.value;
+			for(AtomicInteger count : counts.values()) {
+				sum += count.get();
 			}
 			return sum >= expireCount;
 		}
 		public void count(String type) {
-			IntHolder count = counts.get(type);
+			AtomicInteger count = counts.get(type);
 			if(count == null) {
-				counts.put(type, new IntHolder(1));
+				counts.put(type, new AtomicInteger(1));
 			}else {
-				count.value += 1;
+				count.incrementAndGet();
 			}
 		}
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder(DateFormatUtils.format(time, "yyyy-MM-dd HH:mm:ss")).append(" ").append(token).append(" (");
-			for(Entry<String, IntHolder> count : counts.entrySet()) {
-				sb.append(count.getKey()).append("=").append(count.getValue().value).append(",");
+			for(Entry<String, AtomicInteger> count : counts.entrySet()) {
+				sb.append(count.getKey()).append("=").append(count.getValue().get()).append(",");
 			}
 			sb.setCharAt(sb.length()-1, ')');
 			return sb.toString();
