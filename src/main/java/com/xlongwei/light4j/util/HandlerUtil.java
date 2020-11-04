@@ -11,12 +11,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.codec.CharEncoding;
-import org.jose4j.json.internal.json_simple.JSONObject;
 
+import com.alibaba.fastjson.JSONObject;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.session.Session;
 import com.networknt.session.SessionManager;
@@ -53,6 +55,8 @@ public class HandlerUtil {
 			: new SessionAttachmentHandler(
 					SingletonServiceFactory.getBean(io.undertow.server.session.SessionManager.class),
 					SingletonServiceFactory.getBean(io.undertow.server.session.SessionConfig.class));
+	public static JSONObject ipsConfig = new JSONObject();
+	public static Map<String, AtomicInteger> ipsCounter = new ConcurrentHashMap<>();
 	/**
 	 * 请求参数和正文
 	 */
@@ -329,5 +333,45 @@ public class HandlerUtil {
 			sessionAttachmentHandler.handleRequest(exchange);
 			return new HttpSessionUndertow(create ? Sessions.getOrCreateSession(exchange) : Sessions.getSession(exchange), exchange);
 		}
+	}
+	
+	/** true处理请求 false提示或拒绝 */
+	public static boolean ipsConfig(HttpServerExchange exchange, String name) {
+		if(ipsConfig!=null && !ipsConfig.isEmpty()) {
+			String ip = getIp(exchange);
+			if(!StringUtil.splitContains(ipsConfig.getString("whites"), ip)) {
+				if(!StringUtil.splitContains(ipsConfig.getString("frees"), name)) {
+					AtomicInteger counter = ipsCounter.get(ip);
+					if(counter==null) {
+						ipsCounter.put(ip, new AtomicInteger(1));
+					}else {
+						int count = counter.getAndIncrement();
+						int limits = ipsConfig.getIntValue("limits");
+						if(limits>0 && count>=limits) {
+							if(count%100 == 0) {
+								log.info("ipsConfig ban ip={} count={}", ip, count);
+							}
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
+	}
+	/** 手动更新ipsConfig */
+	public static void ipsConfigUpdate() {
+		String configKey = "service.controller.ips.config";
+		ipsConfig = JsonUtil.parseNew(RedisConfig.get(System.getProperty(configKey, configKey)));
+		log.info("ipsConfig limits={}", ipsConfig.getIntValue("limits"));
+	}
+	/** 定时清除ip计数器 */
+	public static void ipsCounterClear(String ip) {
+		if(ip==null) {
+			ipsCounter.clear();
+		}else {
+			ipsCounter.remove(ip);
+		}
+		log.info("ipsCounter clear done");
 	}
 }

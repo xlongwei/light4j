@@ -3,6 +3,8 @@ package com.xlongwei.light4j.handler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -17,10 +19,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.util.ConfigUtil;
+import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.PathEndpointSource;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
+import com.xlongwei.light4j.util.TaskUtil;
 import com.xlongwei.light4j.util.TokenCounter;
 
 import ch.qos.logback.classic.Level;
@@ -49,6 +53,8 @@ public class ServiceHandler implements LightHttpHandler {
 			handlers.put(name, handler);
 			log.info("load {} => {}", name, handler.getClass().getName());
 		}
+		HandlerUtil.ipsConfigUpdate();
+		TaskUtil.scheduleAtFixedRate(()->{ HandlerUtil.ipsCounterClear(null); }, DateUtil.parse(DateUtil.format(new Date(), "yyyy-MM-dd")+" 00:00:29"), 1, TimeUnit.DAYS);
 	}
 
 	@Override
@@ -69,7 +75,12 @@ public class ServiceHandler implements LightHttpHandler {
 				String path = split.length>1 ? split[1] : "";
 				exchange.putAttachment(AbstractHandler.PATH, path);
 				HandlerUtil.parseBody(exchange);
-				handler.handleRequest(exchange);
+				boolean ipsConfig = HandlerUtil.ipsConfig(exchange, name);
+				if(ipsConfig) {
+					handler.handleRequest(exchange);
+				}else {
+					HandlerUtil.setResp(exchange, Collections.singletonMap("error", "access is limited"));
+				}
 				serviceCount(name);
 			}
 		}

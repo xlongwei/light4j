@@ -15,12 +15,14 @@ import com.xlongwei.light4j.util.AdtUtil.PairList.PriorityPairList.PriorityCompa
 import com.xlongwei.light4j.handler.ServiceHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.DateUtil;
+import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
+import com.xlongwei.light4j.util.WeixinUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
 
 import apijson.Log;
@@ -33,7 +35,7 @@ import apijson.Log;
 public class CounterHandler extends AbstractTextHandler {
 
 	private static final String TAG = "统计";
-	private static final String RELOAD = "reload", SERVICE_COUNT = "serviceCount";
+	private static final String RELOAD = "reload", SERVICE_COUNT = "serviceCount", IPS_COUNTER_CLEAR = "ipsCounterClear";
 
 	@Override
 	public String handle(String content) {
@@ -89,6 +91,13 @@ public class CounterHandler extends AbstractTextHandler {
 			Log.DEBUG = false;
 			MySqlUtil.SQLMANAGER.setInters(MySqlUtil.EMPTY_INTERS);
 			return "debug="+Log.DEBUG;
+		}else if("ipsConfigUpdate".equals(content)) {
+			HandlerUtil.ipsConfigUpdate();
+			return "limits="+HandlerUtil.ipsConfig.getIntValue("limits");
+		}else if(content.startsWith(IPS_COUNTER_CLEAR) && WeixinUtil.touserTest.equals(message.get().getToUserName())) {
+			String ip = content.substring(IPS_COUNTER_CLEAR.length());
+			HandlerUtil.ipsCounterClear(ip.length()>1 ? null : ip.substring(1));
+			return "clear done";
 		}
 		return null;
 	}

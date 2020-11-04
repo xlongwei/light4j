@@ -10,6 +10,7 @@ JVM_OPS="-Djava.compiler=none -Xmx${Xmx}m -Xms${Xmx}m -XX:NewSize=${NewSize}m -X
 JVM_OPS="$JVM_OPS -Dlogserver -DcontextName=light4j"
 #JVM_OPS="$JVM_OPS -Dapijson.enabled=true -Dapijson.debug=false -Dapijson.test=false"
 #JVM_OPS="$JVM_OPS -Dweixin.appid=wx78b808148023e9fa -Dweixin.appidTest=wx5bb3e90365f54b7a -Dweixin.touserTest=gh_f6216a9ae70b"
+#JVM_OPS="$JVM_OPS -Dservice.controller.ips.config=service.controller.ips.config"
 #ENV_OPS="PATH=/usr/java/jdk1.8.0_161/bin:$PATH"
 #ENV_OPS="$ENV_OPS db.hostPort=localhost:3306 db.username=apijson db.password=apijson"
 JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
