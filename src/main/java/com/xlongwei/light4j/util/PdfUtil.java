@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -89,6 +90,7 @@ public class PdfUtil {
 	}
 	
 	private static Round<String> roundGet = null;
+	private static Semaphore roundLimit = null;
 	private static Map<String, Tuple<OpenOfficeConnection, DocumentConverter>> soffices = new ConcurrentHashMap<>();
 	static {
 		String[] hostAndPorts = StringUtil.firstNotBlank(ConfigUtil.config("soffice").get("hosts"), "127.0.0.1:8100:false").split("[,;]");
@@ -112,6 +114,7 @@ public class PdfUtil {
 			}
 		}
 		roundGet = new Round<>(soffices);
+		roundLimit = new Semaphore(soffices.size());
 		TaskUtil.addShutdownHook((Runnable)() -> {
 				log.info("soffices shutdown");
 				PdfUtil.soffices.values().parallelStream().map(tuple -> tuple.first).forEach(OpenOfficeConnection::disconnect);
@@ -122,9 +125,10 @@ public class PdfUtil {
 	 * @param target 支持pdf html
 	 */
 	public static boolean doc2pdf(File source, File target) {
-		String hostAndPort = roundGet.get();
-		log.info("convert file source: {}, target: {}, hostAndPort: {}", source.getAbsolutePath(), target.getAbsolutePath(), hostAndPort);
 		try {
+			roundLimit.acquire();
+			String hostAndPort = roundGet.get();
+			log.info("convert file source: {}, target: {}, hostAndPort: {}", source.getAbsolutePath(), target.getAbsolutePath(), hostAndPort);
 			String[] split = hostAndPort.split("[:]");
 			String host = split[0]; int port = NumberUtil.parseInt(split.length>1?split[1]:null, 8100); boolean stream = NumberUtil.parseBoolean(split.length>2?split[2]:null, false);
 			Tuple<OpenOfficeConnection, DocumentConverter> tuple = soffices.get(hostAndPort);
@@ -152,6 +156,8 @@ public class PdfUtil {
 			return true;
 		} catch (Exception e) {
 			log.info("fail to convert file source: {}, ex: ", source, e.getMessage());
+		} finally {
+			roundLimit.release();
 		}
 		return false;
 	}

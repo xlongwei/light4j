@@ -3,6 +3,7 @@ package com.xlongwei.light4j.handler.service;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,12 +14,14 @@ import org.apache.commons.lang3.ArrayUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.FileUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
+import com.xlongwei.light4j.util.HttpUtil;
 import com.xlongwei.light4j.util.IdWorker;
 import com.xlongwei.light4j.util.ImageUtil;
 import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.PdfUtil;
 import com.xlongwei.light4j.util.StringUtil;
+import com.xlongwei.light4j.util.TaskUtil;
 import com.xlongwei.light4j.util.UploadUtil;
 import com.xlongwei.light4j.util.WordUtil;
 
@@ -50,6 +53,24 @@ public class DocHandler extends AbstractHandler {
 			return;
 		}
 		
+		String callback = HandlerUtil.getParam(exchange, "callback");
+		if(StringUtil.isUrl(callback)) {
+			TaskUtil.submit(()->{
+				Map<String, String> map = handle(exchange, path, doc);
+				if(map.isEmpty()) {
+					map.put("error", "convert failed");
+				}else {
+					map.put("url", map.get(UploadUtil.DOMAIN)+map.get(UploadUtil.PATH));
+				}
+				HttpUtil.post(callback, map);
+			});
+			HandlerUtil.setResp(exchange, Collections.singletonMap("callback", callback));
+		}else {
+			handle(exchange, path, doc);
+		}
+	}
+
+	private Map<String, String> handle(HttpServerExchange exchange, String path, File doc) {
 		File toFile = null;
 		switch(path) {
 		case "toPdf":
@@ -67,8 +88,8 @@ public class DocHandler extends AbstractHandler {
 			break;
 		}
 		log.info("toFile: {}, exists: {}", toFile==null?"null":toFile.getAbsolutePath(), toFile!=null&&toFile.exists());
+		Map<String, String> map = new HashMap<>(4);
 		if(toFile!=null && toFile.exists()) {
-			Map<String, String> map = new HashMap<>(4);
 			map.put(UploadUtil.DOMAIN, UploadUtil.URL_TEMP);
 			map.put(UploadUtil.PATH, path);
 			boolean base64File = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "base64File"), false);
@@ -77,6 +98,7 @@ public class DocHandler extends AbstractHandler {
 			}
 			HandlerUtil.setResp(exchange, map);
 		}
+		return map;
 	}
 
 	@SuppressWarnings("unchecked")
