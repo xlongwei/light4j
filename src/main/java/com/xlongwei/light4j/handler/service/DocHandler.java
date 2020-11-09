@@ -55,6 +55,7 @@ public class DocHandler extends AbstractHandler {
 		
 		String callback = HandlerUtil.getParam(exchange, "callback");
 		if(StringUtil.isUrl(callback)) {
+			final String callbackId = String.valueOf(IdWorker.getId());
 			TaskUtil.submit(()->{
 				Map<String, String> map = handle(exchange, path, doc);
 				if(map.isEmpty()) {
@@ -62,9 +63,10 @@ public class DocHandler extends AbstractHandler {
 				}else {
 					map.put("url", map.get(UploadUtil.DOMAIN)+map.get(UploadUtil.PATH));
 				}
+				map.put("callback", callbackId);
 				HttpUtil.post(callback, map);
 			});
-			HandlerUtil.setResp(exchange, Collections.singletonMap("callback", callback));
+			HandlerUtil.setResp(exchange, Collections.singletonMap("callback", callbackId));
 		}else {
 			handle(exchange, path, doc);
 		}
