@@ -48,6 +48,22 @@
 	    </then>
     </if>
     
+    <if condition='isDefined("redis")'>
+    	<then>
+   			<appender name="REDIS" class="ch.qos.logback.classic.redis.RedisAppender">
+				<key>${redis.key:-logserver}</key>
+				<pubsub>${redis.pubsub:-true}</pubsub>
+				<pushpop>${redis.pushpop:-false}</pushpop>
+				<queueSize>${redis.queueSize:-10240}</queueSize>
+				<host>${redis.host:-localhost}</host>
+				<port>${redis.port:-6379}</port>
+   			</appender>
+			<appender name="ASYNC_REDIS" class="ch.qos.logback.classic.AsyncAppender">
+				<appender-ref ref="REDIS" />
+			</appender>   			
+    	</then>
+    </if>
+    
     <logger name="jdbc.sqlonly" level="${log4jdbc.sqlonly:-info}"/>
     <logger name="jdbc.sqltiming" level="${log4jdbc.sqlonly:-off}"/>
     <logger name="jdbc.audit" level="${log4jdbc.audit:-off}"/>
@@ -57,7 +73,14 @@
 	<root level="${logLevel}">
 		<if condition='isDefined("logserver")'>
 		    <then>
-				<appender-ref ref="ASYNC_SOCKET" />
+		    	<if condition='isDefined("redis")'>
+		    		<then>
+						<appender-ref ref="ASYNC_REDIS" />
+		    		</then>
+		    		<else>
+						<appender-ref ref="ASYNC_SOCKET" />
+		    		</else>
+		    	</if>
 		    </then>
 		    <else>
 				<if condition='isDefined("logfile")'>
