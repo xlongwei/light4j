@@ -1,12 +1,17 @@
 package com.xlongwei.light4j.handler.weixin;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.time.DateUtils;
 
@@ -94,6 +99,10 @@ public class CounterHandler extends AbstractTextHandler {
 		}else if("ipsConfigUpdate".equals(content)) {
 			HandlerUtil.ipsConfigUpdate();
 			return "limits="+HandlerUtil.ipsConfig.getIntValue("limits");
+		}else if("ipsCounter".equals(content)) {
+			List<Entry<String, AtomicInteger>> list = new ArrayList<>(HandlerUtil.ipsCounter.entrySet());
+			Collections.sort(list, (e1,e2)->{ return e2.getValue().get()-e1.getValue().get(); });
+			return textLimited(StringUtil.join(list, null, null, "\n"));
 		}else if(content.startsWith(IPS_COUNTER_CLEAR) && WeixinUtil.touserTest.equals(message.get().getToUserName())) {
 			String ip = content.substring(IPS_COUNTER_CLEAR.length());
 			HandlerUtil.ipsCounterClear(ip.length()>1 ? null : ip.substring(1));

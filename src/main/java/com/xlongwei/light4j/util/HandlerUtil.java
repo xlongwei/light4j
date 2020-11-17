@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.codec.CharEncoding;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
 import com.networknt.service.SingletonServiceFactory;
@@ -56,6 +58,7 @@ public class HandlerUtil {
 					SingletonServiceFactory.getBean(io.undertow.server.session.SessionManager.class),
 					SingletonServiceFactory.getBean(io.undertow.server.session.SessionConfig.class));
 	public static JSONObject ipsConfig = new JSONObject();
+	public static Logger ipsConfigLogger = LoggerFactory.getLogger("ipsConfig");
 	public static Map<String, AtomicInteger> ipsCounter = new ConcurrentHashMap<>();
 	/**
 	 * 请求参数和正文
@@ -347,6 +350,7 @@ public class HandlerUtil {
 					}else {
 						int count = counter.getAndIncrement();
 						int limits = ipsConfig.getIntValue("limits");
+						ipsConfigLogger.debug("ip={} count={}", ip, count);
 						if(limits>0 && count>=limits) {
 							if(count%100 == 0) {
 								log.info("ipsConfig ban ip={} count={}", ip, count);

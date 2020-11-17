@@ -44,6 +44,7 @@
 		    </appender>
 			<appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
 				<appender-ref ref="FILE" />
+				<IncludeCallerData>true</IncludeCallerData>
 			</appender>
 	    </then>
     </if>
@@ -60,6 +61,7 @@
    			</appender>
 			<appender name="ASYNC_REDIS" class="ch.qos.logback.classic.AsyncAppender">
 				<appender-ref ref="REDIS" />
+				<IncludeCallerData>true</IncludeCallerData>
 			</appender>   			
     	</then>
     </if>

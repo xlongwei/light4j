@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ServiceHandler implements LightHttpHandler {
-	public static final String BAD_REQUEST = "{\"status\":\"200\", \"error\":\"bad request\"}";
+	public static final String BAD_REQUEST = "{\"error\":\"bad request\"}";
 	public static final Map<String, AbstractHandler> handlers = new HashMap<>();
 	public static volatile boolean serviceCount = true;
 	private static final ServiceCounter serviceCounter = new ServiceCounter(64, TimeUnit.SECONDS.toMillis(18));
