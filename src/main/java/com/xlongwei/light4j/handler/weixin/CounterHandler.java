@@ -1,6 +1,5 @@
 package com.xlongwei.light4j.handler.weixin;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -10,8 +9,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.DateUtils;
 
@@ -39,16 +40,9 @@ import apijson.Log;
  */
 public class CounterHandler extends AbstractTextHandler {
 
-	private static final String TAG = "统计";
-	private static final String RELOAD = "reload", SERVICE_COUNT = "serviceCount", IPS_COUNTER_CLEAR = "ipsCounterClear";
-
 	@Override
 	public String handle(String content) {
-		if(StringUtil.isBlank(content)) {
-			return null;
-		}
-		
-		if(content.startsWith(TAG)) {
+		if(content.startsWith("统计")) {
 			if(ServiceCounter.refresh()==false) {
 				return null;
 			}
@@ -74,13 +68,13 @@ public class CounterHandler extends AbstractTextHandler {
 					sb.append("total: ").append(total);
 					return sb.toString();
 				}
-			}else if(RELOAD.equals(cmd)){
+			}else if("reload".equals(cmd)){
 				ServiceCounter.reload();
 			}else {
 				return countDays(cmd);
 			} 
-		}else if(content.startsWith(SERVICE_COUNT)) {
-			content = content.substring(SERVICE_COUNT.length());
+		}else if(content.startsWith("serviceCount")) {
+			content = content.substring("serviceCount".length());
 			if(StringUtil.hasLength(content)) {
 				Boolean b = NumberUtil.parseBoolean(content, null);
 				if(b!=null) {
@@ -99,14 +93,19 @@ public class CounterHandler extends AbstractTextHandler {
 		}else if("ipsConfigUpdate".equals(content)) {
 			HandlerUtil.ipsConfigUpdate();
 			return "limits="+HandlerUtil.ipsConfig.getIntValue("limits");
-		}else if("ipsCounter".equals(content)) {
-			List<Entry<String, AtomicInteger>> list = new ArrayList<>(HandlerUtil.ipsCounter.entrySet());
-			Collections.sort(list, (e1,e2)->{ return e2.getValue().get()-e1.getValue().get(); });
-			return textLimited(StringUtil.join(list, null, null, "\n"));
-		}else if(content.startsWith(IPS_COUNTER_CLEAR) && WeixinUtil.touserTest.equals(message.get().getToUserName())) {
-			String ip = content.substring(IPS_COUNTER_CLEAR.length());
-			HandlerUtil.ipsCounterClear(ip.length()>1 ? null : ip.substring(1));
+		}else if(content.startsWith("ipsCounterClear") && WeixinUtil.touserTest.equals(message.get().getToUserName())) {
+			String ip = content.substring("ipsCounterClear".length());
+			HandlerUtil.ipsCounterClear(ip.length()<=1 ? null : ip.substring(1));
 			return "clear done";
+		}else if(content.startsWith("ipsCounter")) {
+			int len = "ipsCounter".length(), min = content.length()>len ? NumberUtil.parseInt(content.substring(len+1), 0) : 0, size = 10;
+			Set<Entry<String, AtomicInteger>> entrySet = HandlerUtil.ipsCounter.entrySet();
+			List<Entry<String, AtomicInteger>> list = entrySet.stream().filter(e -> e.getValue().get()>=min).collect(Collectors.toList());
+			boolean empty = list.isEmpty() || content.length()==len;
+			if(empty) list.addAll(entrySet);
+			Collections.sort(list, (e1,e2)->{ return e2.getValue().get()-e1.getValue().get(); });
+			if(empty && list.size()>size) list = list.subList(0, size);
+			return textLimited(StringUtil.join(list, null, null, "\n"));
 		}
 		return null;
 	}

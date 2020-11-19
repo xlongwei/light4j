@@ -13,57 +13,59 @@
     <!-- ch.qos.logback.core.joran.conditional.PropertyWrapperForScripts -->
     <if condition='isDefined("logserver")'>
 	    <then>
-			<appender name="SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
-				<RemoteHost>logserver</RemoteHost>
-				<Port>6000</Port>
-				<ReconnectionDelay>10000</ReconnectionDelay>
-				<IncludeCallerData>false</IncludeCallerData>
-			</appender>
-			<appender name="ASYNC_SOCKET" class="ch.qos.logback.classic.AsyncAppender">
-				<appender-ref ref="SOCKET" />
-				<IncludeCallerData>true</IncludeCallerData>
-			</appender>
+		    <if condition='isDefined("redis")'>
+		    	<then>
+		   			<appender name="REDIS" class="ch.qos.logback.classic.redis.RedisAppender">
+						<key>${redis.key:-logserver}</key>
+						<pubsub>${redis.pubsub:-true}</pubsub>
+						<pushpop>${redis.pushpop:-false}</pushpop>
+						<queueSize>${redis.queueSize:-10240}</queueSize>
+						<host>${redis.host:-localhost}</host>
+						<port>${redis.port:-6379}</port>
+		   			</appender>
+					<appender name="ASYNC_REDIS" class="ch.qos.logback.classic.AsyncAppender">
+						<appender-ref ref="REDIS" />
+						<IncludeCallerData>true</IncludeCallerData>
+					</appender>
+		    	</then>
+		    	<else>
+					<appender name="SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
+						<RemoteHost>logserver</RemoteHost>
+						<Port>6000</Port>
+						<ReconnectionDelay>10000</ReconnectionDelay>
+						<IncludeCallerData>false</IncludeCallerData>
+					</appender>
+					<appender name="ASYNC_SOCKET" class="ch.qos.logback.classic.AsyncAppender">
+						<appender-ref ref="SOCKET" />
+						<IncludeCallerData>true</IncludeCallerData>
+					</appender>
+		    	</else>
+		    </if>
 	    </then>
-    </if>
-    
-    <if condition='isDefined("logfile")'>
-	    <then>
-		    <if condition='property("logfile").isEmpty()'>
+	    <else>
+		    <if condition='isDefined("logfile")'>
 			    <then>
-				    <property name="logfile" value="logs/light4j.log"/>
+				    <if condition='property("logfile").isEmpty()'>
+					    <then>
+						    <property name="logfile" value="logs/light4j.log"/>
+					    </then>
+				    </if>
+				    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+				        <file>${logfile}</file>
+				        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+				            <fileNamePattern>${logfile}.%d{yyyy-MM-dd}</fileNamePattern>
+				        </rollingPolicy>
+				        <encoder>
+				            <pattern>${logPattern}</pattern>
+				        </encoder>
+				    </appender>
+					<appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+						<appender-ref ref="FILE" />
+						<IncludeCallerData>true</IncludeCallerData>
+					</appender>
 			    </then>
 		    </if>
-		    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		        <file>${logfile}</file>
-		        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-		            <fileNamePattern>${logfile}.%d{yyyy-MM-dd}</fileNamePattern>
-		        </rollingPolicy>
-		        <encoder>
-		            <pattern>${logPattern}</pattern>
-		        </encoder>
-		    </appender>
-			<appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
-				<appender-ref ref="FILE" />
-				<IncludeCallerData>true</IncludeCallerData>
-			</appender>
-	    </then>
-    </if>
-    
-    <if condition='isDefined("redis")'>
-    	<then>
-   			<appender name="REDIS" class="ch.qos.logback.classic.redis.RedisAppender">
-				<key>${redis.key:-logserver}</key>
-				<pubsub>${redis.pubsub:-true}</pubsub>
-				<pushpop>${redis.pushpop:-false}</pushpop>
-				<queueSize>${redis.queueSize:-10240}</queueSize>
-				<host>${redis.host:-localhost}</host>
-				<port>${redis.port:-6379}</port>
-   			</appender>
-			<appender name="ASYNC_REDIS" class="ch.qos.logback.classic.AsyncAppender">
-				<appender-ref ref="REDIS" />
-				<IncludeCallerData>true</IncludeCallerData>
-			</appender>   			
-    	</then>
+	    </else>
     </if>
     
     <logger name="jdbc.sqlonly" level="${log4jdbc.sqlonly:-info}"/>
