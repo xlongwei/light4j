@@ -6,9 +6,9 @@ appname=light4j
 jarfile=target/light4j.jar
 [ ! -e "$jarfile" ] && jarfile=light4j.jar
 Survivor=2 Old=64 NewSize=$[Survivor*10] Xmx=$[NewSize+Old] #NewSize=Survivor*(1+1+8) Xmx=NewSize+Old
-JVM_OPS="-Djava.compiler=none -Xmx${Xmx}m -Xms${Xmx}m -XX:NewSize=${NewSize}m -XX:MaxNewSize=${NewSize}m -XX:SurvivorRatio=8 -Xss228k"
-#JVM_OPS="-Dredis -Dredis.host=localhost -Dredis.port=6379 -Dredis.pubsub=false -Dredis.pushpop=true -Dredis.queueSize=10240"
-JVM_OPS="$JVM_OPS -Dlogserver -DcontextName=light4j"
+JVM_OPS="-Xmx${Xmx}m -Xms${Xmx}m -XX:NewSize=${NewSize}m -XX:MaxNewSize=${NewSize}m -XX:SurvivorRatio=8 -Xss228k"
+#JVM_OPS="$JVM_OPS -Dredis -Dredis.host=localhost -Dredis.port=6379 -Dredis.pubsub=false -Dredis.pushpop=true -Dredis.queueSize=10240"
+JVM_OPS="$JVM_OPS -Djava.compiler=none -Dlogserver -DcontextName=light4j"
 #JVM_OPS="$JVM_OPS -Dapijson.enabled=true -Dapijson.debug=false -Dapijson.test=false"
 #JVM_OPS="$JVM_OPS -Dweixin.appid=wx78b808148023e9fa -Dweixin.appidTest=wx5bb3e90365f54b7a -Dweixin.touserTest=gh_f6216a9ae70b"
 #JVM_OPS="$JVM_OPS -Dservice.controller.ips.config=service.controller.ips.config"

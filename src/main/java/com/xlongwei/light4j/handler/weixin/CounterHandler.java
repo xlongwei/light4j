@@ -102,7 +102,7 @@ public class CounterHandler extends AbstractTextHandler {
 			Set<Entry<String, AtomicInteger>> entrySet = HandlerUtil.ipsCounter.entrySet();
 			List<Entry<String, AtomicInteger>> list = entrySet.stream().filter(e -> e.getValue().get()>=min).collect(Collectors.toList());
 			boolean empty = list.isEmpty() || content.length()==len;
-			if(empty) list.addAll(entrySet);
+			if(empty) { list.clear(); list.addAll(entrySet); }
 			Collections.sort(list, (e1,e2)->{ return e2.getValue().get()-e1.getValue().get(); });
 			if(empty && list.size()>size) list = list.subList(0, size);
 			return textLimited(StringUtil.join(list, null, null, "\n"));

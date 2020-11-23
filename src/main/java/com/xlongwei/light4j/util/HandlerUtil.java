@@ -372,6 +372,16 @@ public class HandlerUtil {
 	/** 定时清除ip计数器 */
 	public static void ipsCounterClear(String ip) {
 		if(ip==null) {
+			ipsCounter.entrySet().forEach(entry -> {
+				int counter = entry.getValue().get(), count = counter/100;
+				if(count>0) {
+					String key = entry.getKey();
+					log.info("serviceCount {}={} counter={}", key, count, counter);
+					for(int i=0;i<count;i++) {
+						ServiceHandler.serviceCount(key);
+					}
+				}
+			});
 			ipsCounter.clear();
 		}else {
 			ipsCounter.remove(ip);
