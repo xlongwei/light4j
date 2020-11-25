@@ -12,6 +12,8 @@ import org.lionsoul.ip2region.Util;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
+import com.xlongwei.light4j.util.NumberUtil;
+import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 
 import cn.hutool.core.map.MapUtil;
@@ -26,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class IpHandler extends AbstractHandler {
 	static DbSearcher dbSearcher = null;
+	static boolean memorySearch = NumberUtil.parseBoolean(RedisConfig.get("ip.memorySearch"), false);
 
 	public void region(HttpServerExchange exchange) throws Exception {
 		String ip = HandlerUtil.getParam(exchange, "ip");
@@ -46,11 +49,26 @@ public class IpHandler extends AbstractHandler {
 		}
 	}
 	
-	public static String zeroToEmpty(String value) {
+	public void config(HttpServerExchange exchange) throws Exception {
+		String memory = HandlerUtil.getParam(exchange, "memory");
+		Boolean search = "true".equals(memory) ? Boolean.TRUE : ("false".equals(memory) ? Boolean.FALSE : null);
+		if(search!=null && search.booleanValue()!=memorySearch) {
+			dbSearcher.close();
+			reload();
+			memorySearch = search.booleanValue();
+		}
+		HandlerUtil.setResp(exchange, Collections.singletonMap("memory", memorySearch));
+	}
+	
+	private static String zeroToEmpty(String value) {
 		return "0".equals(value) ? "" : value;
 	}
 	
 	static {
+		reload();
+	}
+
+	private static void reload() {
 		try {
 			DbConfig config = new DbConfig();
 			String dbFile = ConfigUtil.DIRECTORY + "ip2region.db";
@@ -60,21 +78,28 @@ public class IpHandler extends AbstractHandler {
 		}
 	}
 	
-	public static synchronized DataBlock search(String ip) {
+	public static DataBlock search(String ip) {
 		if(StringUtil.hasLength(ip)) {
-			if("0:0:0:0:0:0:0:1".equals(ip)) {
-				ip = "127.0.0.1";
-			}
-			try{
-				return Util.isIpAddress(ip) ? dbSearcher.memorySearch(ip) : null;
-			}catch(Exception e) {
-				log.warn("fail to search ip: {}, ex: {}", ip, e.getMessage());
+//			if("0:0:0:0:0:0:0:1".equals(ip)) {
+//				ip = "127.0.0.1";
+//			}
+			if(Util.isIpAddress(ip)) {
+				synchronized (dbSearcher) {
+					try{
+						if(memorySearch) {
+							return dbSearcher.memorySearch(ip);
+						}
+						return dbSearcher.btreeSearch(ip);
+					}catch(Exception e) {
+						log.warn("fail to search ip: {}, ex: {}", ip, e.getMessage());
+					}
+				}
 			}
 		}
 		return null;
 	}
 	
-	public static synchronized Map<String, String> searchToMap(String ip) {
+	public static Map<String, String> searchToMap(String ip) {
 		DataBlock dataBlock = search(ip);
 		if(dataBlock != null) {
 			//国家，区域，省份，城市，运营商
