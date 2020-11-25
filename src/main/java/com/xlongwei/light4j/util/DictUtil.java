@@ -16,6 +16,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.xlongwei.light4j.util.AdtUtil.Queue;
+import com.xlongwei.light4j.util.AdtUtil.Queue.PriorityQueueWithComparator;
+import com.xlongwei.light4j.util.AdtUtil.Queue.LimitSizeQueue;
 import com.xlongwei.light4j.util.FileUtil.CharsetNames;
 import com.xlongwei.light4j.util.FileUtil.TextReader;
 
@@ -36,12 +39,13 @@ public class DictUtil {
 	private static Map<String, List<String>> simMapRowWords = new HashMap<String, List<String>>();
 	private static Map<String, String> wordsMapPiece = new HashMap<String, String>();
 	private static Map<String, Integer> guards = new HashMap<String, Integer>();
-	private static List<WordScore> results = new ArrayList<WordScore>();
+	private static Queue<WordScore> results = new LimitSizeQueue<>(10, new PriorityQueueWithComparator<>(Collections.reverseOrder()));
 	private static List<String> frequents = new ArrayList<>();
 	private static Map<String, Integer> strokes = new HashMap<>();
 	private static List<String> simpleWords = new ArrayList<>();
 	private static int simpleWordsStrokes = 12;
 	private static boolean inited = false;
+	private static boolean quick = false;//quick=true时计算partsMapWords，但会占用更多内存
 	
 	static {
 		if(!(inited=initFromDat())) {
@@ -60,8 +64,15 @@ public class DictUtil {
 		if(!inited) {
 			return null;
 		}
-		parseInput(input, true);
-		return results;
+		synchronized (results) {
+			parseInput(input, quick);
+			List<WordScore> list = new ArrayList<>(results.size());
+			WordScore wordScore = null;
+			while((wordScore = results.deQueue()) != null) {
+				list.add(wordScore);
+			}
+			return list;
+		}
 	}
 	
 	/** 笔画数，0 未知 */
@@ -147,7 +158,7 @@ public class DictUtil {
 			ArrayList<String> parts = getParts(key, lineNumber);
 			if (parts.isEmpty()) {
 				log.info(" <- " + value);
-			} else {
+			} else if(quick) {
 				List<String> words = partsMapWords.get(parts);
 				if(words == null) {
 					partsMapWords.put(parts, words = new ArrayList<>());
@@ -155,7 +166,7 @@ public class DictUtil {
 				words.add(key);
 			}
 		}
-		log.info("<" + partsMapWords.size() + " groups>...over!");
+		log.info("< {} groups>...over! quick={}", partsMapWords.size(), quick);
 		List<String> readLines = FileUtil.readLines(ConfigUtil.stream("strokes.txt"), CharsetNames.UTF_8);
 		for(String line : readLines) {
 			String[] split = line.split("\\s+");
@@ -202,10 +213,10 @@ public class DictUtil {
 				if(parts.get(3).length()>1 || parts.get(4).length()>1) {
 					continue;
 				}
-				List<WordScore> parse = parse(parts.get(3)+" "+parts.get(4));
-				if(parse!=null && parse.size()!=1) {
-					continue;
-				}
+//				List<WordScore> parse = parse(parts.get(3)+" "+parts.get(4));
+//				if(parse!=null && parse.size()!=1) {
+//					continue;
+//				}
 				simpleWords.add(word);
 			}
 		}
@@ -373,7 +384,6 @@ public class DictUtil {
 	}
 
 	private static void parseInput(String line, boolean quick) {
-		results.clear();
 		List<String> partsOfInput = new LinkedList<String>();
 		List<List<String>> parts = new LinkedList<>();
 		parts.add(partsOfInput);
@@ -428,7 +438,7 @@ public class DictUtil {
 					}
 				}
 				for(String word : words) {
-					results.add(new WordScore(word, 1.0));
+					results.enQueue(new WordScore(word, 1.0));
 				}
 			}
 			if(results.isEmpty()) {
@@ -452,9 +462,8 @@ public class DictUtil {
 					temp.add(part);
 				}
 			}
-			results.add(new WordScore(key, (double) fenzi / fenmu));
+			results.enQueue(new WordScore(key, (double) fenzi / fenmu));
 		}
-		Collections.sort(results, Collections.reverseOrder());
 	}
 
 	private static ArrayList<String> partOfWord(String word, int type) {
