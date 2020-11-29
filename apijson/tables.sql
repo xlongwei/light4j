@@ -9,4 +9,4 @@ CREATE TABLE `district` (
   KEY `idx_province_city_name` (`province`,`city`,`cityName`),
   KEY `idx_city_county_name` (`city`,`county`,`countyName`),
   KEY `idx_province_name` (`province`,`provinceName`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='行政区划';
+) ENGINE=InnoDB DEFAULT CHARSET=gbk COMMENT='行政区划';
