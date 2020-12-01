@@ -21,6 +21,10 @@ chains:
     - exception
     - cors
     - service
+  weixin:
+    - exception
+    - cors
+    - weixin
   openapi:
     - exception
     - cors
@@ -31,6 +35,10 @@ chains:
     - exception
     - cors
     - demo
+  upload:
+    - exception
+    - cors
+    - upload
 
 paths:
   - source: com.xlongwei.light4j.handler.ServiceHandler$ServiceEndpointSource

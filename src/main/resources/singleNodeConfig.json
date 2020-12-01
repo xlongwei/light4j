@@ -13,15 +13,15 @@
     "clientName": null,
     "address": "redis://127.0.0.1:6379",
     "subscriptionConnectionMinimumIdleSize": 1,
-    "subscriptionConnectionPoolSize": 50,
-    "connectionMinimumIdleSize": 10,
-    "connectionPoolSize": 64,
+    "subscriptionConnectionPoolSize": 3,
+    "connectionMinimumIdleSize": 1,
+    "connectionPoolSize": 3,
     "database": 0,
     "dnsMonitoring": false,
     "dnsMonitoringInterval": 5000
   },
-  "threads": 0,
-  "nettyThreads": 0,
+  "threads": 1,
+  "nettyThreads": 1,
   "codec": null,
   "useLinuxNativeEpoll": false
 }

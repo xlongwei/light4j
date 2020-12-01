@@ -130,7 +130,8 @@ public class HandlerUtil {
 				Builder builder = FormParserFactory.builder();
 				builder.setDefaultCharset(CharEncoding.UTF_8);
 				FormParserFactory formParserFactory = builder.build();
-		        try(FormDataParser parser = formParserFactory.createParser(exchange)){
+				//MultiPartParserDefinition#93，exchange.addExchangeCompleteListener，在请求结束时关闭parser并删除临时文件
+		        FormDataParser parser = formParserFactory.createParser(exchange);
 			        if (parser != null) {
 			            FormData formData = parser.parseBlocking();
 			            for(String name : formData) {
@@ -151,7 +152,6 @@ public class HandlerUtil {
 						String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
 			        	body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, StandardCharsets.UTF_8));
 			        }
-		        }
 			}else if(StringUtils.isBlank(contentType) || StringUtil.containsOneOfIgnoreCase(contentType, TEXT, JSON, XML)) {
 				InputStream inputStream = exchange.getInputStream();
 				String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));

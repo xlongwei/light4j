@@ -39,10 +39,6 @@ public class OpenapiHandler implements LightHttpHandler {
 
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
-		if (exchange.isInIoThread()) {
-            exchange.dispatch(this);
-            return;
-        }
 		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
 		String service = queryParameters.remove("*").getFirst();
 		log.info("{} {}", exchange.getRequestMethod(), exchange.getRequestURI());

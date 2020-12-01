@@ -31,10 +31,6 @@ public class WeixinHandler implements LightHttpHandler {
 
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
-		if (exchange.isInIoThread()) {
-            exchange.dispatch(this);
-            return;
-        }
 		HandlerUtil.parseBody(exchange);
 		String echostr = HandlerUtil.getParam(exchange, "echostr");
 		String timestamp = HandlerUtil.getParam(exchange, "timestamp");

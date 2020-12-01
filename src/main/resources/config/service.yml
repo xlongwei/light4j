@@ -34,7 +34,8 @@ singletons:
 #  - io.undertow.server.session.InMemorySessionManager:
 #    - java.lang.String: INMEMORY-SESSION
 - com.networknt.session.SessionRepository:
-  - com.networknt.session.redis.RedisSessionRepository
+#  - com.networknt.session.redis.RedisSessionRepository
+   - com.xlongwei.light4j.openapi.extend.MyRedisSessionRepository
 - com.networknt.session.SessionManager:
   - com.networknt.session.redis.RedisSessionManager
 

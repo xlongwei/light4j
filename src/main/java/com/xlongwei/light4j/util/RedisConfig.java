@@ -23,14 +23,16 @@ public class RedisConfig {
 	public static final String CACHE = "property";
 	public static final String LOCK = "lock";
 	public static final JedisPool JEDIS_POOL;
+	public static String host = "localhost";
+	public static int port = 6379;
 	
 	static {
 		String hostAndPort = ConfigUtil.config("redis").get("configDb");
 		log.info("redis.configDb={}", hostAndPort);
 		
 		String[] hostPort = hostAndPort.split("[:]");
-		String host = hostPort[0];
-		int port = NumberUtil.parseInt(hostPort.length>1 ? hostPort[1] : null, 6379);
+		host = hostPort[0];
+		port = NumberUtil.parseInt(hostPort.length>1 ? hostPort[1] : null, 6379);
 		int db = NumberUtil.parseInt(hostPort.length>2 ? hostPort[2] : null, 0);
 		String password = hostPort.length>3?hostPort[3]:null;
 		int timeout = NumberUtil.parseInt(hostPort.length>4 ? hostPort[4] : null, 0);
