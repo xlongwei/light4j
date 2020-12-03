@@ -28,9 +28,10 @@ import org.jose4j.jwt.JwtClaims;
 import com.networknt.openapi.JwtVerifyHandler;
 import com.networknt.security.JwtVerifier;
 import com.networknt.utility.Constants;
-import com.xlongwei.light4j.util.RedisConfig;
+import com.xlongwei.light4j.util.RedisPubsub;
 import com.xlongwei.light4j.util.ShiroUtil;
 import com.xlongwei.light4j.util.StringUtil;
+import com.xlongwei.light4j.util.RedisPubsub.MessageListener;
 
 import cn.hutool.core.util.CharUtil;
 import io.undertow.server.HttpServerExchange;
@@ -61,6 +62,15 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 		SecurityUtils.setSecurityManager(securityManager);
 		securityManager.setRealm(new JwtAuthenticationRealm());
 		securityManager.setCacheManager(new MemoryConstrainedCacheManager());
+		ShiroUtil.reload(false);
+		RedisPubsub.sub(new MessageListener() {
+			@Override
+			public void onMessage(String message) {
+				if(ShiroUtil.MESSAGE.equals(message)) {
+					ShiroUtil.reload(false);
+				}
+			}
+		});
 	}
 	
 	@Override
@@ -74,7 +84,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
         	if(path.lastIndexOf(CharUtil.DOT) > -1) {
         		path = path.substring(0, path.lastIndexOf(CharUtil.DOT));
         	}
-        	Map<String, String> urls = RedisConfig.hgetAll(RedisConfig.CACHE, "shiro.urls");
+        	Map<String, String> urls = ShiroUtil.getUrls();
         	checkUrls(subject, path, urls);
         	super.handleRequest(exchange);
         }catch(AuthorizationException e) {
@@ -92,7 +102,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 		urls.forEach((antPath, rolesPermsList) -> {
 			if(antPathMatcher.matchStart(antPath, path)) {
 				//roles[admin,user], perms[file:edit]
-				log.info("path: {}, matcher: {}, rolesPerms: {}", path, antPath, rolesPermsList);
+				log.debug("path: {}, matcher: {}, rolesPerms: {}", path, antPath, rolesPermsList);
 				String[] rolesPermsArray = StringUtils.split(rolesPermsList, StringUtils.DEFAULT_DELIMITER_CHAR, '[', ']', true, true);
 				for (String rolesPerms : rolesPermsArray) {
 		            checkRolesPerms(subject, rolesPerms);
@@ -108,6 +118,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 			String[] roleArray = StringUtils.split(roles, StringUtils.DEFAULT_DELIMITER_CHAR, CharUtil.DOUBLE_QUOTES, CharUtil.DOUBLE_QUOTES, true, true);
 			if(roleArray.length > 1) {
 				for(String role : roleArray) {
+					log.debug("checkRole: {}", role);
 					boolean hasRole = role.indexOf(CharUtil.DOUBLE_QUOTES)==-1 && subject.hasRole(role);
 					boolean hasAllRoles = role.indexOf(CharUtil.DOUBLE_QUOTES) > -1 && subject.hasAllRoles(Arrays.asList(role.substring(1, role.length()-1).split("[,]")));
 					if(hasRole || hasAllRoles) {
@@ -117,6 +128,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 				throw new AuthorizationException();
 			}else {
 				String role = roleArray[0];
+				log.debug("checkRole: {}", role);
 				if(role.indexOf(CharUtil.DOUBLE_QUOTES) == -1) {
 					subject.checkRole(role);
 				}else {
@@ -131,6 +143,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 			String[] permArray = StringUtils.split(perms, StringUtils.DEFAULT_DELIMITER_CHAR, CharUtil.DOUBLE_QUOTES, CharUtil.DOUBLE_QUOTES, true, true);
 			if(permArray.length > 1) {
 				for(String perm : permArray) {
+					log.debug("checkPerm: {}", perm);
 					if(perm.indexOf(CharUtil.DOUBLE_QUOTES) > -1) {
 						perm = perm.substring(1, perm.length() -1);
 					}
@@ -141,6 +154,7 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 				throw new AuthorizationException();
 			}else {
 				String perm = permArray[0];
+				log.debug("checkPerm: {}", perm);
 				if(perm.indexOf(CharUtil.DOUBLE_QUOTES) > -1) {
 					perm = perm.substring(0, perm.length()-1);
 				}
@@ -185,9 +199,9 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	        	Set<String> perms = ShiroUtil.getPerms(roles);
 	        	authz.setRoles(roles);
 	        	authz.setStringPermissions(perms);
-	        	log.info("userId: {}, roles: {}, perms: {}", userId, authz.getRoles(), authz.getStringPermissions());
+	        	log.debug("userId: {}, roles: {}, perms: {}", userId, authz.getRoles(), authz.getStringPermissions());
 	        }catch(Exception e) {
-	        	log.info("authorize ex: {}", e.getMessage());
+	        	log.info("authorize ex: {}, msg: {}", e.getClass().getSimpleName(), e.getMessage());
 	        }
 			return authz;
 		}

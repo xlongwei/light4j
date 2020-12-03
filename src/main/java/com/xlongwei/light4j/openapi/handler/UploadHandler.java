@@ -32,7 +32,14 @@ public class UploadHandler extends AbstractHandler {
 			log.info("direct upload save={}, file={}, size={}K, path={}", save, fileName, target.length()/1024, path);
 			if(save) {
 				String url = UploadUtil.string(UploadUtil.URL + path);
-				HandlerUtil.setResp(exchange, StringUtil.params("code", "0", "url", url));
+				HandlerUtil.setResp(exchange, StringUtil.params("url", url));
+			}
+		}else {
+			String type = HandlerUtil.getParam(exchange, "type");
+			String name = HandlerUtil.getParam(exchange, "name");
+			if(!StringUtil.isBlank(name) && (UploadUtil.CONFIRM.equals(type) || UploadUtil.TRASH.equals(type))) {
+				boolean move = UploadUtil.move(name, type);
+				HandlerUtil.setResp(exchange, StringUtil.params(type, move ? "1" : "0"));
 			}
 		}
 	}

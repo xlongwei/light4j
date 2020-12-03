@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
+import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -128,6 +129,35 @@ public class RedisConfig {
 				byte[] byteField = RedisUtil.byteKey(field);
 				byte[] byteValue = jedis.hget(byteKey, byteField);
 				return RedisUtil.stringValue(byteValue);
+		});
+	}
+	
+	public static List<String> hmget(final String cache, final String key, final String ... fields) {
+		return execute((jedis) -> {
+			byte[] byteKey = RedisUtil.byteKey(cache, key);
+			byte[][] byteFields = new byte[fields.length][];
+			for(int i=0;i<byteFields.length;i++) {
+				byteFields[i] = RedisUtil.byteKey(fields[i]);
+			}
+			List<byte[]> byteValues = jedis.hmget(byteKey, byteFields);
+			List<String> list = new ArrayList<>(fields.length);
+			for(byte[] byteValue : byteValues) {
+				list.add(RedisUtil.stringValue(byteValue));
+			}
+			return list;
+		});
+	}
+	
+	public static String hmset(final String cache, final String key, final Map<String, String> map) {
+		return CollUtil.isEmpty(map) ? null : execute((jedis) -> {
+			byte[] byteKey = RedisUtil.byteKey(cache, key);
+			Map<byte[], byte[]> byteMap = new HashMap<>(map.size());
+			for(Map.Entry<String, String> entry : map.entrySet()) {
+				byte[] bKey = RedisUtil.byteKey(entry.getKey());
+				byte[] bVal = RedisUtil.byteValue(entry.getValue());
+				byteMap.put(bKey, bVal);
+			}
+			return jedis.hmset(byteKey, byteMap);
 		});
 	}
 	

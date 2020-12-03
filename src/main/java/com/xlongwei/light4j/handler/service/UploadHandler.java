@@ -25,10 +25,10 @@ public class UploadHandler extends AbstractHandler {
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		String type = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "type"), "image");
-		if(UploadUtil.CONFIRM.equals(type)) {
+		if(UploadUtil.CONFIRM.equals(type) || UploadUtil.TRASH.equals(type)) {
 			String name = HandlerUtil.getParam(exchange, "name");
 			boolean move = UploadUtil.move(name, UploadUtil.CONFIRM);
-			HandlerUtil.setResp(exchange, StringUtil.params(UploadUtil.CONFIRM, move ? "1" : "0"));
+			HandlerUtil.setResp(exchange, StringUtil.params(type, move ? "1" : "0"));
 		}else {
 			String base64 = HandlerUtil.getParam(exchange, "base64");
 			String path = type;

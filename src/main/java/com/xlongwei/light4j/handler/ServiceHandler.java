@@ -185,7 +185,7 @@ public class ServiceHandler implements LightHttpHandler {
 				}
 			}
 			String value = JSONObject.toJSONString(counts);
-			log.info("update service counter key: {} count: {}", key, value);
+			log.debug("update service counter key: {} count: {}", key, value);
 			RedisConfig.persist(key, value);
 		}
 	}

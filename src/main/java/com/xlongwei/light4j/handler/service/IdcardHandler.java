@@ -43,9 +43,11 @@ public class IdcardHandler extends AbstractHandler {
 		int areaMin = 2, areaYear = 10, areaBirth = 14;
 		if(idNumber.length()>=areaMin) {
 			String area = idNumber.substring(0,Math.min(idNumber.length(), 6));
-			String areas = StringUtil.join(IdCardUtil.areas(area), null, null, null);
-			params.put("area", area);
-			params.put("areas", areas);
+			if(StringUtil.isNumbers(area)) {
+				String areas = StringUtil.join(IdCardUtil.areas(area), null, null, null);
+				params.put("area", area);
+				params.put("areas", areas);
+			}
 			if(idNumber.length()>=areaYear) {
 				String year = idNumber.length() == 15 ? "19" + idNumber.substring(6,8) : idNumber.substring(6, 10);
 				String month = idNumber.length() == 15 ? idNumber.substring(8, 10) : (idNumber.length()>=12 ? idNumber.substring(10,12) : "01");
@@ -56,7 +58,7 @@ public class IdcardHandler extends AbstractHandler {
 				if(idNumber.length()>=areaBirth) {
 					params.put("birth", year+month+day);
 				}
-				if(serial != null) {
+				if(serial != null && StringUtil.isNumbers(serial)) {
 					boolean male = Integer.parseInt(serial)%2==1;
 					params.put("male", Boolean.toString(male));
 					params.put("sex", male?"男":"女");
