@@ -31,12 +31,15 @@ public class PinyinUtil {
 	 * return pinyin of zhStr, eg: zhongguo for 中国
 	 */
 	public static String getPinyin(String zhStr) {
-		StringBuilder pinyin = new StringBuilder();
-		char[] zhCharArray = zhStr.toCharArray();
-		for (char zhChar : zhCharArray) {
-			pinyin.append(getPinyin(zhChar));
+		if(StringUtil.isBlank(zhStr)) {
+			return "";
 		}
-		return pinyin.toString();
+		String[] pinyin = getPinyin(zhStr, 0, 1, 0);
+		StringBuilder sb = new StringBuilder();
+		for(String str : pinyin) {
+			sb.append(str);
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -184,32 +187,7 @@ public class PinyinUtil {
 					// 非空 > 空
 					return 1;
 				} else {
-					// 比较前min个字符
-					int min = Math.min(o1.length(), o2.length());
-					for (int i = 0; i < min; i++) {
-						char c1 = o1.charAt(i), c2 = o2.charAt(i);
-						if (StringUtil.isChinese(c1)) {
-							if (!StringUtil.isChinese(c2)) {
-								// 中文 > 英文
-								return 1;
-							} else if (c1 != c2)
-							 {
-								// 两个中文比较
-								return getPinyin(c1).compareTo(getPinyin(c2));
-							}
-						} else {
-							if (StringUtil.isChinese(c2)) {
-								// 英文 < 中文
-								return -1; 
-							} else if (c1 != c2)
-							 {
-								// 两个英文比较
-								return String.valueOf(c1).compareToIgnoreCase(String.valueOf(false));
-							}
-						}
-					}
-					// 短串 < 长串
-					return o1.length() < min ? -1 : (o2.length() < min ? 1 : 0);
+					return getPinyin(o1).compareTo(getPinyin(o2));
 				}
 			}
 	};
