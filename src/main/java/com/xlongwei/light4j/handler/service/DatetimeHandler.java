@@ -25,6 +25,7 @@ import com.xlongwei.light4j.util.ZhDate;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateRange;
 import cn.hutool.core.date.Week;
+import cn.hutool.core.date.Zodiac;
 import io.undertow.server.HttpServerExchange;
 
 /**
@@ -119,6 +120,7 @@ public class DatetimeHandler extends AbstractHandler {
 		Week week = cn.hutool.core.date.DateUtil.dayOfWeekEnum(day);
 		map.put("week", week.getValue()==1 ? 7 : week.getValue()-1);
 		map.put("isweekend", week==Week.SATURDAY || week==Week.SUNDAY);
+		map.put("zodiac", Zodiac.getZodiac(day));
 		convert(exchange, day, map);
 		holiday(exchange, day, map);
 	}
@@ -229,6 +231,7 @@ public class DatetimeHandler extends AbstractHandler {
 				map.put("chinese", zhDate.chinese());
 				map.put("ganzhi", zhDate.ganzhi());
 				map.put("shengxiao", zhDate.shengxiao());
+				map.put("zodiac", Zodiac.getZodiac(day));
 			}else {
 				map.put("status", "农历日期不支持");
 			}
