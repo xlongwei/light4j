@@ -9,4 +9,11 @@ CREATE TABLE `district` (
   KEY `idx_province_city_name` (`province`,`city`,`cityName`),
   KEY `idx_city_county_name` (`city`,`county`,`countyName`),
   KEY `idx_province_name` (`province`,`provinceName`)
-) ENGINE=InnoDB DEFAULT CHARSET=gbk COMMENT='行政区划';
+) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='行政区划';
+
+CREATE TABLE `ecdict` (
+  `word` varchar(64) NOT NULL COMMENT '单词',
+  `phonetic` varchar(64) NOT NULL COMMENT '音标',
+  PRIMARY KEY (`word`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='英语单词和音标';
+

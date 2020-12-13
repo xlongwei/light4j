@@ -32,6 +32,7 @@ public class MySqlUtil {
 		if(!SQLMANAGER.isProductMode()) {
 			SQLMANAGER.setInters(INTERS);
 		}
+		TaskUtil.addShutdownHook(DATASOURCE);
 	}
 	
 	/** QueryRunner回调 */

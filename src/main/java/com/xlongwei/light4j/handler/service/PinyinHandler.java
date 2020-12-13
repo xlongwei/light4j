@@ -2,10 +2,13 @@ package com.xlongwei.light4j.handler.service;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
+import com.xlongwei.light4j.util.EcdictUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.PinyinUtil;
@@ -31,7 +34,7 @@ public class PinyinHandler extends AbstractHandler {
 			boolean isWord = text.length()==1;
 			String[] pinyin = isWord ? PinyinUtil.getPinyin(text.charAt(0), caseType, toneType, vcharType) : PinyinUtil.getPinyin(text, caseType, toneType, vcharType);
 			String join = StringUtil.join(Arrays.asList(pinyin), null, null, " ");
-			Map<String, String> map = new HashMap<>(2);
+			Map<String, Object> map = new HashMap<>(2);
 			map.put("pinyin", join);
 			if(!isWord) {
 				StringBuilder header = new StringBuilder();
@@ -39,6 +42,22 @@ public class PinyinHandler extends AbstractHandler {
 					header.append(py.charAt(0));
 				}
 				map.put("header", header.toString());
+				List<String[]> symbols = new LinkedList<>();
+				for(String sentence : EcdictUtil.sentences(text)) {
+					if(StringUtil.isHasChinese(sentence)) {
+						pinyin = PinyinUtil.getPinyin(sentence, caseType, toneType, vcharType);
+						for(int i=0,j=pinyin.length;i<j;i++) {
+							symbols.add(new String[] {sentence.substring(i, i+1), pinyin[i]});
+						}
+					}else {
+						List<String> words = EcdictUtil.words(sentence);
+						List<String> pinyins = EcdictUtil.pinyin(words);
+						for(int i=0,j=words.size();i<j;i++) {
+							symbols.add(new String[] {words.get(i), pinyins.get(i)});
+						}
+					}
+				}
+				map.put("words", symbols);
 			}
 			HandlerUtil.setResp(exchange, map);
 		}

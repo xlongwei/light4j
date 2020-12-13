@@ -1226,7 +1226,7 @@ public class StringUtil {
 	
 	/** 去掉sql参数里的特殊字符 */
 	public static String sqlParam(String sqlParam) {
-		return sqlParam.replaceAll("([';]+|(--)+)", "");
+		return isBlank(sqlParam) ? "" : sqlParam.replaceAll("([;]+|(--)+)", "").replace("'", "\\'");
 	}
 	
 	/** 解析颜色，支持oxffffff和(r,g,b)两种格式 */
