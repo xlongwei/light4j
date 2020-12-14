@@ -1,13 +1,18 @@
 package com.xlongwei.light4j.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.ListUtils;
+
 import com.xlongwei.light4j.beetl.model.Ecdict;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.CharUtil;
 
 /**
@@ -82,8 +87,21 @@ public class EcdictUtil {
 	}
 	/** 获取多个单词的音标 */
 	public static Map<String, String> phonetic(Set<String> words) {
-		List<Ecdict> list = MySqlUtil.SQLMANAGER.lambdaQuery(Ecdict.class).andIn("word", words).select("word","phonetic");
-		return list.stream().collect(Collectors.toMap(ec -> ec.getWord(), ec -> ec.getPhonetic(), (v1,v2) -> v1));
+		if(CollUtil.isEmpty(words)) return Collections.emptyMap();
+		int pageSize = 100;
+		if(words.size() <= pageSize) {
+			List<Ecdict> list = MySqlUtil.SQLMANAGER.lambdaQuery(Ecdict.class).andIn("word", words).select("word","phonetic");
+			return list.stream().collect(Collectors.toMap(ec -> ec.getWord(), ec -> ec.getPhonetic(), (v1,v2) -> v1));
+		}else {
+			List<List<String>> partitions = ListUtils.partition(new ArrayList<>(words), pageSize);
+			Map<String, String> phonetic = new HashMap<>(words.size());
+			for(List<String> partition : partitions) {
+				List<Ecdict> list = MySqlUtil.SQLMANAGER.lambdaQuery(Ecdict.class).andIn("word", partition).select("word","phonetic");
+				Map<String, String> map = list.stream().collect(Collectors.toMap(ec -> ec.getWord(), ec -> ec.getPhonetic(), (v1,v2) -> v1));
+				phonetic.putAll(map);
+			}
+			return phonetic;
+		}
 	}
 	/** 判断英文单词是否合法 */
 	public static boolean isWord(String word) {
