@@ -2,7 +2,6 @@ package com.xlongwei.light4j.util;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,20 +63,6 @@ public class IdCardUtil {
 			}
 		}
 		return list;
-	}
-
-	/** 根据生日计算年龄 */
-	public static int age(String year, String month, String day) {
-		Calendar now = Calendar.getInstance();
-		int y1 = Integer.parseInt(year), y2 = now.get(Calendar.YEAR);
-		int m1 = Integer.parseInt(month), m2 = now.get(Calendar.MONTH) + 1;
-		int d1 = Integer.parseInt(day), d2 = now.get(Calendar.DAY_OF_MONTH);
-		int age = y2 - y1;
-		boolean beforeBirthday = m1 > m2 || (m1 == m2 && d1 > d2);
-		if (beforeBirthday) {
-			age--;
-		}
-		return age < 0 ? 0 : age;
 	}
 
 }

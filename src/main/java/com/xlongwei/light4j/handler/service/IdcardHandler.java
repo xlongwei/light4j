@@ -20,7 +20,9 @@ import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.IdCardUtil;
 import com.xlongwei.light4j.util.PinyinUtil;
 import com.xlongwei.light4j.util.StringUtil;
+import com.xlongwei.light4j.util.ZhDate;
 
+import cn.hutool.core.date.Zodiac;
 import io.undertow.server.HttpServerExchange;
 
 /**
@@ -38,33 +40,50 @@ public class IdcardHandler extends AbstractHandler {
 		}
 	}
 
-	private Map<String, String> idcardInfo(String idNumber) {
+	public static Map<String, String> idcardInfo(String idNumber) {
 		boolean valid = StringUtil.isIdNumber(idNumber);
 		Map<String, String> params = StringUtil.params("valid", String.valueOf(valid));
-		int areaMin = 2, areaYear = 10, areaBirth = 14;
-		if(idNumber.length()>=areaMin) {
+		if(idNumber.length()>=2) {//行政区划
 			String area = idNumber.substring(0,Math.min(idNumber.length(), 6));
 			if(StringUtil.isNumbers(area)) {
 				String areas = StringUtil.join(IdCardUtil.areas(area), null, null, null);
-				params.put("area", area);
-				params.put("areas", areas);
+				if(area.length()==6) params.put("area", area);
+				if(!StringUtil.isBlank(areas)) params.put("areas", areas);
 			}
-			if(idNumber.length()>=areaYear) {
-				String year = idNumber.length() == 15 ? "19" + idNumber.substring(6,8) : idNumber.substring(6, 10);
-				String month = idNumber.length() == 15 ? idNumber.substring(8, 10) : (idNumber.length()>=12 ? idNumber.substring(10,12) : "01");
-				String day = idNumber.length() ==15 ? idNumber.substring(10, 12) : (idNumber.length()>=areaBirth ? idNumber.substring(12, 14) : "01");
-				String serial = idNumber.length() ==15 ? idNumber.substring(12, 15) : (idNumber.length()==18 ? idNumber.substring(14, 17) : null);
-				int age = IdCardUtil.age(year, month, day);
+		}
+		boolean old = idNumber.length() == 15 && !"19".equals(idNumber.substring(6, 8));
+		if(params.containsKey("area") && idNumber.length()>=10) {//出生日期
+			String year = old ? "19" + idNumber.substring(6,8) : idNumber.substring(6, 10);
+			String month = old ? idNumber.substring(8, 10) : (idNumber.length()>=12 ? idNumber.substring(10,12) : "01");
+			String day = old ? idNumber.substring(10, 12) : (idNumber.length()>=14 ? idNumber.substring(12, 14) : "01");
+			Date birth = DateUtil.parse(year+month+day);
+			if(birth != null && birth.before(new Date())) {
+				int age = cn.hutool.core.date.DateUtil.ageOfNow(birth);
 				params.put("age", String.valueOf(age));
-				if(idNumber.length()>=areaBirth) {
-					params.put("birth", year+month+day);
-				}
-				if(serial != null && StringUtil.isNumbers(serial)) {
-					boolean male = Integer.parseInt(serial)%2==1;
-					params.put("male", Boolean.toString(male));
-					params.put("sex", male?"男":"女");
+				params.put("year", year);
+				String birthday = DateUtil.format(birth, "yyyyMMdd");
+				if(!old && idNumber.length()>=14 && birthday.equals(idNumber.substring(6, 14)) || (old && idNumber.length()>=12 && birthday.endsWith(idNumber.substring(6, 12)))) {
+					params.put("birth", birthday);
+					params.put("zodiac", Zodiac.getZodiac(birth));
+					ZhDate zhDate = ZhDate.fromDate(birth);
+					if(zhDate != null) {
+						params.put("nongli", zhDate.toString());
+						params.put("chinese", zhDate.chinese());
+						params.put("ganzhi", zhDate.ganzhi());
+						params.put("shengxiao", zhDate.shengxiao());
+					}
 				}
 			}
+		}
+		if(params.containsKey("birth") && (old || idNumber.length()==18)) {//序号+性别
+			String serial = old ? idNumber.substring(12, 15) : (idNumber.length()==18 ? idNumber.substring(14, 17) : null);
+			if(serial != null && StringUtil.isNumbers(serial)) {
+				boolean male = Integer.parseInt(serial)%2==1;
+				params.put("male", Boolean.toString(male));
+				params.put("sex", male?"男":"女");
+			}
+		}else if(idNumber.length()>15 && idNumber.length()!=18) {
+			params.put("error", "身份证长度有误="+idNumber.length());
 		}
 		return params;
 	}
