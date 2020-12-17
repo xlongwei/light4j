@@ -122,6 +122,19 @@
     	context.close();
     }
 
+    var socketChat = socket, socketService = null;
+    function switchChatService(){
+    	if(wsurl.endsWith('/chat')){
+    		wsurl = wsurl.replace('/chat', '/service')
+    		if(!socketService) {
+    			socketService = new ReconnectingWebSocket(wsurl);
+    			socketService.onmessage = socket.onmessage;
+    		}
+    		socket = socketService;
+    	}else{
+    		socket = socketChat;
+    	}
+    }
 </script>
 <style type="text/css">
     html,body {width:100%;height:100%;}
@@ -176,7 +189,7 @@
         </div>
 
         <form onsubmit="return false;" class="chatform" action="">
-            <label for="msg" style="display:inline">Message</label>
+            <label for="msg" style="display:inline" ondblclick="switchChatService()">Message</label>
             <input type="text" name="message" id="msg"  onkeypress="if(event.keyCode==13) { send(this.form.message.value); this.value='' } " placeholder="支持粘贴QQ截图"/>
             <label title="选择图片"><input type="file" style="display:none" onchange="onSelect()" accept="image/*">➕</label>
             <label title="按住录音，松开发送" onmousedown="startRecord()" onmouseup="stopRecord()">录音</label>
