@@ -94,4 +94,9 @@ public abstract class WebSocketAbstractCallback implements WebSocketConnectionCa
 	protected String getClientPort(WebSocketChannel channel) {
 		return serverMapClients.get(getServerPort(channel));
 	}
+	
+	protected String getClientIp(WebSocketChannel channel) {
+		String clientPort = getClientPort(channel);
+		return StringUtil.isBlank(clientPort) ? "" : clientPort.substring(1, clientPort.lastIndexOf(':'));
+	}
 }

@@ -25,7 +25,7 @@ public class WebSocketChatCallback extends WebSocketAbstractCallback {
 
 	@Override
 	protected void onTextMessage(WebSocketChannel channel, String text) {
-		String msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), channel.getSourceAddress().getHostString(), channel.getPeerConnections().size(), text);
+		String msg = String.format("<br>&nbsp;[%s]%s/%d：<br>&nbsp;%s", DateUtil.format(SystemClock.date()), getClientIp(channel), channel.getPeerConnections().size(), text);
 		if("mute".equals(text)) {
 			mute = !mute;
 			log.info("chat mute: {}", mute);

@@ -3,6 +3,8 @@ package com.xlongwei.light4j.provider;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.xnio.IoUtils;
+
 import com.alibaba.fastjson.JSONObject;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler;
@@ -11,6 +13,7 @@ import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.JsonUtil;
 
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 import io.undertow.websockets.core.WebSocketChannel;
 import jodd.util.StringUtil;
 
@@ -29,6 +32,15 @@ public class WebSocketServiceCallback extends WebSocketAbstractCallback {
 			AbstractHandler service = ServiceHandler.handlers.get(handler);
 			if(service != null) {
 				HttpServerExchange exchange = new HttpServerExchange(null);
+				exchange.getRequestHeaders().add(Headers.X_FORWARDED_FOR, getClientIp(channel));
+				exchange.setSourceAddress(channel.getSourceAddress());
+				boolean ipsConfig = HandlerUtil.ipsConfig(exchange, handler);
+				ServiceHandler.serviceCount(handler);
+				if(!ipsConfig) {
+					sendText(channel, "{\"error\":\"access is limited\"}");
+					IoUtils.safeClose(channel);
+					return;
+				}
 				exchange.putAttachment(AbstractHandler.PATH, StringUtils.isBlank(path)?"":path);
 				if(request.containsKey("data")) {
 					//{"handler":"datetime","path":"info","data":{"day":"2020-12-17"}}
@@ -49,7 +61,7 @@ public class WebSocketServiceCallback extends WebSocketAbstractCallback {
 						sendText(channel, ServiceHandler.BAD_REQUEST);
 					}
 				}catch(Exception e) {
-					sendText(channel, e.getMessage());
+					sendText(channel, "{\"error\":\""+e.getMessage()+"\"}");
 				}
 			}
 		}

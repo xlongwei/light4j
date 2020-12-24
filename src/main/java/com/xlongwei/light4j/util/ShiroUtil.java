@@ -70,12 +70,14 @@ public class ShiroUtil {
 			roles.forEach(role -> {
 //				String perms = RedisConfig.hget(RedisConfig.CACHE, ROLES, role);
 				String perms = ShiroUtil.roles.get(role);
-				String[] permArray = StringUtils.split(perms, StringUtils.DEFAULT_DELIMITER_CHAR, '"', '"', true, true);
-				for(String perm : permArray) {
-					if(perm.indexOf('"') > -1) {
-						perm = perm.substring(0, perm.length()-1);
+				if(!StringUtil.isBlank(perms)) {
+					String[] permArray = StringUtils.split(perms, StringUtils.DEFAULT_DELIMITER_CHAR, '"', '"', true, true);
+					for(String perm : permArray) {
+						if(perm.indexOf('"') > -1) {
+							perm = perm.substring(0, perm.length()-1);
+						}
+						permList.add(perm);
 					}
-					permList.add(perm);
 				}
 			});
 			return permList;
