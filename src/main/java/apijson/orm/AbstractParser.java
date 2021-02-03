@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.TimeoutException;
 
 import javax.activation.UnsupportedDataTypeException;
@@ -256,10 +258,16 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 	@Override
 	public SQLExecutor getSQLExecutor() {
+		if (sqlExecutor == null) {
+			sqlExecutor = createSQLExecutor();
+		}
 		return sqlExecutor;
 	}
 	@Override
 	public Verifier<T> getVerifier() {
+		if (verifier == null) {
+			verifier = createVerifier().setVisitor(getVisitor());
+		}
 		return verifier;
 	}
 
@@ -387,9 +395,13 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		long duration = endTime - startTime;
 
 		if (Log.DEBUG) { //用 | 替代 /，避免 APIJSON ORM，APIAuto 等解析路径错误
-			requestObject.put("sql:generate|cache|execute|maxExecute", sqlExecutor.getGeneratedSQLCount() + "|" + sqlExecutor.getCachedSQLCount() + "|" + sqlExecutor.getExecutedSQLCount() + "|" + getMaxSQLCount());
+			requestObject.put("sql:generate|cache|execute|maxExecute", getSQLExecutor().getGeneratedSQLCount() + "|" + getSQLExecutor().getCachedSQLCount() + "|" + getSQLExecutor().getExecutedSQLCount() + "|" + getMaxSQLCount());
 			requestObject.put("depth:count|max", queryDepth + "|" + getMaxQueryDepth());
 			requestObject.put("time:start|duration|end", startTime + "|" + duration + "|" + endTime);
+			if (error != null) {
+				requestObject.put("throw", error.getClass().getName());
+				requestObject.put("trace", error.getStackTrace());
+			}
 		}
 
 		onClose();
@@ -412,7 +424,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 	@Override
 	public void onVerifyLogin() throws Exception {
-		verifier.verifyLogin();
+		getVerifier().verifyLogin();
 	}
 	@Override
 	public void onVerifyContent() throws Exception {
@@ -437,7 +449,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 					config.setRole(getVisitor().getId() == null ? RequestRole.UNKNOWN : RequestRole.LOGIN);
 				}
 			}
-			verifier.verify(config);
+			getVerifier().verifyAccess(config);
 		}
 
 	}
@@ -473,7 +485,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		JSONObject object = null;
 		String error = "";
 		try {
-			object = getStructure("Request", JSONRequest.KEY_TAG, tag, version);
+			object = getStructure("Request", method.name(), tag, version);
 		} catch (Exception e) {
 			error = e.getMessage();
 		}
@@ -502,7 +514,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		//获取指定的JSON结构 >>>>>>>>>>>>>>
 
 		//JSONObject clone 浅拷贝没用，Structure.parse 会导致 structure 里面被清空，第二次从缓存里取到的就是 {}
-		return Structure.parseRequest(method, name, target, request, maxUpdateCount, creator);
+		return getVerifier().verifyRequest(method, name, target, request, maxUpdateCount, getGlobleDatabase(), getGlobleSchema(), creator);
 	}
 
 
@@ -667,41 +679,90 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 	/**获取Request或Response内指定JSON结构
 	 * @param table
-	 * @param key
-	 * @param value
+	 * @param method
+	 * @param tag
 	 * @param version
 	 * @return
 	 * @throws Exception
 	 */
 	@Override
-	public JSONObject getStructure(@NotNull String table, String key, String value, int version) throws Exception  {
-		//获取指定的JSON结构 <<<<<<<<<<<<<<
-		SQLConfig config = createSQLConfig().setMethod(GET).setTable(table);
-		config.setPrepared(false);
-		config.setColumn(Arrays.asList("structure"));
+	public JSONObject getStructure(@NotNull String table, String method, String tag, int version) throws Exception  {
+		// TODO 目前只使用 Request 而不使用 Response，所以这里写死用 REQUEST_MAP，以后可能 Response 表也会与 Request 表合并，用字段来区分
+		String cacheKey = AbstractVerifier.getCacheKeyForRequest(method, tag);
+		SortedMap<Integer, JSONObject> versionedMap = AbstractVerifier.REQUEST_MAP.get(cacheKey);
 
-		Map<String, Object> where = new HashMap<String, Object>();
-		where.put("method", requestMethod.name());
-		if (key != null) {
-			where.put(key, value);
-		}
-		if (version > 0) {
-			where.put(JSONRequest.KEY_VERSION + "{}", ">=" + version);
-		}
-		config.setWhere(where);
-		config.setOrder(JSONRequest.KEY_VERSION + (version > 0 ? "+" : "-"));
-		config.setCount(1);
+		JSONObject result = versionedMap == null ? null : versionedMap.get(Integer.valueOf(version));
+		if (result == null) {  // version <= 0 时使用最新，version > 0 时使用 > version 的最接近版本（最小版本）
+			Set<Entry<Integer, JSONObject>> set = versionedMap == null ? null : versionedMap.entrySet();
 
-		if (sqlExecutor == null) {
-			sqlExecutor = createSQLExecutor();
+			if (set != null && set.isEmpty() == false) {
+				Entry<Integer, JSONObject> maxEntry = null;
+
+				for (Entry<Integer, JSONObject> entry : set) {
+					if (entry == null || entry.getKey() == null || entry.getValue() == null) {
+						continue;
+					}
+
+					if (version <= 0 || version == entry.getKey()) {  // 这里应该不会出现相等，因为上面 versionedMap.get(Integer.valueOf(version))
+						maxEntry = entry;
+						break;
+					}
+
+					if (entry.getKey() < version) {
+						break;
+					}
+
+					maxEntry = entry;
+				}
+
+				result = maxEntry == null ? null : maxEntry.getValue();
+			}
+
+			if (result != null) {  // 加快下次查询，查到值的话组合情况其实是有限的，不属于恶意请求
+				if (versionedMap == null) {
+					versionedMap = new TreeMap<>((o1, o2) -> {
+						return o2 == null ? -1 : o2.compareTo(o1);  // 降序
+					});
+				}
+
+				versionedMap.put(Integer.valueOf(version), result);
+				AbstractVerifier.REQUEST_MAP.put(cacheKey, versionedMap);
+			}
 		}
 
-		//too many connections error: 不try-catch，可以让客户端看到是服务器内部异常
-		JSONObject result = sqlExecutor.execute(config, false);
-		return getJSONObject(result, "structure");//解决返回值套了一层 "structure":{}
+		if (result == null) {
+			if (AbstractVerifier.REQUEST_MAP.isEmpty() == false) {
+				return null;  // 已使用 REQUEST_MAP 缓存全部，但没查到
+			}
+
+			//获取指定的JSON结构 <<<<<<<<<<<<<<
+			SQLConfig config = createSQLConfig().setMethod(GET).setTable(table);
+			config.setPrepared(false);
+			config.setColumn(Arrays.asList("structure"));
+
+			Map<String, Object> where = new HashMap<String, Object>();
+			where.put("method", method);
+			where.put(JSONRequest.KEY_TAG, tag);
+
+			if (version > 0) {
+				where.put(JSONRequest.KEY_VERSION + "{}", ">=" + version);
+			}
+			config.setWhere(where);
+			config.setOrder(JSONRequest.KEY_VERSION + (version > 0 ? "+" : "-"));
+			config.setCount(1);
+
+			//too many connections error: 不try-catch，可以让客户端看到是服务器内部异常
+			result = getSQLExecutor().execute(config, false);
+
+			// version, method, tag 组合情况太多了，JDK 里又没有 LRUCache，所以要么启动时一次性缓存全部后面只用缓存，要么每次都查数据库
+			//			versionedMap.put(Integer.valueOf(version), result);
+			//			AbstractVerifier.REQUEST_MAP.put(cacheKey, versionedMap);
+		}
+
+		return getJSONObject(result, "structure"); //解决返回值套了一层 "structure":{}
 	}
 
-
+	protected Map<String, ObjectParser> arrayObjectParserCacheMap = new HashMap<>();
 
 	//	protected SQLConfig itemConfig;
 	/**获取单个对象，该对象处于parentObject内
@@ -725,9 +786,10 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		}
 
 		int type = arrayConfig == null ? 0 : arrayConfig.getType();
+		int position = arrayConfig == null ? 0 : arrayConfig.getPosition();
 
 		String[] arr = StringUtil.split(parentPath, "/");
-		if (arrayConfig == null || arrayConfig.getPosition() == 0) {
+		if (position == 0) {
 			int d = arr == null ? 1 : arr.length + 1;
 			if (queryDepth < d) {
 				queryDepth = d;
@@ -738,21 +800,36 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			}
 		}
 
-		ObjectParser op = createObjectParser(request, parentPath, name, arrayConfig, isSubquery).parse();
+		boolean isTable = apijson.JSONObject.isTableKey(name);
+		boolean isArrayMainTable = isSubquery == false && isTable && type == SQLConfig.TYPE_ITEM_CHILD_0 && arrayConfig != null && RequestMethod.isGetMethod(arrayConfig.getMethod(), true);
+		boolean isReuse = isArrayMainTable && position > 0;
 
+		ObjectParser op = null;
+		if (isReuse) {  // 数组主表使用专门的缓存数据
+			op = arrayObjectParserCacheMap.get(parentPath.substring(0, parentPath.lastIndexOf("[]") + 2));
+		}
+		
+		if (op == null) {
+			op = createObjectParser(request, parentPath, arrayConfig, isSubquery, isTable, isArrayMainTable);
+		}
+		op = op.parse(name, isReuse);
 
 		JSONObject response = null;
-		if (op != null) {//SQL查询结果为空时，functionMap和customMap还有没有意义？
-			if (arrayConfig == null) {//Common
+		if (op != null) {//SQL查询结果为空时，functionMap和customMap没有意义
+			
+			if (arrayConfig == null) { //Common
 				response = op.setSQLConfig().executeSQL().response();
 			}
 			else {//Array Item Child
 				int query = arrayConfig.getQuery();
 
 				//total 这里不能用arrayConfig.getType()，因为在createObjectParser.onChildParse传到onObjectParse时已被改掉
-				if (type == SQLConfig.TYPE_ITEM_CHILD_0 && query != JSONRequest.QUERY_TABLE
-						&& arrayConfig.getPosition() == 0) {
+				if (type == SQLConfig.TYPE_ITEM_CHILD_0 && query != JSONRequest.QUERY_TABLE && position == 0) {
+					
+					RequestMethod method = op.getMethod();
 					JSONObject rp = op.setMethod(RequestMethod.HEAD).setSQLConfig().executeSQL().getSqlReponse();
+					op.setMethod(method);
+					
 					if (rp != null) {
 						int index = parentPath.lastIndexOf("]/");
 						if (index >= 0) {
@@ -793,14 +870,21 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 					response = null;//不再往后查询
 				} else {
 					response = op
-							.setSQLConfig(arrayConfig.getCount(), arrayConfig.getPage(), arrayConfig.getPosition())
+							.setSQLConfig(arrayConfig.getCount(), arrayConfig.getPage(), position)
 							.executeSQL()
 							.response();
 					//					itemConfig = op.getConfig();
 				}
 			}
 
-			op.recycle();
+			if (isArrayMainTable) {
+				if (position == 0) {  // 提取并缓存数组主表的列表数据
+					arrayObjectParserCacheMap.put(parentPath.substring(0, parentPath.lastIndexOf("[]") + 2), op);
+				}
+			}
+//			else {
+//				op.recycle();
+//			}
 			op = null;
 		}
 
@@ -884,46 +968,47 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			return null;
 		}
 
-
-		int size = count2 == 0 ? max : count2;//count为每页数量，size为第page页实际数量，max(size) = count
-		Log.d(TAG, "onArrayParse  size = " + size + "; page = " + page);
-
-
-		//key[]:{Table:{}}中key equals Table时 提取Table
-		int index = isSubquery || name == null ? -1 : name.lastIndexOf("[]");
-		String childPath = index <= 0 ? null : Pair.parseEntry(name.substring(0, index), true).getKey(); // Table-key1-key2...
-
-		//判断第一个key，即Table是否存在，如果存在就提取
-		String[] childKeys = StringUtil.split(childPath, "-", false);
-		if (childKeys == null || childKeys.length <= 0 || request.containsKey(childKeys[0]) == false) {
-			childKeys = null;
-		}
+		JSONArray response = null;
+		try {
+			int size = count2 == 0 ? max : count2;//count为每页数量，size为第page页实际数量，max(size) = count
+			Log.d(TAG, "onArrayParse  size = " + size + "; page = " + page);
 
 
-		//Table<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-		JSONArray response = new JSONArray();
-		SQLConfig config = createSQLConfig()
-				.setMethod(requestMethod)
-				.setCount(size)
-				.setPage(page)
-				.setQuery(query2)
-				.setJoinList(onJoinParse(join, request));
-
-		JSONObject parent;
-		//生成size个
-		for (int i = 0; i < (isSubquery ? 1 : size); i++) {
-			parent = onObjectParse(request, isSubquery ? parentPath : path, isSubquery ? name : "" + i, config.setType(SQLConfig.TYPE_ITEM).setPosition(i), isSubquery);
-			if (parent == null || parent.isEmpty()) {
-				break;
-			}
 			//key[]:{Table:{}}中key equals Table时 提取Table
-			response.add(getValue(parent, childKeys)); //null有意义
-		}
-		//Table>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+			int index = isSubquery || name == null ? -1 : name.lastIndexOf("[]");
+			String childPath = index <= 0 ? null : Pair.parseEntry(name.substring(0, index), true).getKey(); // Table-key1-key2...
+
+			//判断第一个key，即Table是否存在，如果存在就提取
+			String[] childKeys = StringUtil.split(childPath, "-", false);
+			if (childKeys == null || childKeys.length <= 0 || request.containsKey(childKeys[0]) == false) {
+				childKeys = null;
+			}
 
 
-		/*
-		 * 支持引用取值后的数组
+			//Table<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			response = new JSONArray();
+			SQLConfig config = createSQLConfig()
+					.setMethod(requestMethod)
+					.setCount(size)
+					.setPage(page)
+					.setQuery(query2)
+					.setJoinList(onJoinParse(join, request));
+
+			JSONObject parent;
+			//生成size个
+			for (int i = 0; i < (isSubquery ? 1 : size); i++) {
+				parent = onObjectParse(request, isSubquery ? parentPath : path, isSubquery ? name : "" + i, config.setType(SQLConfig.TYPE_ITEM).setPosition(i), isSubquery);
+				if (parent == null || parent.isEmpty()) {
+					break;
+				}
+				//key[]:{Table:{}}中key equals Table时 提取Table
+				response.add(getValue(parent, childKeys)); //null有意义
+			}
+			//Table>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+			/*
+			 * 支持引用取值后的数组
 			{
 			    "User-id[]": {
 			        "User": {
@@ -936,18 +1021,19 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			        }
 			    }
 			}
-		 */
-		Object fo = childKeys == null || response.isEmpty() ? null : response.get(0);
-		if (fo instanceof Boolean || fo instanceof Number || fo instanceof String) { //[{}] 和 [[]] 都没意义
-			putQueryResult(path, response);
+			 */
+			Object fo = childKeys == null || response.isEmpty() ? null : response.get(0);
+			if (fo instanceof Boolean || fo instanceof Number || fo instanceof String) { //[{}] 和 [[]] 都没意义
+				putQueryResult(path, response);
+			}
+		} finally {
+
+			//后面还可能用到，要还原
+			request.put(JSONRequest.KEY_QUERY, query);
+			request.put(JSONRequest.KEY_COUNT, count);
+			request.put(JSONRequest.KEY_PAGE, page);
+			request.put(JSONRequest.KEY_JOIN, join);
 		}
-
-
-		//后面还可能用到，要还原
-		request.put(JSONRequest.KEY_QUERY, query);
-		request.put(JSONRequest.KEY_COUNT, count);
-		request.put(JSONRequest.KEY_PAGE, page);
-		request.put(JSONRequest.KEY_JOIN, join);
 
 		if (Log.DEBUG) {
 			Log.i(TAG, "onArrayParse  return response = \n" + JSON.toJSONString(response) + "\n>>>>>>>>>>>>>>>\n\n\n");
@@ -1094,6 +1180,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 	private static final List<String> JOIN_COPY_KEY_LIST;
 	static {//不全
 		JOIN_COPY_KEY_LIST = new ArrayList<String>();
+		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_ROLE);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_DATABASE);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_SCHEMA);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_COLUMN);
@@ -1101,14 +1188,13 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_GROUP);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_HAVING);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_ORDER);
+		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_RAW);
 	}
 
-	/**
-	 * 取指定json对象的id集合
+	/**取指定 JSON 对象的 id 集合
 	 * @param table
 	 * @param key
 	 * @param obj
-	 * @param targetKey 
 	 * @return null ? 全部 : 有限的数组
 	 */
 	private JSONObject getJoinObject(String table, JSONObject obj, String key) {
@@ -1121,8 +1207,8 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			return null;
 		}
 
-		//取出所有join条件
-		JSONObject requestObj = new JSONObject(true);//(JSONObject) obj.clone();//
+		// 取出所有 join 条件
+		JSONObject requestObj = new JSONObject(true); // (JSONObject) obj.clone();
 		Set<String> set = new LinkedHashSet<>(obj.keySet());
 		for (String k : set) {
 			if (StringUtil.isEmpty(k, true)) {
@@ -1343,7 +1429,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 		if (parent != null) {
 			Log.i(TAG, "getValueByPath >> get from queryResultMap >> return  parent.get(keys[keys.length - 1]);");
-			target = parent.get(keys[keys.length - 1]); //值为null应该报错NotExistExeption，一般都是id关联，不可为null，否则可能绕过安全机制
+			target = keys == null || keys.length <= 0 ? parent : parent.get(keys[keys.length - 1]); //值为null应该报错NotExistExeption，一般都是id关联，不可为null，否则可能绕过安全机制
 			if (target != null) {
 				Log.i(TAG, "getValueByPath >> getValue >> return target = " + target);
 				return target;
@@ -1379,6 +1465,20 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 
 	public static final String KEY_CONFIG = "config";
+	
+	protected Map<String, List<JSONObject>> arrayMainCacheMap = new HashMap<>();
+	public void putArrayMainCache(String arrayPath, List<JSONObject> mainTableDataList) {
+		arrayMainCacheMap.put(arrayPath, mainTableDataList);
+	}
+	public List<JSONObject> getArrayMainCache(String arrayPath) {
+		return arrayMainCacheMap.get(arrayPath);
+	}
+	public JSONObject getArrayMainCacheItem(String arrayPath, int position) {
+		List<JSONObject> list = getArrayMainCache(arrayPath);
+		return list == null || position >= list.size() ? null : list.get(position);
+	}
+	
+	
 
 	/**执行 SQL 并返回 JSONObject
 	 * @param config
@@ -1399,14 +1499,15 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		}
 
 		try {
-			boolean explain = config.isExplain();
 			JSONObject result;
+			
+			boolean explain = config.isExplain();
 			if (explain) { //如果先执行 explain，则 execute 会死循环，所以只能先执行非 explain
 				config.setExplain(false); //对下面 config.getSQL(false); 生效
-				JSONObject res = sqlExecutor.execute(config, false);
+				JSONObject res = getSQLExecutor().execute(config, false);
 
 				config.setExplain(explain);
-				JSONObject explainResult = config.isMain() && config.getPosition() != 0 ? null : sqlExecutor.execute(config, false);
+				JSONObject explainResult = config.isMain() && config.getPosition() != 0 ? null : getSQLExecutor().execute(config, false);
 
 				if (explainResult == null) {
 					result = res;
@@ -1418,30 +1519,26 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 				}
 			}
 			else {
-				result = sqlExecutor.execute(config, false);
+				result = getSQLExecutor().execute(config, false);
 			}
-			//不在finally里面抛异常，正常执行时打印SQL条数抛异常，异常执行时仅打印SQL条数，不覆盖当前异常
+
+			return parseCorrectResponse(config.getTable(), result);
+		}
+		catch (Exception e) {
+			if (Log.DEBUG == false && e instanceof SQLException) {
+				throw new SQLException("数据库驱动执行异常SQLException，非 Log.DEBUG 模式下不显示详情，避免泄漏真实模式名、表名等隐私信息", e);
+			}
+			throw e;
+		}
+		finally {
 			if (config.getPosition() == 0 && config.limitSQLCount()) {
 				int maxSQLCount = getMaxSQLCount();
-				int sqlCount = sqlExecutor.getExecutedSQLCount();
+				int sqlCount = getSQLExecutor().getExecutedSQLCount();
 				Log.d(TAG, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n\n\n 已执行 " + sqlCount + "/" + maxSQLCount + " 条 SQL \n\n\n >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 				if (sqlCount > maxSQLCount) {
 					throw new IllegalArgumentException("截至 " + config.getTable() + " 已执行 " + sqlCount + " 条 SQL，数量已超限，必须在 0-" + maxSQLCount + " 内 !");
 				}
 			}
-			
-			return parseCorrectResponse(config.getTable(), result);
-		}
-		catch (Exception e) {
-			if (config.getPosition() == 0 && config.limitSQLCount()) {
-				int maxSQLCount = getMaxSQLCount();
-				int sqlCount = sqlExecutor.getExecutedSQLCount();
-				Log.d(TAG, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< \n\n\n 已执行 " + sqlCount + "/" + maxSQLCount + " 条 SQL \n\n\n >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-			}
-			if (Log.DEBUG == false && e instanceof SQLException) {
-				throw new SQLException("数据库驱动执行异常SQLException，非 Log.DEBUG 模式下不显示详情，避免泄漏真实模式名、表名等隐私信息", e);
-			}
-			throw e;
 		}
 	}
 
@@ -1460,27 +1557,27 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 	@Override
 	public void begin(int transactionIsolation) {
 		Log.d("\n\n" + TAG, "<<<<<<<<<<<<<<<<<<<<<<< begin transactionIsolation = " + transactionIsolation + " >>>>>>>>>>>>>>>>>>>>>>> \n\n");
-		sqlExecutor.setTransactionIsolation(transactionIsolation); //不知道 connection 什么时候创建，不能在这里准确控制，sqlExecutor.begin(transactionIsolation);
+		getSQLExecutor().setTransactionIsolation(transactionIsolation); //不知道 connection 什么时候创建，不能在这里准确控制，getSqlExecutor().begin(transactionIsolation);
 	}
 	@Override
 	public void rollback() throws SQLException {
 		Log.d("\n\n" + TAG, "<<<<<<<<<<<<<<<<<<<<<<< rollback >>>>>>>>>>>>>>>>>>>>>>> \n\n");
-		sqlExecutor.rollback();
+		getSQLExecutor().rollback();
 	}
 	@Override
 	public void rollback(Savepoint savepoint) throws SQLException {
 		Log.d("\n\n" + TAG, "<<<<<<<<<<<<<<<<<<<<<<< rollback savepoint " + (savepoint == null ? "" : "!") + "= null >>>>>>>>>>>>>>>>>>>>>>> \n\n");
-		sqlExecutor.rollback(savepoint);
+		getSQLExecutor().rollback(savepoint);
 	}
 	@Override
 	public void commit() throws SQLException {
 		Log.d("\n\n" + TAG, "<<<<<<<<<<<<<<<<<<<<<<< commit >>>>>>>>>>>>>>>>>>>>>>> \n\n");
-		sqlExecutor.commit();
+		getSQLExecutor().commit();
 	}
 	@Override
 	public void close() {
 		Log.d("\n\n" + TAG, "<<<<<<<<<<<<<<<<<<<<<<< close >>>>>>>>>>>>>>>>>>>>>>> \n\n");
-		sqlExecutor.close();
+		getSQLExecutor().close();
 	}
 
 	/**开始事务
@@ -1537,6 +1634,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		//		Log.d(TAG, "onClose >>");
 
 		close();
+		verifier = null;
 		sqlExecutor = null;
 		queryResultMap.clear();
 		queryResultMap = null;

@@ -17,7 +17,9 @@ package com.xlongwei.light4j.apijson;
 import com.alibaba.fastjson.JSONObject;
 
 import apijson.RequestMethod;
+import apijson.framework.APIJSONObjectParser;
 import apijson.framework.APIJSONParser;
+import apijson.orm.SQLConfig;
 import apijson.orm.SQLCreator;
 import apijson.orm.SQLExecutor;
 
@@ -69,4 +71,11 @@ public class DemoParser extends APIJSONParser {
 	public int getMaxQueryPage() {
 		return 10000;
 	}
+	
+    @Override
+    public APIJSONObjectParser createObjectParser(JSONObject request, String parentPath, SQLConfig arrayConfig
+            , boolean isSubquery, boolean isTable, boolean isArrayMainTable) throws Exception {
+        return new DemoObjectParser(getSession(), request, parentPath, arrayConfig
+                , isSubquery, isTable, isArrayMainTable).setMethod(getMethod()).setParser(this);
+    }	
 }

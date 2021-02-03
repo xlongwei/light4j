@@ -20,8 +20,7 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.alibaba.excel.EasyExcelFactory;
-import com.alibaba.excel.metadata.Sheet;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.xlongwei.light4j.util.BankUtil;
 import com.xlongwei.light4j.util.BankUtil.CardInfo;
@@ -137,7 +136,7 @@ public class BankUtilTest {
 	private List<CardInfo> bankInfos(File binFile, Map<String, String> bankIdAndNameMap) throws IOException, FileNotFoundException {
 		List<CardInfo> bankInfos = new ArrayList<>(6000);
 		try(InputStream in = new BufferedInputStream(new FileInputStream(binFile))){
-			List<Object> list = EasyExcelFactory.read(in, new Sheet(1, 4));
+			List<Object> list = EasyExcel.read(in).sheet(1).headRowNumber(4).doReadSync();
 			list.forEach(row -> {
 				//log.info("{}", row);
 				//[中国银联支付标记(00010030), 中国银联移动支付标记化产品, √, √, 2, 2, 37, 2, 19, 623529xxxxxxxxxxxxx, 2, 2, 6, 623529, 2, 借记卡,  ]

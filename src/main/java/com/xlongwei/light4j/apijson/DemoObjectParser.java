@@ -20,8 +20,9 @@ import javax.servlet.http.HttpSession;
 
 import com.alibaba.fastjson.JSONObject;
 
+import apijson.NotNull;
 import apijson.RequestMethod;
-import apijson.orm.AbstractObjectParser;
+import apijson.framework.APIJSONObjectParser;
 import apijson.orm.AbstractParser;
 import apijson.orm.Join;
 import apijson.orm.SQLConfig;
@@ -30,17 +31,12 @@ import apijson.orm.SQLConfig;
 /**简化Parser，getObject和getArray(getArrayConfig)都能用
  * @author Lemon
  */
-public class DemoObjectParser extends AbstractObjectParser {
+public class DemoObjectParser extends APIJSONObjectParser {
 
-	/**for single object
-	 * @param parentPath
-	 * @param request
-	 * @param name
-	 * @throws Exception 
-	 */
-	public DemoObjectParser(HttpSession session, JSONObject request, String parentPath, String name, SQLConfig arrayConfig, boolean isSubquery) throws Exception {
-		super(request, parentPath, name, arrayConfig, isSubquery);
-	}
+    public DemoObjectParser(HttpSession session, @NotNull JSONObject request, String parentPath, SQLConfig arrayConfig
+            , boolean isSubquery, boolean isTable, boolean isArrayMainTable) throws Exception {
+        super(session, request, parentPath, arrayConfig, isSubquery, isTable, isArrayMainTable);
+    }
 
 	@Override
 	public DemoObjectParser setMethod(RequestMethod method) {
@@ -55,10 +51,10 @@ public class DemoObjectParser extends AbstractObjectParser {
 	}
 
 
-	@Override
-	public SQLConfig newSQLConfig(RequestMethod method, String table, String alias, JSONObject request, List<Join> joinList, boolean isProcedure) throws Exception {
-		return DemoSQLConfig.newSQLConfig(method, table, alias, request, joinList, isProcedure);
-	}
+    @Override
+    public SQLConfig newSQLConfig(RequestMethod method, String table, String alias, JSONObject request, List<Join> joinList, boolean isProcedure) throws Exception {
+        return DemoSQLConfig.newSQLConfig(method, table, alias, request, joinList, isProcedure);
+    }
 
 	@Override
 	public JSONObject parseResponse(SQLConfig config, boolean isProcedure) throws Exception {

@@ -53,7 +53,6 @@ public class ApijsonHandler extends AbstractHandler {
 		case "register": json = apijson.register(request).toJSONString(); break;
 		case "putPassword": json = apijson.putPassword(request).toJSONString(); break;
 		case "putBalance": json = apijson.putBalance(request, session).toJSONString(); break;
-		case "invokeMethod": json = apijson.invokeMethod(request).toJSONString(); break;
 		default: 
 			HandlerUtil.setResp(exchange, Collections.singletonMap("error", "apijson/"+path+" not supported"));
 			return;

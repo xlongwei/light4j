@@ -11,13 +11,13 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.main.class>com.networknt.server.Server</project.main.class>
-        <version.light-4j>1.6.28</version.light-4j>
+        <version.light-4j>1.6.30</version.light-4j>
         <version.logback>1.2.3</version.logback>
         <version.junit>4.13.1</version.junit>
         <version.fastscanner>2.18.1</version.fastscanner>
         <versions.maven-version>2.4</versions.maven-version>
-        <version.lombok>1.16.18</version.lombok>
-        <version.pinyin4j>2.5.0</version.pinyin4j>
+        <version.lombok>1.18.8</version.lombok>
+        <version.pinyin4j>2.5.1</version.pinyin4j>
         <version.ansj>5.1.2</version.ansj>
         <version.jpwgen>1.2.0</version.jpwgen>
         <version.aes>1.6</version.aes>
@@ -27,23 +27,23 @@
         <version.poi>4.1.2</version.poi>
         <version.itext>2.0.8.1</version.itext>
         <version.httpmime>4.5.2</version.httpmime>
-        <version.fastjson>1.2.73</version.fastjson>
+        <version.fastjson>1.2.75</version.fastjson>
         <version.jodconverter>2.2.1</version.jodconverter>
         <version.jodreports>2.4.0</version.jodreports>
         <version.xom>1.2.5</version.xom>
         <version.zxing>3.2.1</version.zxing>
         <version.vcard>0.10.0</version.vcard>
-        <version.easyexcel>1.1.2-beta5</version.easyexcel>
+        <version.easyexcel>2.2.7</version.easyexcel>
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.dbutils>1.7</version.dbutils>
         <version.commons-io>2.6</version.commons-io>
-        <version.hutool>5.4.6</version.hutool>
+        <version.hutool>5.5.8</version.hutool>
         <version.shiro>1.3.2</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
         <version.bouncycastle>1.64</version.bouncycastle>
         <version.beetlsql>2.12.28.RELEASE</version.beetlsql>
         <version.antlr4>4.7.2</version.antlr4>
-        <version.apijson>4.2.3</version.apijson>
+        <version.apijson>4.6.0</version.apijson>
         <version.log4jdbc>1.2</version.log4jdbc>
     </properties>
 
@@ -149,6 +149,11 @@
 			<artifactId>poi-examples</artifactId>
 			<version>${version.poi}</version>
 		</dependency>
+   		<dependency>
+   			<groupId>org.apache.poi</groupId>
+   			<artifactId>poi-ooxml-schemas</artifactId>
+   			<version>${version.poi}</version>
+   		</dependency>
 		<dependency>
 		  <groupId>com.lowagie</groupId>
 		  <artifactId>itext</artifactId>
@@ -254,11 +259,11 @@
 		  <artifactId>antlr4-runtime</artifactId>
 		  <version>${version.antlr4}</version>
 		</dependency>
-		<dependency>
-			<groupId>com.github.APIJSON</groupId>
-			<artifactId>apijson-orm</artifactId>
+		<!-- <dependency>
+			<groupId>com.github.tencent</groupId>
+			<artifactId>APIJSON</artifactId>
 			<version>${version.apijson}</version>
-		</dependency>
+		</dependency> -->
 		<!-- https://jitpack.io -->
 		<dependency>
 			<groupId>com.github.APIJSON</groupId>

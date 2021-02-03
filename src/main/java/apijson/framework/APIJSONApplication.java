@@ -14,11 +14,11 @@ limitations under the License.*/
 
 package apijson.framework;
 
+import java.rmi.ServerException;
+
 import com.xlongwei.light4j.util.NumberUtil;
 
 import apijson.NotNull;
-import apijson.orm.ParserCreator;
-import apijson.orm.SQLCreator;
 
 
 /**SpringBootApplication
@@ -35,80 +35,95 @@ public class APIJSONApplication {
 	}
 
 
-	public static void init() throws Exception {
-		init(true);
+	/**初始化，加载所有配置并校验
+	 * @return 
+	 * @throws ServerException
+	 */
+	public static void init() throws ServerException {
+		init(true, DEFAULT_APIJSON_CREATOR);
 	}
-	public static void init(boolean shutdownWhenServerError) throws Exception {
-		init(shutdownWhenServerError, null, null);
+	/**初始化，加载所有配置并校验
+	 * @param shutdownWhenServerError 
+	 * @return 
+	 * @throws ServerException
+	 */
+	public static void init(boolean shutdownWhenServerError) throws ServerException {
+		init(shutdownWhenServerError, DEFAULT_APIJSON_CREATOR);
 	}
-	public static void init(APIJSONCreator creator) throws Exception {
-		init(false, creator);
+	/**初始化，加载所有配置并校验
+	 * @param creator 
+	 * @return 
+	 * @throws ServerException
+	 */
+	public static void init(@NotNull APIJSONCreator creator) throws ServerException {
+		init(true, creator);
 	}
-	public static void init(boolean shutdownWhenServerError, APIJSONCreator creator) throws Exception {
-		init(shutdownWhenServerError, creator, creator);
-	}
-	public static void init(boolean shutdownWhenServerError, ParserCreator<Long> parserCreator, SQLCreator sqlCreator) throws Exception {
+	/**初始化，加载所有配置并校验
+	 * @param shutdownWhenServerError 
+	 * @param creator 
+	 * @return 
+	 * @throws ServerException
+	 */
+	public static void init(boolean shutdownWhenServerError, @NotNull APIJSONCreator creator) throws ServerException {
 //		System.out.println("\n\n\n\n\n<<<<<<<<<<<<<<<<<<<<<<<<< APIJSON 开始启动 >>>>>>>>>>>>>>>>>>>>>>>>\n");
+		DEFAULT_APIJSON_CREATOR = creator;
 
-		if (parserCreator == null) {
-			parserCreator = DEFAULT_APIJSON_CREATOR;
-		}
-		if (sqlCreator == null) {
-			sqlCreator = DEFAULT_APIJSON_CREATOR;
-		}
+		// 统一用同一个 creator
+		APIJSONSQLConfig.APIJSON_CREATOR = creator;
+		APIJSONParser.APIJSON_CREATOR = creator;
+		APIJSONController.APIJSON_CREATOR = creator;
 
-//		System.out.println("\n\n\n开始初始化:远程函数配置 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+
+//		System.out.println("\n\n\n开始初始化: 权限校验配置 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		try {
-			APIJSONFunctionParser.init(shutdownWhenServerError, parserCreator);
+			APIJSONVerifier.initAccess(shutdownWhenServerError, creator);
 		}
 		catch (Exception e) {
 //			e.printStackTrace();
 		}
-//		System.out.println("\n完成初始化:远程函数配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//		System.out.println("\n完成初始化: 权限校验配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
-//		System.out.println("开始测试:远程函数 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+		
+		
+//		System.out.println("\n\n\n开始初始化: 远程函数配置 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		try {
-			if(test) {
-				APIJSONFunctionParser.test();
-			}
+			APIJSONFunctionParser.init(shutdownWhenServerError, creator);
 		}
 		catch (Exception e) {
 //			e.printStackTrace();
 		}
-//		System.out.println("\n完成测试:远程函数 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//		System.out.println("\n完成初始化: 远程函数配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
-
-
-//		System.out.println("\n\n\n开始初始化:请求校验配置 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+//		System.out.println("开始测试: 远程函数 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		try {
-			StructureUtil.init(shutdownWhenServerError, parserCreator);
+			if(test) APIJSONFunctionParser.test();
 		}
 		catch (Exception e) {
 //			e.printStackTrace();
 		}
-//		System.out.println("\n完成初始化:请求校验配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//		System.out.println("\n完成测试: 远程函数 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
-//		System.out.println("\n\n\n开始测试:请求校验 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+
+
+//		System.out.println("\n\n\n开始初始化: 请求结构校验配置 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		try {
-			if(test) {
-				StructureUtil.test(sqlCreator);
-			}
+			APIJSONVerifier.initRequest(shutdownWhenServerError, creator);
 		}
 		catch (Exception e) {
 //			e.printStackTrace();
 		}
-//		System.out.println("\n完成测试:请求校验 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//		System.out.println("\n完成初始化: 请求结构校验配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
-
-
-//		System.out.println("\n\n\n开始初始化:权限校验配置 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+//		System.out.println("\n\n\n开始测试: Request 和 Response 的数据结构校验 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		try {
-			APIJSONVerifier.init(shutdownWhenServerError, parserCreator);
+			if(test) APIJSONVerifier.testStructure();
 		}
 		catch (Exception e) {
 //			e.printStackTrace();
 		}
-//		System.out.println("\n完成初始化:权限校验配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//		System.out.println("\n完成测试: Request 和 Response 的数据结构校验 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+
 
 
 //		System.out.println("\n\n<<<<<<<<<<<<<<<<<<<<<<<<< APIJSON 启动完成，试试调用自动化 API 吧 ^_^ >>>>>>>>>>>>>>>>>>>>>>>>\n");

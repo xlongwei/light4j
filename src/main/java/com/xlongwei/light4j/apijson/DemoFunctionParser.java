@@ -49,6 +49,10 @@ public class DemoFunctionParser extends APIJSONFunctionParser {
 	 */
 	public Object verifyIdList(@NotNull JSONObject current, @NotNull String idList) throws Exception {
 		Object obj = current.get(idList);
+		if (obj == null) {
+			return null;
+		}
+		
 		if (obj instanceof Collection == false) {
 			throw new IllegalArgumentException(idList + " 不符合 Array 类型! 结构必须是 [] ！");
 		}
@@ -65,12 +69,17 @@ public class DemoFunctionParser extends APIJSONFunctionParser {
 
 
 	/**
-	 * @param request
+	 * @param current
+	 * @param urlList
 	 * @return
 	 * @throws Exception
 	 */
 	public Object verifyURLList(@NotNull JSONObject current, @NotNull String urlList) throws Exception {
 		Object obj = current.get(urlList);
+		if (obj == null) {
+			return null;
+		}
+		
 		if (obj instanceof Collection == false) {
 			throw new IllegalArgumentException(urlList + " 不符合 Array 类型! 结构必须是 [] ！");
 		}
@@ -87,7 +96,7 @@ public class DemoFunctionParser extends APIJSONFunctionParser {
 
 
 	/**
-	 * @param rq
+	 * @param current
 	 * @param momentId
 	 * @return
 	 * @throws Exception
@@ -115,7 +124,7 @@ public class DemoFunctionParser extends APIJSONFunctionParser {
 
 
 	/**删除评论的子评论
-	 * @param rq
+	 * @param current
 	 * @param toId
 	 * @return
 	 */

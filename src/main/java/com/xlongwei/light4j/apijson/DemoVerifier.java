@@ -16,7 +16,6 @@ package com.xlongwei.light4j.apijson;
 
 
 import apijson.framework.APIJSONVerifier;
-import apijson.orm.SQLConfig;
 
 
 /**权限验证器
@@ -25,8 +24,10 @@ import apijson.orm.SQLConfig;
 public class DemoVerifier extends APIJSONVerifier {
 	public static final String TAG = "DemoVerifier";
 
-	@Override
-	public String getVisitorIdKey(SQLConfig config) {
-		return super.getVisitorIdKey(config);
-	}
+	// 重写方法来自定义字段名等	
+	//	@Override
+	//	public String getVisitorIdKey(SQLConfig config) {
+	//		return super.getVisitorIdKey(config);  // return "userid"; // return "uid" 等自定义的字段名
+	//	}
+
 }

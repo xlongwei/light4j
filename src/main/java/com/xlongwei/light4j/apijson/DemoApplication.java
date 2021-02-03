@@ -9,11 +9,11 @@ import apijson.Log;
 import apijson.StringUtil;
 import apijson.framework.APIJSONApplication;
 import apijson.framework.APIJSONCreator;
+import apijson.orm.AbstractVerifier;
 import apijson.orm.FunctionParser;
 import apijson.orm.Parser;
 import apijson.orm.SQLConfig;
 import apijson.orm.SQLExecutor;
-import apijson.orm.Structure;
 import apijson.orm.Verifier;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +30,7 @@ public class DemoApplication {
 	
 	public static void start() {
 		if(apijsonEnabled) {
-			Map<String, Pattern> COMPILE_MAP = Structure.COMPILE_MAP;
+			Map<String, Pattern> COMPILE_MAP = AbstractVerifier.COMPILE_MAP;
 			COMPILE_MAP.put("PHONE", StringUtil.PATTERN_PHONE);
 			COMPILE_MAP.put("EMAIL", StringUtil.PATTERN_EMAIL);
 			COMPILE_MAP.put("ID_CARD", StringUtil.PATTERN_ID_CARD);

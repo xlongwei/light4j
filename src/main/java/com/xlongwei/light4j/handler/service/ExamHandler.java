@@ -1,17 +1,20 @@
 package com.xlongwei.light4j.handler.service;
 
+import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelReader;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.alibaba.excel.metadata.Sheet;
+import com.alibaba.excel.read.metadata.ReadSheet;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
@@ -147,26 +150,27 @@ public class ExamHandler extends AbstractHandler {
 		}
 		if(is != null) {
 			final List<List<String>> rows = new ArrayList<>();
-	        ExcelReader excelReader = new ExcelReader(is, null, new AnalysisEventListener<List<String>>() {
+	        ExcelReader excelReader = EasyExcel.read(new BufferedInputStream(is)).autoCloseStream(true).registerReadListener(new AnalysisEventListener<Map<Integer, String>>() {
 	            @Override
-	            public void invoke(List<String> object, AnalysisContext context) {
-	                rows.add(object);
+	            public void invoke(Map<Integer, String> object, AnalysisContext context) {
+	                rows.add(object.entrySet().stream().map(Entry::getValue).collect(Collectors.toList()));
 	            }
 	            @Override
 	            public void doAfterAllAnalysed(AnalysisContext context) {
 	            }
-	        }, false);
-	        List<Sheet> sheets = excelReader.getSheets();
+	        }).build();
+	        List<ReadSheet> sheets = excelReader.excelExecutor().sheetList();
 	        JsonBuilder jb = JsonUtil.builder(false).put("sheets", sheets.size());
-	        Set<String> sheetNames = sheets.stream().map(Sheet::getSheetName).collect(Collectors.toSet());
-			for(Sheet sheet : sheets) {
+	        Set<String> sheetNames = sheets.stream().map(ReadSheet::getSheetName).collect(Collectors.toSet());
+			for(ReadSheet sheet : sheets) {
 				jb = handleSheet(sheet, excelReader, sheetNames, rows, jb);
 			}
+			excelReader.finish();
 			HandlerUtil.setResp(exchange, jb.json());
 		}
 	}
 
-	private JsonBuilder handleSheet(Sheet sheet, ExcelReader excelReader, Set<String> sheetNames, List<List<String>> rows, JsonBuilder jb) {
+	private JsonBuilder handleSheet(ReadSheet sheet, ExcelReader excelReader, Set<String> sheetNames, List<List<String>> rows, JsonBuilder jb) {
 		rows.clear();
 		excelReader.read(sheet);
 		String sheetName = sheet.getSheetName();

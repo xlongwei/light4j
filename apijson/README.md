@@ -10,11 +10,12 @@
   * 创建数据库apijson，创建用户apijson/apijson，导入脚本apijson.sql
   * 下载[apijson-framework-4.1.0.jar](http://t.xlongwei.com/windows/apijson-framework-4.1.0.jar)、[apijson-orm-4.1.0.jar](http://t.xlongwei.com/windows/apijson-orm-4.1.0.jar)
   * mvn install:install-file -DgroupId=apijson.orm -DartifactId=apijson-orm -Dversion=4.1.0 -Dpackaging=jar -Dfile=apijson-orm-4.1.0.jar
-  * mvn install:install-file -DgroupId=apijson.framework -DartifactId=apijson-framework -Dversion=4.1.0 -Dpackaging=jar -Dfile=apijson-framework-4.1.0.jar
+  * <del>mvn install:install-file -DgroupId=apijson.framework -DartifactId=apijson-framework -Dversion=4.1.0 -Dpackaging=jar -Dfile=apijson-framework-4.1.0.jar</del>
+  * sh start.sh install，apjson-orm更改为com.github.tencent:APIJSON，版本升级到4.6.0
 
 ### apijson框架引用2
 
-  * git clone https://gitee.com/APIJSON/APIJSON.git
+  * <del>git clone https://gitee.com/APIJSON/APIJSON.git</del>
   * 导入脚本MySQL/sys.sql
   * vi APIJSON-Java-Server/APIJSONORM/pom.xml，groupId=apijson.orm，artifactId=apijson-orm
   * mvn install -f APIJSON-Java-Server/APIJSONORM/pom.xml

@@ -40,7 +40,6 @@ import java.util.concurrent.TimeoutException;
 import javax.servlet.http.HttpSession;
 
 import com.alibaba.fastjson.JSONObject;
-import com.networknt.service.SingletonServiceFactory;
 import com.xlongwei.light4j.apijson.model.Privacy;
 import com.xlongwei.light4j.apijson.model.User;
 import com.xlongwei.light4j.apijson.model.Verify;
@@ -52,8 +51,6 @@ import apijson.Log;
 import apijson.StringUtil;
 import apijson.framework.APIJSONController;
 import apijson.framework.BaseModel;
-import apijson.framework.MethodUtil;
-import apijson.framework.StructureUtil;
 import apijson.orm.JSONRequest;
 import apijson.orm.exception.ConditionErrorException;
 import apijson.orm.exception.ConflictException;
@@ -91,6 +88,7 @@ public class DemoController extends APIJSONController {
 	public static final String VERIFY = "verify";
 
 	public static final String TYPE = "type";
+	public static final String VALUE = "value";
 
 	/**重新加载配置
 	 * @param request
@@ -108,11 +106,13 @@ public class DemoController extends APIJSONController {
 	public JSONObject reload(String request) {
 		JSONObject requestObject = null;
 		String type;
+		JSONObject value;
 		String phone;
 		String verify;
 		try {
 			requestObject = DemoParser.parseRequest(request);
 			type = requestObject.getString(TYPE);
+			value = requestObject.getJSONObject(VALUE);
 			phone = requestObject.getString(PHONE);
 			verify = requestObject.getString(VERIFY);
 		} catch (Exception e) {
@@ -129,9 +129,18 @@ public class DemoController extends APIJSONController {
 
 		boolean reloadAll = StringUtil.isEmpty(type, true) || "ALL".equals(type);
 
+		if (reloadAll || "ACCESS".equals(type)) {
+			try {
+				result.put(ACCESS_, DemoVerifier.initAccess(false, null, value));
+			} catch (ServerException e) {
+				e.printStackTrace();
+				result.put(ACCESS_, DemoParser.newErrorResult(e));
+			}
+		}
+
 		if (reloadAll || "FUNCTION".equals(type)) {
 			try {
-				result.put(FUNCTION_, DemoFunctionParser.init());
+				result.put(FUNCTION_, DemoFunctionParser.init(false, null, value));
 			} catch (ServerException e) {
 				e.printStackTrace();
 				result.put(FUNCTION_, DemoParser.newErrorResult(e));
@@ -140,19 +149,10 @@ public class DemoController extends APIJSONController {
 
 		if (reloadAll || "REQUEST".equals(type)) {
 			try {
-				result.put(REQUEST_, StructureUtil.init());
+				result.put(REQUEST_, DemoVerifier.initRequest(false, null, value));
 			} catch (ServerException e) {
 				e.printStackTrace();
 				result.put(REQUEST_, DemoParser.newErrorResult(e));
-			}
-		}
-
-		if (reloadAll || "ACCESS".equals(type)) {
-			try {
-				result.put(ACCESS_, DemoVerifier.init());
-			} catch (ServerException e) {
-				e.printStackTrace();
-				result.put(ACCESS_, DemoParser.newErrorResult(e));
 			}
 		}
 
@@ -422,7 +422,12 @@ public class DemoController extends APIJSONController {
 
 		response = new JSONResponse(
 				new DemoParser(GETS, false).parseResponse(
-						new JSONRequest(new User(userId)).setFormat(true)
+						new JSONRequest(  // 兼容 MySQL 5.6 及以下等不支持 json 类型的数据库
+								USER_,  // User 里在 setContactIdList(List<Long>) 后加 setContactIdList(String) 没用
+								new apijson.JSONObject(  // fastjson 查到一个就不继续了，所以只能加到前面或者只有这一个，但这样反过来不兼容 5.7+
+										new User(userId)  // 所以就用 @json 来强制转为 JSONArray，保证有效
+										).setJson("contactIdList,pictureList")
+								).setFormat(true)
 						)
 				);
 		User user = response.getObject(User.class);
@@ -460,12 +465,10 @@ public class DemoController extends APIJSONController {
 		}
 
 		JSONObject result = DemoParser.newSuccessResult();
-		if(userId > 0) {
-			JSONObject user = DemoParser.newSuccessResult();
-			user.put(ID, userId);
-			user.put(COUNT, 1);
-			result.put(StringUtil.firstCase(USER_), user);
-		}
+		JSONObject user = DemoParser.newSuccessResult();
+		user.put(ID, userId);
+		user.put(COUNT, 1);
+		result.put(StringUtil.firstCase(USER_), user);
 
 		return result;
 	}
@@ -818,27 +821,6 @@ public class DemoController extends APIJSONController {
 				"accept-encoding", "accept-language", // "accept", "connection"
 				"host", "origin", "referer", "user-agent", "sec-fetch-mode", "sec-fetch-site", "sec-fetch-dest", "sec-fetch-user"
 				);
-	}
-
-	@Override
-	public JSONObject invokeMethod(String request) {
-		try {
-			JSONObject req = JSON.parseObject(request);
-			if (req != null) {
-				String pkgName = req.getString("package");
-				String clsName = req.getString("class");
-				return MethodUtil.invokeMethod(
-						req,
-						SingletonServiceFactory.getBean(
-								Class.forName(pkgName.replaceAll("/", ".") + "." + clsName)
-								)
-						);
-			}
-		} catch (Exception e) {
-			Log.e(TAG, "listMethod  try { JSONObject req = JSON.parseObject(request); ... } catch (Exception e) { \n" + e.getMessage());
-		}
-
-		return super.invokeMethod(request);
 	}
 
 }

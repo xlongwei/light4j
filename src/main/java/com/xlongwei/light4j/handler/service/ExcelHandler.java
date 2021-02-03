@@ -8,12 +8,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelReader;
+import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.read.metadata.ReadSheet;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ExcelUtil;
 import com.xlongwei.light4j.util.FileUtil;
@@ -103,12 +109,39 @@ public class ExcelHandler extends AbstractHandler {
 			}
 		}
 		if(is != null) {
-			int sheetNo = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "sheetNo"), 1);
+			int sheetNo = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "sheetNo"), 0);
 			int headLine = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "headLine"), 0);
-			List<Object> data = EasyExcelFactory.read(new BufferedInputStream(is), new com.alibaba.excel.metadata.Sheet(sheetNo, headLine));
+			String sheetName = HandlerUtil.getParam(exchange, "sheetName");
 			Map<String, Object> map = new HashMap<>(2);
-			map.put("size", data==null ? 0 : data.size());
-			map.put("data", data);
+			List<Object> list = new ArrayList<>();
+			ExcelReader excelReader = EasyExcel.read(new BufferedInputStream(is)).autoCloseStream(true).registerReadListener(new AnalysisEventListener<Map<Integer, String>>() {
+				@Override
+				public void invoke(Map<Integer, String> data, AnalysisContext context) {
+					list.add(data.entrySet().stream().map(Entry::getValue).collect(Collectors.toList()));
+				}
+				@Override
+				public void doAfterAllAnalysed(AnalysisContext context) {
+				}
+			}).build();
+			if("*".equals(sheetName)) {
+				List<ReadSheet> sheetList = excelReader.excelExecutor().sheetList();
+				map.put("size", sheetList.size());
+				Map<String, Object> sheets = new HashMap<>();
+				sheets.put("sheetNames", sheetList.stream().map(ReadSheet::getSheetName).collect(Collectors.toList()));
+				sheetList.forEach(sheet -> {
+					list.clear();
+					excelReader.read(sheet);
+					sheets.put(sheet.getSheetName(), new ArrayList<>(list));
+				});
+				map.put("data", sheets);
+			}else {
+				ReadSheet sheet = new ReadSheet(StringUtil.isBlank(sheetName)?sheetNo:null, StringUtil.nullOrString(sheetName));
+				sheet.setHeadRowNumber(headLine);
+				excelReader.read(sheet);
+				map.put("size", list.size());
+				map.put("data", list);
+			}
+			excelReader.finish();
 			HandlerUtil.setResp(exchange, map);
 		}
 	}
