@@ -31,6 +31,7 @@ import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.UploadUtil;
 
+import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData.FormValue;
 
@@ -112,7 +113,7 @@ public class ExcelHandler extends AbstractHandler {
 			int sheetNo = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "sheetNo"), 0);
 			int headLine = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "headLine"), 0);
 			String sheetName = HandlerUtil.getParam(exchange, "sheetName");
-			Map<String, Object> map = new HashMap<>(2);
+			Map<String, Object> map = MapUtil.newHashMap(true);
 			List<Object> list = new ArrayList<>();
 			ExcelReader excelReader = EasyExcel.read(new BufferedInputStream(is)).autoCloseStream(true).registerReadListener(new AnalysisEventListener<Map<Integer, String>>() {
 				@Override
@@ -126,14 +127,15 @@ public class ExcelHandler extends AbstractHandler {
 			if("*".equals(sheetName)) {
 				List<ReadSheet> sheetList = excelReader.excelExecutor().sheetList();
 				map.put("size", sheetList.size());
-				Map<String, Object> sheets = new HashMap<>();
-				sheets.put("sheetNames", sheetList.stream().map(ReadSheet::getSheetName).collect(Collectors.toList()));
+				map.put("sheetNames", sheetList.stream().map(ReadSheet::getSheetName).collect(Collectors.toList()));
 				sheetList.forEach(sheet -> {
 					list.clear();
 					excelReader.read(sheet);
-					sheets.put(sheet.getSheetName(), new ArrayList<>(list));
+					HashMap<String, Object> sheetMap = MapUtil.newHashMap();
+					sheetMap.put("size", list.size());
+					sheetMap.put("data", new ArrayList<>(list));
+					map.put(sheet.getSheetName(), sheetMap);
 				});
-				map.put("data", sheets);
 			}else {
 				ReadSheet sheet = new ReadSheet(StringUtil.isBlank(sheetName)?sheetNo:null, StringUtil.nullOrString(sheetName));
 				sheet.setHeadRowNumber(headLine);

@@ -29,17 +29,27 @@ public class SqlInsert {
 	private String table;
 	public SqlInsert(String table) { this.table = table; }
 	public void addColumn(String column, String value, Type type) { columns.add(column); values.add(StringUtil.sqlParam(value)); types.add(type); }
-	public void addColumns(String ... columns) { if(columns!=null && columns.length>0) for(String column:columns) this.columns.add(column); }
+	public void addColumns(String ... columns) {
+		if(columns!=null && columns.length>0) {
+			for(String column:columns) {
+				this.columns.add(column);
+			}
+		}
+	}
 	public void addValues(String ... values) { 
 		if(values!=null && values.length>0) {
 			List<String> list = new ArrayList<>();
-			for(String value:values) list.add(StringUtil.sqlParam(value));
+			for(String value:values) {
+				list.add(StringUtil.sqlParam(value));
+			}
 			values2.add(list);
 		}
 	}
 	@Override
 	public String toString() {
-		if(columns.size()==0 || (values.size()==0 && values2.size()==0)) return null;
+		if(columns.size()==0 || (values.size()==0 && values2.size()==0)) {
+			return null;
+		}
 		StringBuilder sqlInsert = new StringBuilder("insert into "+table);
 		sqlInsert.append("(");
 		sqlInsert.append(StringUtil.join(columns, null, null, ","));

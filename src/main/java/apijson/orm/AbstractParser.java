@@ -687,7 +687,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 	 */
 	@Override
 	public JSONObject getStructure(@NotNull String table, String method, String tag, int version) throws Exception  {
-		// TODO 目前只使用 Request 而不使用 Response，所以这里写死用 REQUEST_MAP，以后可能 Response 表也会与 Request 表合并，用字段来区分
+		// 目前只使用 Request 而不使用 Response，所以这里写死用 REQUEST_MAP，以后可能 Response 表也会与 Request 表合并，用字段来区分
 		String cacheKey = AbstractVerifier.getCacheKeyForRequest(method, tag);
 		SortedMap<Integer, JSONObject> versionedMap = AbstractVerifier.REQUEST_MAP.get(cacheKey);
 
@@ -1522,15 +1522,8 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 				result = getSQLExecutor().execute(config, false);
 			}
 
-			return parseCorrectResponse(config.getTable(), result);
-		}
-		catch (Exception e) {
-			if (Log.DEBUG == false && e instanceof SQLException) {
-				throw new SQLException("数据库驱动执行异常SQLException，非 Log.DEBUG 模式下不显示详情，避免泄漏真实模式名、表名等隐私信息", e);
-			}
-			throw e;
-		}
-		finally {
+			JSONObject json = parseCorrectResponse(config.getTable(), result);
+			
 			if (config.getPosition() == 0 && config.limitSQLCount()) {
 				int maxSQLCount = getMaxSQLCount();
 				int sqlCount = getSQLExecutor().getExecutedSQLCount();
@@ -1539,6 +1532,14 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 					throw new IllegalArgumentException("截至 " + config.getTable() + " 已执行 " + sqlCount + " 条 SQL，数量已超限，必须在 0-" + maxSQLCount + " 内 !");
 				}
 			}
+			
+			return json;
+		}
+		catch (Exception e) {
+			if (Log.DEBUG == false && e instanceof SQLException) {
+				throw new SQLException("数据库驱动执行异常SQLException，非 Log.DEBUG 模式下不显示详情，避免泄漏真实模式名、表名等隐私信息", e);
+			}
+			throw e;
 		}
 	}
 

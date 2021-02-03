@@ -171,7 +171,9 @@ public class EcdictTest {
 						lemma = lemma.substring(0, pos);
 					}
 					String[] row = resultSet(lemma);
-					if(row==null) continue;//没有lemma信息，直接跳过
+					if(row==null) {
+						continue;//没有lemma信息，直接跳过
+					}
 					String[] split = words.split("[,]");
 					for(String str:split) {
 						if(EcdictUtil.isWord(str)) {

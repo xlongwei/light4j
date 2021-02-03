@@ -59,13 +59,17 @@ public class EcdictUtil {
 				boolean change = en != e;
 				if(change) {
 					String word = sentence.substring(cur, pos);
-					if(!StringUtil.isBlank(word)) words.add(word);
+					if(!StringUtil.isBlank(word)) {
+						words.add(word);
+					}
 					cur = pos;
 					continue next;
 				}
 			}
 			String word = sentence.substring(cur);
-			if(!StringUtil.isBlank(word)) words.add(word);
+			if(!StringUtil.isBlank(word)) {
+				words.add(word);
+			}
 			break;
 		}
 		return words;
@@ -87,7 +91,9 @@ public class EcdictUtil {
 	}
 	/** 获取多个单词的音标 */
 	public static Map<String, String> phonetic(Set<String> words) {
-		if(CollUtil.isEmpty(words)) return Collections.emptyMap();
+		if(CollUtil.isEmpty(words)) {
+			return Collections.emptyMap();
+		}
 		int pageSize = 100;
 		if(words.size() <= pageSize) {
 			List<Ecdict> list = MySqlUtil.SQLMANAGER.lambdaQuery(Ecdict.class).andIn("word", words).select("word","phonetic");

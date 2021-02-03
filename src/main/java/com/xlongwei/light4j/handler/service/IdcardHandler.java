@@ -47,8 +47,12 @@ public class IdcardHandler extends AbstractHandler {
 			String area = idNumber.substring(0,Math.min(idNumber.length(), 6));
 			if(StringUtil.isNumbers(area)) {
 				String areas = StringUtil.join(IdCardUtil.areas(area), null, null, null);
-				if(area.length()==6) params.put("area", area);
-				if(!StringUtil.isBlank(areas)) params.put("areas", areas);
+				if(area.length()==6) {
+					params.put("area", area);
+				}
+				if(!StringUtil.isBlank(areas)) {
+					params.put("areas", areas);
+				}
 			}
 		}
 		boolean old = idNumber.length() == 15 && !"19".equals(idNumber.substring(6, 8));
@@ -62,7 +66,7 @@ public class IdcardHandler extends AbstractHandler {
 				params.put("age", String.valueOf(age));
 				params.put("year", year);
 				String birthday = DateUtil.format(birth, "yyyyMMdd");
-				if(!old && idNumber.length()>=14 && birthday.equals(idNumber.substring(6, 14)) || (old && idNumber.length()>=12 && birthday.endsWith(idNumber.substring(6, 12)))) {
+				if((!old && idNumber.length()>=14 && birthday.equals(idNumber.substring(6, 14))) || (old && idNumber.length()>=12 && birthday.endsWith(idNumber.substring(6, 12)))) {
 					params.put("birth", birthday);
 					params.put("zodiac", Zodiac.getZodiac(birth));
 					ZhDate zhDate = ZhDate.fromDate(birth);

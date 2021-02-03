@@ -96,7 +96,9 @@ public class APIJSONApplication {
 
 //		System.out.println("开始测试: 远程函数 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		try {
-			if(test) APIJSONFunctionParser.test();
+			if(test) {
+				APIJSONFunctionParser.test();
+			}
 		}
 		catch (Exception e) {
 //			e.printStackTrace();
@@ -116,7 +118,9 @@ public class APIJSONApplication {
 
 //		System.out.println("\n\n\n开始测试: Request 和 Response 的数据结构校验 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 		try {
-			if(test) APIJSONVerifier.testStructure();
+			if(test) {
+				APIJSONVerifier.testStructure();
+			}
 		}
 		catch (Exception e) {
 //			e.printStackTrace();

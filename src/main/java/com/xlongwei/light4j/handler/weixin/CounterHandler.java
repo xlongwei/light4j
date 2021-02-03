@@ -106,7 +106,9 @@ public class CounterHandler extends AbstractTextHandler {
 			boolean empty = list.isEmpty() || content.length()==len;
 			if(empty) { list.clear(); list.addAll(entrySet); }
 			Collections.sort(list, (e1,e2)->{ return e2.getValue().get()-e1.getValue().get(); });
-			if(empty && list.size()>size) list = list.subList(0, size);
+			if(empty && list.size()>size) {
+				list = list.subList(0, size);
+			}
 			return textLimited(StringUtil.join(list, null, null, "\n"));
 		}
 		return null;
