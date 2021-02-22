@@ -119,7 +119,7 @@ public class DruidUtil {
             RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;
             RSAPrivateKeySpec spec = new RSAPrivateKeySpec(rsaPublicKey.getModulus(), rsaPublicKey.getPublicExponent());
             Key fakePrivateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
-            cipher = Cipher.getInstance("RSA"); //It is a stateful object. so we need to get new one.
+            cipher = Cipher.getInstance("RSA/None/PKCS1Padding"); //It is a stateful object. so we need to get new one.
             cipher.init(Cipher.DECRYPT_MODE, fakePrivateKey);
 		}
 		
@@ -130,7 +130,7 @@ public class DruidUtil {
 		byte[] cipherBytes = Base64.base64ToByteArray(cipherText);
 		byte[] plainBytes = cipher.doFinal(cipherBytes);
 
-		return new String(plainBytes);
+		return new String(plainBytes, "ISO-8859-1");
 	}
 
 	public static String encrypt(String plainText) throws Exception {
@@ -159,7 +159,7 @@ public class DruidUtil {
             RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) privateKey;
             RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(rsaPrivateKey.getModulus(), rsaPrivateKey.getPrivateExponent());
             Key fakePublicKey = KeyFactory.getInstance("RSA").generatePublic(publicKeySpec);
-            cipher = Cipher.getInstance("RSA");
+            cipher = Cipher.getInstance("RSA/None/PKCS1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, fakePublicKey);
         }
 
