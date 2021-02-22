@@ -68,6 +68,19 @@ stop(){
 			echo -e "kill $PID"
 		    kill $PID > /dev/null 2>&1
 		done
+		COUNT=0
+		while [ $COUNT -lt 1 ]; do
+		    echo -e ".\c"
+		    sleep 1
+		    COUNT=1
+		    for PID in $PIDS ; do
+		        PID_EXIST=`ps -f -p $PID | grep "$jarfile"`
+		        if [ -n "$PID_EXIST" ]; then
+		            COUNT=0
+		            break
+		        fi
+		    done
+		done
 	fi
 }
 
@@ -92,9 +105,9 @@ start(){
 	JVM_OPS="-server -Djava.awt.headless=true $JVM_OPS"
 	#env $ENV_OPS java $JVM_OPS -jar target/light4j-3.0.1.jar 2>&1
 	if [ "$daemon" = "true" ]; then
-		env $ENV_OPS setsid java $JVM_OPS -cp $jarfile com.networknt.server.Servers >> /dev/null 2>&1 &
+		env $ENV_OPS setsid java $JVM_OPS -jar $jarfile >> /dev/null 2>&1 &
 	else
-		env $ENV_OPS java $JVM_OPS -cp $jarfile com.networknt.server.Servers 2>&1
+		env $ENV_OPS java $JVM_OPS -jar $jarfile 2>&1
 	fi
 }
 
