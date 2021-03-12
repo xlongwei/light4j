@@ -27,8 +27,6 @@ import com.networknt.session.SessionManager;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler;
 
-import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
-import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
 import io.undertow.server.handlers.form.FormData.FormValue;
@@ -73,38 +71,6 @@ public class HandlerUtil {
 	 */
 	public static final AttachmentKey<Object> RESP = AttachmentKey.create(Object.class);
 
-	@SuppressWarnings("unchecked")
-	public static <T> List<T> scanHandlers(Class<T> clazz, String scanSpec) {
-		FastClasspathScanner scanner = new FastClasspathScanner(scanSpec);
-		ScanResult scanResult = scanner.scan();
-		List<String> list = scanResult.getNamesOfAllClasses();
-		List<T> handlers = new ArrayList<>();
-		for(String className : list) {
-			if(!className.startsWith(scanSpec)) {
-				continue;
-			}
-			try {
-				Class<?> clz = Class.forName(className);
-				if(clazz.isAssignableFrom(clz)) {
-					T handler = (T)newInstance(clz);
-					handlers.add(handler);
-				}
-			}catch(Exception e) {
-				log.info("failed: {}, ex: {}", className, e.getMessage());
-			}
-		}
-		return handlers;
-	}
-	
-	public static <T> T newInstance(Class<T> clazz) {
-		try {
-			return clazz.getConstructor().newInstance();
-		}catch(Exception e) {
-			log.info("fail to instance:{}, ex:{}", clazz, e.getMessage());
-			return null;
-		}
-	}
-	
 	/**
 	 * 解析body为Map<String, Object>
 	 * <br>Object可能是String、List<String>、FileItem、List<FileItem>

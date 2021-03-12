@@ -21,7 +21,7 @@ import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractEvent.ClickEvent;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessage.TextMessage;
 
-import io.github.lukehutch.fastclasspathscanner.utils.ReflectionUtils;
+import cn.hutool.core.util.ReflectUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -157,7 +157,7 @@ public class WeixinUtil {
 		List<AbstractMessageHandler> list = handlers.get(msg.getClass());
 		if(list!=null && list.size()>0) {
 			for(AbstractMessageHandler handler : list) {
-				ThreadLocal message = (ThreadLocal)ReflectionUtils.getFieldVal(handler, "message", false);
+				ThreadLocal message = (ThreadLocal)ReflectUtil.getFieldValue(handler, "message");
 				message.set(msg);
 				try {
 					AbstractMessage handle = handler.handle(msg);

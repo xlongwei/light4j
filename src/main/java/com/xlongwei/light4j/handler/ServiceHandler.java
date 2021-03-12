@@ -7,9 +7,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,6 +29,8 @@ import com.xlongwei.light4j.util.TokenCounter;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import cn.hutool.core.util.ClassUtil;
+import cn.hutool.core.util.ReflectUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import lombok.extern.slf4j.Slf4j;
@@ -46,9 +48,10 @@ public class ServiceHandler implements LightHttpHandler {
 	private static final ServiceCounter serviceCounter = new ServiceCounter(64, TimeUnit.SECONDS.toMillis(18));
 	
 	public ServiceHandler() {
-		String service = getClass().getPackage().getName()+".service";
-		List<AbstractHandler> list = HandlerUtil.scanHandlers(AbstractHandler.class, service);
-		for(AbstractHandler handler : list) {
+		String pkg = getClass().getPackage().getName()+".service";
+		Set<Class<?>> list = ClassUtil.scanPackageBySuper(pkg, AbstractHandler.class);
+		for(Class<?> clazz : list) {
+			AbstractHandler handler = (AbstractHandler)ReflectUtil.newInstanceIfPossible(clazz);
 			String name = handler.name();
 			handlers.put(name, handler);
 			log.info("load {} => {}", name, handler.getClass().getName());

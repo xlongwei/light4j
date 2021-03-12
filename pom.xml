@@ -14,7 +14,6 @@
         <version.light-4j>1.6.30</version.light-4j>
         <version.logback>1.2.3</version.logback>
         <version.junit>4.13.1</version.junit>
-        <version.fastscanner>2.18.1</version.fastscanner>
         <versions.maven-version>2.4</versions.maven-version>
         <version.lombok>1.18.8</version.lombok>
         <version.pinyin4j>2.5.1</version.pinyin4j>
@@ -97,11 +96,6 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${version.logback}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.lukehutch</groupId>
-            <artifactId>fast-classpath-scanner</artifactId>
-            <version>${version.fastscanner}</version>
         </dependency>
         <!-- Added Dependencies -->
 		<dependency>

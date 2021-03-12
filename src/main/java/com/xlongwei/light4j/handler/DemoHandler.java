@@ -34,8 +34,8 @@ public class DemoHandler implements LightHttpHandler {
 	private Map<String, AbstractHandler> handlers = new HashMap<>();
 	
 	public DemoHandler() {
-		String service = getClass().getPackage().getName()+".demo";
-		Set<Class<?>> list = ClassUtil.scanPackageBySuper(service, AbstractHandler.class);
+		String pkg = getClass().getPackage().getName()+".demo";
+		Set<Class<?>> list = ClassUtil.scanPackageBySuper(pkg, AbstractHandler.class);
 		for(Class<?> clazz : list) {
 			AbstractHandler handler = (AbstractHandler)ReflectUtil.newInstanceIfPossible(clazz);
 			String name = handler.name();

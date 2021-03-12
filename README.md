@@ -18,8 +18,8 @@ vi start.sh
 
 1. -Dredis.configDb、-Dredis.cacheDbs，配置redis地址
 2. -Dlight4j.directory，相关资源可在[library](http://t.xlongwei.com/softwares/library/)获取
-3. -Dlogserver，在/etc/hosts配置logserver地址
-4. contextName=light4j，修改应用的日志上下文
+3. -Dlogserver，在/etc/hosts配置logserver地址：127.0.0.1 logserver
+4. -DcontextName=light4j，修改应用的日志上下文
 5. -Djava.compiler=none，禁用JIT可节约内存，默认启用JIT可提高性能
 6. https、registry可自行研究，sh start.sh keystore转换密钥为相关文件
 

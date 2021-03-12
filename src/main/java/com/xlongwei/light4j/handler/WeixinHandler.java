@@ -1,6 +1,6 @@
 package com.xlongwei.light4j.handler;
 
-import java.util.List;
+import java.util.Set;
 
 import com.networknt.handler.LightHttpHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
@@ -9,6 +9,8 @@ import com.xlongwei.light4j.util.WeixinUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessage;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler;
 
+import cn.hutool.core.util.ClassUtil;
+import cn.hutool.core.util.ReflectUtil;
 import io.undertow.server.HttpServerExchange;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,9 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 public class WeixinHandler implements LightHttpHandler {
 	
 	public WeixinHandler() {
-		String weixin = getClass().getPackage().getName()+".weixin";
-		List<AbstractMessageHandler> list = HandlerUtil.scanHandlers(AbstractMessageHandler.class, weixin);
-		for(AbstractMessageHandler handler : list) {
+		String pkg = getClass().getPackage().getName()+".weixin";
+		Set<Class<?>> list = ClassUtil.scanPackageBySuper(pkg, AbstractMessageHandler.class);
+		for(Class<?> clazz : list) {
+			AbstractMessageHandler handler = (AbstractMessageHandler)ReflectUtil.newInstanceIfPossible(clazz);
 			WeixinUtil.register(handler);
 		}
 	}
