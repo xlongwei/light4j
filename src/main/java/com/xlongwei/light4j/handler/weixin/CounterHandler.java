@@ -55,19 +55,23 @@ public class CounterHandler extends AbstractTextHandler {
 			if(StringUtil.isBlank(cmd) || date!=null) {
 				Map<String, Integer> count = ServiceCounter.counts.get(day);
 				if(count!=null) {
-					StringBuilder sb = new StringBuilder(day).append("\n");
+					StringBuilder sb = new StringBuilder(day).append("\n"), ip = new StringBuilder("\n");
 					String[] names = count.keySet().toArray(new String[0]);
 					Arrays.sort(names);
 					int total = 0;
 					for(String name : names) {
 						Integer times = count.get(name);
 						if(times!=null) {
-							sb.append(name).append("=").append(times).append("\n");
+							if(StringUtil.isIp(name)) {
+								ip.append(name).append("=").append(times).append("\n");
+							}else {
+								sb.append(name).append("=").append(times).append("\n");
+							}
 							total += times;
 						}
 					}
 					sb.append("total: ").append(total);
-					return sb.toString();
+					return textLimited(sb.append(ip).toString());
 				}
 			}else if("reload".equals(cmd)){
 				ServiceCounter.reload();
@@ -118,7 +122,7 @@ public class CounterHandler extends AbstractTextHandler {
 		Date date;
 		String day;
 		boolean isNumbers = StringUtil.isNumbers(cmd);
-		StringBuilder sb = new StringBuilder(cmd).append("\n");
+		StringBuilder sb = new StringBuilder(cmd).append("\n"), ip = new StringBuilder("\n");
 		date = SystemClock.date();
 		int days = isNumbers ? Integer.parseInt(cmd) : 30, total = 0;
 		Map<String, Integer> totalCount = new HashMap<>(8);
@@ -157,12 +161,16 @@ public class CounterHandler extends AbstractTextHandler {
 			PairList<String, Integer> pairList = new PairList.PriorityPairList<>(PriorityComparator.DESEND);
 			pairList.putAll(totalCount);
 			while(pairList.moveNext()) {
-				sb.append(pairList.getData()).append("=").append(pairList.getPriority()).append("\n");
+				if(StringUtil.isIp(pairList.getData())) {
+					ip.append(pairList.getData()).append("=").append(pairList.getPriority()).append("\n");
+				}else {
+					sb.append(pairList.getData()).append("=").append(pairList.getPriority()).append("\n");
+				}
 				total += pairList.getPriority();
 			}
 		}
 		sb.append("total: ").append(total);
-		return sb.toString();
+		return textLimited(sb.append(ip).toString());
 	}
 
 	private static class ServiceCounter {
