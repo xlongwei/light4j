@@ -15,11 +15,14 @@ limitations under the License.*/
 package com.xlongwei.light4j.apijson;
 
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.Objects;
 
 import javax.servlet.http.HttpSession;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.xlongwei.light4j.util.PinyinUtil;
 
 import apijson.JSONResponse;
 import apijson.NotNull;
@@ -149,6 +152,37 @@ public class DemoFunctionParser extends APIJSONFunctionParser {
 
 		JSONObject c = rp.getJSONObject("Comment");
 		return c == null ? 0 : c.getIntValue(JSONResponse.KEY_COUNT);
+	}
+	
+	/**
+	 * 支持拼音排序
+	 * <pre>
+	 * 示例：{"Province[]":{"Province":{"@column":"code,name"}},"sort()":"pinyinSort(Province[],name)"}
+	 * 请求：{"Province[]":[{"code":"11","name":"北京市"},{"code":"51","name":"四川省"},{"code":"50","name":"重庆市"}],"sort":true,"ok":true,"code":200,"msg":"success"}
+	 * 响应：{"Province[]":[{"code":"11","name":"北京市"},{"code":"50","name":"重庆市"},{"code":"51","name":"四川省"}],"sort":true,"ok":true,"code":200,"msg":"success"}
+	 */
+	public boolean pinyinSort(@NotNull JSONObject current, @NotNull String object, @NotNull String key) {
+		Object obj = current.get(object);
+		if(obj instanceof JSONArray) {
+			JSONArray array = current.getJSONArray(object);
+			array.sort(new Comparator<Object>() {
+				@Override
+				public int compare(Object o1, Object o2) {
+					if(Objects.equals(o1, o2)) {
+						return 0;
+					}
+					if(o1 instanceof JSONObject && o2 instanceof JSONObject) {
+						JSONObject json1 = (JSONObject)o1, json2 = (JSONObject)o2;
+						String value1 = json1.getString(key), value2 = json2.getString(key);
+						return PinyinUtil.ZH_COMPARATOR.compare(value1, value2);
+					}
+					return 0;
+				}
+			});
+			return true;
+		}else {
+			return false;
+		}
 	}
 
 
