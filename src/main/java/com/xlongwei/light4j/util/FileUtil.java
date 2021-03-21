@@ -695,6 +695,16 @@ public final class FileUtil {
 		return stringMap;
 	}
 	
+	/** 读文本文件 */
+	public static TextReader reader(File file, String charsetName) {
+		return new TextReader(file, charsetName);
+	}
+	
+	/** 写文本文件 */
+	public static TextWriter writer(File file, String charsetName) {
+		return new TextWriter(file, charsetName);
+	}
+	
 	public static class CharsetNames {
 		/**
 		 * 变长字节通用性强的国际编码

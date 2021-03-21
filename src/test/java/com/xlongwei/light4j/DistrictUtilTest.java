@@ -1,17 +1,24 @@
 package com.xlongwei.light4j;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.event.SyncReadListener;
+import com.xlongwei.light4j.util.FileUtil;
 import com.xlongwei.light4j.util.FileUtil.CharsetNames;
 import com.xlongwei.light4j.util.FileUtil.LineHandler;
 import com.xlongwei.light4j.util.FileUtil.TextReader;
@@ -19,8 +26,12 @@ import com.xlongwei.light4j.util.FileUtil.TextWriter;
 import com.xlongwei.light4j.util.SqlInsert;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.json.JSONSupport;
 import cn.hutool.poi.excel.ExcelUtil;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -152,5 +163,81 @@ public class DistrictUtilTest {
 						}
 				});
 		return parse;
+	}
+	
+	@Test
+	public void parseCounty() throws Exception {
+		SyncReadListener listener = new SyncReadListener();
+		EasyExcel.read(new BufferedInputStream(new FileInputStream("apijson/city_define.xls"))).autoCloseStream(true).registerReadListener(listener).sheet().doRead();
+		SqlInsert sqlInsert = new SqlInsert("pc_county");
+		sqlInsert.addColumns("county_code,county_name,sup_city_code".split("[,]"));
+		Set<String> countyCodes = new HashSet<>();
+		for(Object obj : listener.getList()) {
+			Map<Integer, String> map = (Map<Integer, String>)obj;
+			String countyCode = Objects.toString(map.get(1));
+			String countyName = Objects.toString(map.get(2));
+			if(countyCode==null || countyCode.length()!=6) {
+				continue;
+			}
+			if(countyCodes.contains(countyCode)) {
+				continue;
+			}
+			countyCodes.add(countyCode);
+			String supCityCode = countyCode.substring(0, 4)+"00";
+			sqlInsert.addValues(countyCode, countyName, supCityCode);
+		}
+		List<String> sqls = sqlInsert.sqls();
+		for(String sql : sqls) {
+			System.out.println(sql);
+		}
+	}
+	
+	@Getter
+	@Setter
+	@AllArgsConstructor
+	static class PcCounty extends JSONSupport {
+		private String code, name, supCode;
+	}
+	@Test
+	public void compareCounty() throws Exception {
+		String dir = "../Servers/library/pc_county";
+		Map<String, PcCounty> codeMap = new TreeMap<>();
+		readFile(new File(dir, "pc_county.txt"), codeMap);
+		
+		SqlInsert citySql = new SqlInsert("pc_city").addColumns("city_code,city_name,sup_province_code".split("[,]"));
+		SqlInsert countySql = new SqlInsert("pc_county").addColumns("county_code,county_name,sup_city_code".split("[,]"));
+		for(String code : codeMap.keySet()) {
+			PcCounty pcCounty = codeMap.get(code);
+			if(code.endsWith("00")) {
+				if(code.endsWith("0000")) {
+					citySql.addValues(code, pcCounty.getName(), code.substring(0, 2)+"0000");
+					countySql.addValues(code, pcCounty.getName(), pcCounty.supCode);
+				}else {
+					citySql.addValues(code, pcCounty.getName(), code.substring(0, 2)+"0000");
+				}
+			}else {
+				countySql.addValues(code, pcCounty.getName(), pcCounty.supCode);
+			}
+		}
+		TextWriter writer = FileUtil.writer(new File(dir, "city.sql"), CharsetNames.UTF_8);
+		citySql.sqls().forEach(writer::writeln);
+		writer.close();
+		writer = FileUtil.writer(new File(dir, "county.sql"), CharsetNames.UTF_8);
+		countySql.sqls().forEach(writer::writeln);
+		writer.close();
+	}
+	private void readFile(File file, Map<String, PcCounty> codeMap) {
+		List<String> lines = FileUtil.readLines(file, CharsetNames.UTF_8);
+		for(String line:lines) {
+			if(line==null || line.isEmpty() || !line.contains("	")) {
+				continue;
+			}
+			String[] split=line.split("	");
+			String countyCode = split[0];
+			String countyName = split[1];
+			String supCountyCode = split[2];
+			PcCounty pcCounty = new PcCounty(countyCode, countyName, supCountyCode);
+			codeMap.put(countyCode, pcCounty);
+		}
 	}
 }

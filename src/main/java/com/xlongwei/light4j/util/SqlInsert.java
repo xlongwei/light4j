@@ -19,6 +19,11 @@ import org.apache.commons.lang3.StringUtils;
  * .addValues("xlongwei","18810761776")<br>
  * .addValues("caifuxiangxia","15123011395)<br>
  * .toString()
+ * <li>multi batch insert<br>
+ * new SqlInsert("table").addColumns("name,mobile".split(","))<br>
+ * .batch(100) //默认100<br>
+ * .addValues("xlongwei","18810761776")<br>
+ * .sqls()
  */
 public class SqlInsert {
 	public static enum Type { TrimToNull, TrimToEmpty, LongType, BigDecimalType; };
@@ -27,23 +32,32 @@ public class SqlInsert {
 	private List<List<String>> values2 = new ArrayList<>();
 	private List<Type> types = new LinkedList<>();
 	private String table;
+	private int batchSize = 100;//批量insert，数据太多时生成多条sql
+	private List<String> sqls = new LinkedList<>();
+	public static SqlInsert of(String table, String ... columns) { return new SqlInsert(table).addColumns(columns); }
 	public SqlInsert(String table) { this.table = table; }
-	public void addColumn(String column, String value, Type type) { columns.add(column); values.add(StringUtil.sqlParam(value)); types.add(type); }
-	public void addColumns(String ... columns) {
+	public SqlInsert addColumn(String column, String value, Type type) { columns.add(column); values.add(StringUtil.sqlParam(value)); types.add(type); return this; }
+	public SqlInsert addColumns(String ... columns) {
 		if(columns!=null && columns.length>0) {
 			for(String column:columns) {
 				this.columns.add(column);
 			}
 		}
+		return this;
 	}
-	public void addValues(String ... values) { 
+	public SqlInsert addValues(String ... values) { 
 		if(values!=null && values.length>0) {
 			List<String> list = new ArrayList<>();
 			for(String value:values) {
 				list.add(StringUtil.sqlParam(value));
 			}
 			values2.add(list);
+			if(values2.size() >= batchSize) {
+				sqls.add(toString());
+				values2.clear();
+			}
 		}
+		return this;
 	}
 	@Override
 	public String toString() {
@@ -86,5 +100,15 @@ public class SqlInsert {
 	public void clear() {
 		values.clear();
 		values2.clear();
+	}
+	public void batch(int batchSize) {
+		this.batchSize = batchSize<1 ? 1 : batchSize;
+	}
+	public List<String> sqls(){
+		if(!values2.isEmpty()) {
+			sqls.add(toString());
+			values2.clear();
+		}
+		return sqls;
 	}
 }

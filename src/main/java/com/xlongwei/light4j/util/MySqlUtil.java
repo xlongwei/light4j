@@ -4,7 +4,6 @@ import javax.sql.DataSource;
 
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
-import org.beetl.sql.core.ClasspathLoader;
 import org.beetl.sql.core.ConnectionSourceHelper;
 import org.beetl.sql.core.Interceptor;
 import org.beetl.sql.core.SQLManager;
@@ -24,7 +23,7 @@ import com.zaxxer.hikari.HikariDataSource;
 public class MySqlUtil {
 	public static final HikariDataSource DATASOURCE = (HikariDataSource)SingletonServiceFactory.getBean(DataSource.class);
 	public static final QueryRunner QUERYRUNNER = new QueryRunner(DATASOURCE);
-	public static final SQLManager SQLMANAGER = new SQLManager(new MySqlStyle(), new ClasspathLoader("/beetl/sql"), ConnectionSourceHelper.getSingle(DATASOURCE));
+	public static final SQLManager SQLMANAGER = SQLManager.newBuilder(ConnectionSourceHelper.getSingle(DATASOURCE)).setDbStyle(new MySqlStyle()).setSqlLoader("/beetl/sql", "UTF-8").build();
 	public static final Interceptor[] INTERS = new Interceptor[]{new DebugInterceptor()}, EMPTY_INTERS = new Interceptor[] {};
 	private static final Logger log = LoggerFactory.getLogger(MySqlUtil.class);
 	

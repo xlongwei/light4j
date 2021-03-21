@@ -55,9 +55,9 @@ public class MySqlUtilTest {
 
 	@Test public void beetlGen() throws Exception {
 		SQLManager sqlManager = MySqlUtil.SQLMANAGER;
-		sqlManager.genPojoCodeToConsole("user");
-	    sqlManager.genSQLTemplateToConsole("user");
-	    sqlManager.genBuiltInSqlToConsole(User.class);
+//		sqlManager.genPojoCodeToConsole("user");
+//	    sqlManager.genSQLTemplateToConsole("user");
+//	    sqlManager.genBuiltInSqlToConsole(User.class);
 	}
 	
 	@Test public void beetlQuery() {
@@ -75,8 +75,8 @@ public class MySqlUtilTest {
 		list = query.andEq("id", "1").select();
 		log.info("query list={}", list);
 		//user.md查询
-		list = sqlManager.select("user.sample", User.class);
-		log.info("sample list={}", list);
+//		list = sqlManager.select("user.sample", User.class);
+//		log.info("sample list={}", list);
 		//dao查询
 		UserDao dao = sqlManager.getMapper(UserDao.class);
 		user.setName("admin");

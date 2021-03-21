@@ -17,3 +17,30 @@ CREATE TABLE `ecdict` (
   PRIMARY KEY (`word`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='英语单词和音标';
 
+CREATE TABLE `province` (
+  `code` char(2) NOT NULL COMMENT '代码',
+  `name` varchar(255) NOT NULL COMMENT '名称',
+  PRIMARY KEY (`code`)
+) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='省';
+CREATE TABLE `city` (
+  `code` char(4) NOT NULL COMMENT '代码',
+  `name` varchar(255) NOT NULL COMMENT '名称',
+  PRIMARY KEY (`code`)
+) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='市';
+CREATE TABLE `county` (
+  `code` char(6) NOT NULL COMMENT '代码',
+  `name` varchar(255) NOT NULL COMMENT '名称',
+  PRIMARY KEY (`code`)
+) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='县';
+CREATE TABLE `town` (
+  `code` char(9) NOT NULL COMMENT '代码',
+  `name` varchar(255) NOT NULL COMMENT '名称',
+  PRIMARY KEY (`code`)
+) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='乡';
+CREATE TABLE `village` (
+  `code` char(12) NOT NULL COMMENT '代码',
+  `name` varchar(255) NOT NULL COMMENT '名称',
+  `type` char(3) NOT NULL DEFAULT '000' COMMENT '111主城区，112城乡结合区，121镇中心区，122镇乡结合区，123特殊区域；210乡中心区，220村庄',
+  PRIMARY KEY (`code`)
+) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='村';
+
