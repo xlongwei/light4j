@@ -98,7 +98,7 @@ public class TrainUtil {
 	public static List<String> filter(String from, String to, List<String> lines) {
 		List<String> list2 = new LinkedList<>();
 		for (String line : lines) {
-			JSONObject info = JsonUtil.parse(TrainUtil.trains.get(line));
+			JSONObject info = info(line);
 			JSONArray stations = info.getJSONArray(Line.经过站点);
 			boolean fromFind = false, toFind = false;
 			for (int i = 0; i < stations.size(); i++) {
