@@ -7,6 +7,7 @@ import javax.script.ScriptContext;
 import javax.script.SimpleScriptContext;
 
 import org.beetl.sql.core.SQLReady;
+import org.beetl.sql.core.SqlId;
 
 import com.xlongwei.light4j.beetl.dao.UserDao;
 import com.xlongwei.light4j.beetl.model.User;
@@ -17,6 +18,7 @@ import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
+import com.xlongwei.light4j.util.TaskUtil;
 
 import cn.hutool.script.ScriptUtil;
 import io.undertow.server.HttpServerExchange;
@@ -41,7 +43,7 @@ public class IndexHandler extends AbstractHandler {
 		Object obj = null;
 		switch(type) {
 		case "all": obj = MySqlUtil.SQLMANAGER.all(User.class); break;
-//		case "sql": obj = MySqlUtil.SQLMANAGER.select("user.sample", User.class); break;
+		case "sql": obj = MySqlUtil.SQLMANAGER.select(SqlId.of("user.sample"), User.class); break;
 		case "dao": obj = MySqlUtil.SQLMANAGER.getMapper(UserDao.class).all(); break;
 		default: obj = MySqlUtil.SQLMANAGER.getMetaDataManager().allTable(); break;
 		}
@@ -54,7 +56,9 @@ public class IndexHandler extends AbstractHandler {
 			ScriptContext context = new SimpleScriptContext();
 			context.setAttribute("log", log, ScriptContext.ENGINE_SCOPE);
 			context.setAttribute("util", new Util(), ScriptContext.ENGINE_SCOPE);
-			ScriptUtil.eval(script, context);
+			TaskUtil.submit(()->{
+				ScriptUtil.eval(script, context);
+			});
 		}
 		HandlerUtil.setResp(exchange, exchange.getAttachment(HandlerUtil.BODY));
 	}
@@ -66,8 +70,11 @@ public class IndexHandler extends AbstractHandler {
 		public String get(String json, String path) {
 			return StringUtil.isBlank(json) || StringUtil.isBlank(path) ? "" : JsonUtil.get(json, path);
 		}
+		/** 仅支持insert ignore | into，replace ，不能有分号 */
 		public void insert(String sql, Object ... args) {
-			MySqlUtil.SQLMANAGER.executeUpdate(new SQLReady(sql, args));
+			if(!StringUtil.isBlank(sql) && !sql.contains(";") && (sql.startsWith("insert ") || sql.startsWith("replace ")) ) {
+				MySqlUtil.SQLMANAGER.executeUpdate(new SQLReady(sql, args));
+			}
 		}
 	}
 }

@@ -3092,7 +3092,7 @@ CREATE TABLE `user` (
       `id` int(11) NOT NULL AUTO_INCREMENT,
       `name` varchar(64) DEFAULT NULL,
       `age` int(4) DEFAULT NULL,
-      `createDate` datetime NULL DEFAULT NULL,
+      `createDate` datetime DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 INSERT INTO `user` (`id`, `name`, `age`, `createDate`) VALUES ('1', 'admin', '18', '2020-08-21 23:44:48');

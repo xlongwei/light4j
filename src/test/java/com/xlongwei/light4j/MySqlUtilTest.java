@@ -7,7 +7,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.beetl.sql.core.SQLManager;
+import org.beetl.sql.core.SqlId;
 import org.beetl.sql.core.query.LambdaQuery;
+import org.beetl.sql.gen.SourceConfig;
+import org.beetl.sql.gen.simple.ConsoleOnlyProject;
 import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
@@ -40,9 +43,9 @@ public class MySqlUtilTest {
 		
 		Connection conn = MySqlUtil.DATASOURCE.getConnection();
 		catalog = conn.getCatalog();
-		schema = conn.getSchema();
+//		schema = conn.getSchema();//java.lang.AbstractMethodError: net.sf.log4jdbc.ConnectionSpy.getSchema()Ljava/lang/String;
 		int ti = conn.getTransactionIsolation();
-		int nt = conn.getNetworkTimeout();
+		int nt = 0;//conn.getNetworkTimeout();
 		log.info("conn catalog={} schema={} TransactionIsolation={} NetworkTimeout={}", catalog, schema, ti, nt);
 		
 		DatabaseMetaData metaData = conn.getMetaData();
@@ -58,6 +61,9 @@ public class MySqlUtilTest {
 //		sqlManager.genPojoCodeToConsole("user");
 //	    sqlManager.genSQLTemplateToConsole("user");
 //	    sqlManager.genBuiltInSqlToConsole(User.class);
+		SourceConfig config = new SourceConfig(sqlManager, true);
+		ConsoleOnlyProject project = new ConsoleOnlyProject();
+		config.gen("User",project);
 	}
 	
 	@Test public void beetlQuery() {
@@ -75,8 +81,8 @@ public class MySqlUtilTest {
 		list = query.andEq("id", "1").select();
 		log.info("query list={}", list);
 		//user.md查询
-//		list = sqlManager.select("user.sample", User.class);
-//		log.info("sample list={}", list);
+		list = sqlManager.select(SqlId.of("user", "sample"), User.class);
+		log.info("sample list={}", list);
 		//dao查询
 		UserDao dao = sqlManager.getMapper(UserDao.class);
 		user.setName("admin");

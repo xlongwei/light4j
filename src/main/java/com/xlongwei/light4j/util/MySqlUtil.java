@@ -4,7 +4,9 @@ import javax.sql.DataSource;
 
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
+import org.beetl.sql.clazz.kit.StringKit;
 import org.beetl.sql.core.ConnectionSourceHelper;
+import org.beetl.sql.core.DefaultNameConversion;
 import org.beetl.sql.core.Interceptor;
 import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.db.MySqlStyle;
@@ -23,7 +25,11 @@ import com.zaxxer.hikari.HikariDataSource;
 public class MySqlUtil {
 	public static final HikariDataSource DATASOURCE = (HikariDataSource)SingletonServiceFactory.getBean(DataSource.class);
 	public static final QueryRunner QUERYRUNNER = new QueryRunner(DATASOURCE);
-	public static final SQLManager SQLMANAGER = SQLManager.newBuilder(ConnectionSourceHelper.getSingle(DATASOURCE)).setDbStyle(new MySqlStyle()).setSqlLoader("/beetl/sql", "UTF-8").build();
+	public static final SQLManager SQLMANAGER = SQLManager.newBuilder(ConnectionSourceHelper.getSingle(DATASOURCE)).setNc(new DefaultNameConversion() {
+		public  String getClassName(String tableName){
+			return StringKit.toUpperCaseFirstOne(tableName); //类名使用表名+首字母大写，字段名与列名相同
+		}
+	}).setDbStyle(new MySqlStyle()).setSqlLoader("beetl/sql", "UTF-8").build();
 	public static final Interceptor[] INTERS = new Interceptor[]{new DebugInterceptor()}, EMPTY_INTERS = new Interceptor[] {};
 	private static final Logger log = LoggerFactory.getLogger(MySqlUtil.class);
 	
