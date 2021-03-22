@@ -26,6 +26,7 @@ public class MySqlUtil {
 	public static final HikariDataSource DATASOURCE = (HikariDataSource)SingletonServiceFactory.getBean(DataSource.class);
 	public static final QueryRunner QUERYRUNNER = new QueryRunner(DATASOURCE);
 	public static final SQLManager SQLMANAGER = SQLManager.newBuilder(ConnectionSourceHelper.getSingle(DATASOURCE)).setNc(new DefaultNameConversion() {
+		@Override
 		public  String getClassName(String tableName){
 			return StringKit.toUpperCaseFirstOne(tableName); //类名使用表名+首字母大写，字段名与列名相同
 		}
