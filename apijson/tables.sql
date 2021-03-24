@@ -44,3 +44,17 @@ CREATE TABLE `village` (
   PRIMARY KEY (`code`)
 ) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='村';
 
+CREATE TABLE `sequence` (
+  `name` varchar(64) NOT NULL COMMENT '序列名',
+  `value` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT '当前值'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='序列';
+
+delimiter //
+create function sequence(name varchar(64))
+returns bigint
+begin
+update sequence t1 ,(select @current_val := `value` from sequence t2 where t2.name=name) t3 
+set t1.value = t1.value+1 where t1.name=name and t1.value=@current_val;
+return @current_val+1;
+end //
+delimiter ;

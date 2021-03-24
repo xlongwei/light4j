@@ -72,6 +72,34 @@ public class RedisConfig {
 		T doInJedis(Jedis jedis);
 	}
 	
+	/** 基于Redis的序列号工具 */
+	public static class Sequence {
+		/** 获取name序列的下一个序列号 */
+		public static long next(final String name) {
+			Long next = execute((jedis) -> {
+				//只能处理StringRedisSerializer，不支持默认的JdkSerializationRedisSerializer
+				return jedis.incr(key(name));
+			});
+			return next==null ? 0 : next.longValue();
+		}
+		/** 更新name序列，value为0时重置序列，为负时删除序列 */
+		public static boolean update(final String name, long value) {
+			if(value < 0) {
+				execute((jedis) -> {
+					return jedis.del(key(name));
+				});
+			}else {
+				execute((jedis) -> {
+					return jedis.set(key(name), String.valueOf(value));
+				});
+			}
+			return true;
+		}
+		private static String key(String name) {
+			return CACHE+":sequence."+(name==null ? "" : name);
+		}
+	}
+	
 	public static <T> T execute(JedisCallback<T> callback) {
 		return execute(callback, 1);
 	}

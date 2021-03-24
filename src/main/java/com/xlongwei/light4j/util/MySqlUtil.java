@@ -1,5 +1,7 @@
 package com.xlongwei.light4j.util;
 
+import java.util.Collections;
+
 import javax.sql.DataSource;
 
 import org.apache.commons.dbutils.QueryRunner;
@@ -112,6 +114,28 @@ public class MySqlUtil {
 		}catch(Exception e) {
 			log.warn("mysql query fail: {} {}", e.getClass().getSimpleName(), e.getMessage());
 			return null;
+		}
+	}
+	
+	/** 基于MySql的序列号工具 */
+	public static class Sequence {
+		/** 获取name序列的下一个序列号 */
+		public static long next(String name) {
+			try{
+				return SQLMANAGER.execute("select sequence(#{name})", Long.class, Collections.singletonMap("name", name)).get(0);
+			}catch(Exception e) {
+				//新序列会异常
+			}
+			SQLMANAGER.executeUpdate("insert ignore sequence values(#{name},#{value})", StringUtil.params("name",name,"value","0"));
+			return next(name);
+		}
+		/** 更新name序列，value为0时重置序列，为负时删除序列 */
+		public static boolean update(String name, long value) {
+			if(value < 0) {
+				return 1 == SQLMANAGER.executeUpdate("delete from sequence where name=#{name}", StringUtil.params("name",name,"value","0"));
+			}else {
+				return 1 == SQLMANAGER.executeUpdate("update sequence set value=#{value} where name=#{name}", StringUtil.params("name",name,"value", String.valueOf(value)));
+			}
 		}
 	}
 }

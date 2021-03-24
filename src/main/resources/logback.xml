@@ -32,6 +32,7 @@
 					<appender name="SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
 						<RemoteHost>logserver</RemoteHost>
 						<Port>6000</Port>
+						<QueueSize>10240</QueueSize>
 						<ReconnectionDelay>10000</ReconnectionDelay>
 						<IncludeCallerData>false</IncludeCallerData>
 					</appender>

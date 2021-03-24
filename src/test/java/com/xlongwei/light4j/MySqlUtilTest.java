@@ -11,6 +11,7 @@ import org.beetl.sql.core.SqlId;
 import org.beetl.sql.core.query.LambdaQuery;
 import org.beetl.sql.gen.SourceConfig;
 import org.beetl.sql.gen.simple.ConsoleOnlyProject;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
@@ -22,6 +23,7 @@ import com.xlongwei.light4j.handler.DemoHandler;
 import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.extra.template.Template;
 import lombok.extern.slf4j.Slf4j;
 
@@ -104,6 +106,15 @@ public class MySqlUtilTest {
 		Map<String, String> map = StringUtil.params("ip", "127.0.0.1", "region", "localhost");
 		String html = template.render(map);
 		log.info("html={}", html);
+	}
+	
+	@Test public void sequence() {
+		String name=RandomUtil.randomString(10);
+		Assert.assertEquals(1, MySqlUtil.Sequence.next(name));
+		Assert.assertTrue(MySqlUtil.Sequence.update(name, 0));
+		Assert.assertEquals(1, MySqlUtil.Sequence.next(name));
+		Assert.assertTrue(MySqlUtil.Sequence.update(name, -1));
+		Assert.assertFalse(MySqlUtil.Sequence.update(name, 0));
 	}
 
 	/**

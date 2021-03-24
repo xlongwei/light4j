@@ -4,11 +4,13 @@ import java.util.Map;
 
 import org.apache.shiro.util.AntPathMatcher;
 import org.apache.shiro.util.PatternMatcher;
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.ShiroUtil;
 
+import cn.hutool.core.util.RandomUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -54,5 +56,18 @@ public class RedisTest {
 			}
 			log.info("");
 		}
+	}
+	
+	@Test public void sequence() {
+		String name = RandomUtil.randomString(10);
+		RedisConfig.Sequence.update(name, -1);
+		Assert.assertEquals(1, RedisConfig.Sequence.next(name));
+		RedisConfig.Sequence.update(name, 0);
+		Assert.assertEquals(1, RedisConfig.Sequence.next(name));
+		RedisConfig.Sequence.update(name, 10);
+		Assert.assertEquals(11, RedisConfig.Sequence.next(name));
+		RedisConfig.Sequence.update(name, -1);
+		Assert.assertEquals(1, RedisConfig.Sequence.next(name));
+		RedisConfig.Sequence.update(name, -1);
 	}
 }

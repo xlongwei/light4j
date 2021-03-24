@@ -49,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 public class HandlerUtil {
 	public static final String MIMETYPE_JSON = MimeMappings.DEFAULT.getMimeType("json"), MIMETYPE_TXT = MimeMappings.DEFAULT.getMimeType("txt");
 	private static final String TEXT = "text", XML = "xml", JSON = "json";
-	private static final String SHOWAPI_USER_ID = "showapi_userId";
+	private static final String SHOWAPI_USER_ID = "showapi_userId", SHOWAPI_USER_NAME = "showapi_userName";
 	private static final SessionManager sessionManager = SingletonServiceFactory.getBean(SessionManager.class);
 	private static final SessionAttachmentHandler sessionAttachmentHandler = sessionManager != null ? null
 			: new SessionAttachmentHandler(
@@ -278,6 +278,12 @@ public class HandlerUtil {
 	/** 判断是否showapi客户 */
 	public static boolean isShowapiClient(HttpServerExchange exchange) {
 		return ConfigUtil.isClient(getParam(exchange, SHOWAPI_USER_ID));
+	}
+	
+	/** 获取showapi用户名 */
+	public static String getShowapiUserName(HttpServerExchange exchange) {
+		String showapiUserName = getParam(exchange, SHOWAPI_USER_NAME);
+		return StringUtils.trimToEmpty(showapiUserName);
 	}
 	
 	/** 获取会话session */
