@@ -40,7 +40,7 @@ CREATE TABLE `town` (
 CREATE TABLE `village` (
   `code` char(12) NOT NULL COMMENT '代码',
   `name` varchar(255) NOT NULL COMMENT '名称',
-  `type` char(3) NOT NULL DEFAULT '000' COMMENT '111主城区，112城乡结合区，121镇中心区，122镇乡结合区，123特殊区域；210乡中心区，220村庄',
+  `type` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT '111主城区，112城乡结合区，121镇中心区，122镇乡结合区，123特殊区域；210乡中心区，220村庄',
   PRIMARY KEY (`code`)
 ) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='村';
 
@@ -50,11 +50,11 @@ CREATE TABLE `sequence` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='序列';
 
 delimiter //
-create function sequence(name varchar(64))
+create function sequence(name varchar(64), step bigint(20))
 returns bigint
 begin
 update sequence t1 ,(select @current_val := `value` from sequence t2 where t2.name=name) t3 
-set t1.value = t1.value+1 where t1.name=name and t1.value=@current_val;
+set t1.value = t1.value+step where t1.name=name and t1.value=@current_val;
 return @current_val+1;
 end //
 delimiter ;

@@ -16,6 +16,12 @@ public class SequenceHandler extends AbstractHandler {
 	public void next(HttpServerExchange exchange) throws Exception {
 		String sequence = sequence(exchange);
 		boolean mysql = "mysql".equals(HandlerUtil.getParam(exchange, "type"));
+		long step = NumberUtil.parseLong(HandlerUtil.getParam(exchange, "step"), 0L);
+		if(step > 1) {
+			step -= 1; //这个很奇怪
+			long next = mysql ? MySqlUtil.Sequence.next(sequence, step) : RedisConfig.Sequence.next(sequence, step);
+			HandlerUtil.setResp(exchange, Collections.singletonMap("next", next));
+		}
 		long next = mysql ? MySqlUtil.Sequence.next(sequence) : RedisConfig.Sequence.next(sequence);
 		HandlerUtil.setResp(exchange, Collections.singletonMap("next", next));
 	}

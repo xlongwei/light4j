@@ -82,6 +82,13 @@ public class RedisConfig {
 			});
 			return next==null ? 0 : next.longValue();
 		}
+		/** 获取name序列的下一个序列号 */
+		public static long next(final String name, final long step) {
+			Long next = execute((jedis) -> {
+				return jedis.incrBy(key(name), step);
+			});
+			return next==null ? 0 : next.longValue();
+		}
 		/** 更新name序列，value为0时重置序列，为负时删除序列 */
 		public static boolean update(final String name, long value) {
 			if(value < 0) {
