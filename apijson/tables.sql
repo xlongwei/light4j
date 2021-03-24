@@ -46,7 +46,8 @@ CREATE TABLE `village` (
 
 CREATE TABLE `sequence` (
   `name` varchar(64) NOT NULL COMMENT '序列名',
-  `value` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT '当前值'
+  `value` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT '当前值',
+  PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='序列';
 
 delimiter //
