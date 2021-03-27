@@ -29,6 +29,10 @@ public class ApijsonHandler extends AbstractHandler {
 			return;
 		}
 		String path = exchange.getAttachment(AbstractHandler.PATH), request = HandlerUtil.getBodyString(exchange);
+		apijson(path, request, exchange);
+	}
+
+	public static void apijson(String path, String request, HttpServerExchange exchange) throws Exception {
 		if(StringUtils.isBlank(path) || (StringUtils.isBlank(request) && !"logout".equals(path))) {
 			HandlerUtil.setResp(exchange, Collections.singletonMap("error", StringUtils.isBlank(path) ? "apijson/{path} is required" : "body is required"));
 			return;
@@ -83,5 +87,4 @@ public class ApijsonHandler extends AbstractHandler {
 			exchange.getResponseSender().send(response);
 		}
 	}
-
 }
