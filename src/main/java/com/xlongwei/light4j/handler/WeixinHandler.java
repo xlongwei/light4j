@@ -1,6 +1,8 @@
 package com.xlongwei.light4j.handler;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import com.networknt.handler.LightHttpHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
@@ -25,7 +27,8 @@ public class WeixinHandler implements LightHttpHandler {
 	
 	public WeixinHandler() {
 		String pkg = getClass().getPackage().getName()+".weixin";
-		Set<Class<?>> list = ClassUtil.scanPackageBySuper(pkg, AbstractMessageHandler.class);
+		List<Class<?>> list = new ArrayList<>(ClassUtil.scanPackageBySuper(pkg, AbstractMessageHandler.class));
+		Collections.sort(list, (a,b)->{ return a.getName().compareTo(b.getName()); });
 		for(Class<?> clazz : list) {
 			AbstractMessageHandler handler = (AbstractMessageHandler)ReflectUtil.newInstanceIfPossible(clazz);
 			WeixinUtil.register(handler);

@@ -67,7 +67,7 @@ public class DistrictHandler extends AbstractHandler {
 			String town = StrUtil.sub(code, 0, 9);
 			String village = StrUtil.sub(code, 0, 12);
 			JsonBuilder json = JsonUtil.builder(false);
-			if(code.length()==0) {
+			if(StringUtil.isBlank(code)) {
 				json.putJSON("Province[]").putJSON("Province").top().put("sortProvince()", "pinyinSort(Province[],name)");
 			}else if(code.length()==2) {
 				json.put("province", province).putJSON("Province").put("code", province).top();
