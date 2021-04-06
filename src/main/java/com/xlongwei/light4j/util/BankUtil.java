@@ -21,6 +21,11 @@ public class BankUtil {
 		return cardBin.get(accountNo);
 	}
 	
+	/** 通过银行卡号查找卡bin码 */
+	public static String cardBin(String accountNo) {
+		return cardBin.bin(accountNo);
+	}
+	
 	/**
 	 * 添加基础卡片信息
 	 * @param cardInfo
@@ -50,7 +55,7 @@ public class BankUtil {
 			bankId = split[idx++];
 			bankName = split[idx++];
 			cardName = split[idx++];
-			cardDigits = split[idx++];
+			cardDigits = NumberUtil.correctNumber(split[idx++]);
 			cardType = split[idx++];
 			bankCode = split[idx++];
 			bankName2 = split[idx++];

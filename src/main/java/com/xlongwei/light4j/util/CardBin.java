@@ -34,6 +34,34 @@ public class CardBin<E> {
 		}
 		return null;
 	}
+	
+	/** 匹配bin码 */
+	public String bin(String bin) {
+		if(bin != null && bin.length() > 0) {
+			Node<E> cn = root;
+			for(char c : bin.toCharArray()) {
+				if(cn.children == null) {
+					break;
+				}else {
+					boolean found = false;
+					for(Node<E> n : cn.children) {
+						if(n.c == c) {
+							cn = n;
+							found = true;
+						}
+					}
+					if(found == false) {
+						break;
+					}
+				}
+			}
+			while(cn!=null && cn.data==null && cn.parent!=null) {
+				cn = cn.parent;
+			}
+			return cn == null ? null : cn.toString().trim();
+		}
+		return null;
+	}
 
 	/** 添加bin码对应数据 */
 	public void add(String bin, E data) {

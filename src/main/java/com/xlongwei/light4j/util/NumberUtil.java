@@ -146,6 +146,11 @@ public class NumberUtil {
 				.collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
     }
     
+    /** 返回正确格式的数字或空串 */
+    public static String correctNumber(String numbers) {
+    	return StringUtil.isNumbers(numbers) ? numbers : "";
+    }
+    
     /** 判断是否有效数字金额 */
     public static boolean isMoney(String money) {
     	return money!=null && MONEY_PATTERN.matcher(money).matches();

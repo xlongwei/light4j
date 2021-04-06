@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -16,7 +17,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.beetl.sql.core.SQLReady;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,12 +27,17 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.xlongwei.light4j.util.BankUtil;
 import com.xlongwei.light4j.util.BankUtil.CardInfo;
+import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.FileUtil.CharsetNames;
 import com.xlongwei.light4j.util.FileUtil.TextWriter;
 import com.xlongwei.light4j.util.JsonUtil;
+import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cn.hutool.core.lang.Pair;
+import cn.hutool.core.text.StrFormatter;
 import cn.hutool.core.text.TextSimilarity;
+import cn.hutool.core.util.ReflectUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -120,6 +128,43 @@ public class BankUtilTest {
 		Assert.assertEquals("广东发展银行", BankUtil.cardInfo("625809").getBankName2());
 		Assert.assertEquals("招商银行", BankUtil.cardInfo("439226").getBankName2());
 		Assert.assertEquals("招商银行", BankUtil.cardInfo("43922623433").getBankName2());
+	}
+	
+	//cardBin.txt入库card表，后续维护数据库即可
+	@Test public void testMysql() throws Throwable {
+		try(InputStream inputStream = new BufferedInputStream(ConfigUtil.stream("cardBin.txt"))) {
+			Map<String, Pair<Integer, String>> columnMaxLength = new HashMap<>();
+			Map<String, Pair<Integer, String>> columnMinLength = new HashMap<>();
+			Field[] fields = CardInfo.class.getDeclaredFields();
+			String sql = "insert ignore bank_card(cardBin,issuerCode,issuerName,cardName,cardDigits,cardType,bankCode,bankName) values(?,?,?,?,?,?,?,?)";
+			IOUtils.lineIterator(inputStream, StandardCharsets.UTF_8).forEachRemaining(line -> {
+				CardInfo cardInfo = new CardInfo().rowIn(line);
+				MySqlUtil.SQLMANAGER.executeUpdate(new SQLReady(sql, cardInfo.getCardBin(), cardInfo.getBankId(), cardInfo.getBankName(), cardInfo.getCardName()
+						,cardInfo.getCardDigits(), cardInfo.getCardType(), cardInfo.getBankCode(), cardInfo.getBankName2()));
+				for(Field field : fields) {
+					String value = Objects.toString(ReflectUtil.getFieldValue(cardInfo, field), "");
+					int newLength = value.length();
+					Pair<Integer, String> maxLength = columnMaxLength.get(field.getName());
+					if(maxLength==null || newLength>maxLength.getKey().intValue()) {
+						columnMaxLength.put(field.getName(), Pair.of(newLength, value));
+					}
+					Pair<Integer, String> minLength = columnMinLength.get(field.getName());
+					if(minLength==null || newLength<minLength.getKey().intValue()) {
+						columnMinLength.put(field.getName(), Pair.of(newLength, value));
+					}
+				}
+			});
+			log.info("cardBin.txt loaded");
+			StringBuilder sb = new StringBuilder();
+			for(Field field : fields) {
+				String name = field.getName();
+				Pair<Integer, String> minLength = columnMinLength.get(name), maxLength = columnMaxLength.get(name);
+				String format = StrFormatter.format("{}({}={},{}={})", name, minLength.getKey(), minLength.getValue(), maxLength.getKey(), maxLength.getValue());
+				sb.append(format).append(" ");
+			}
+			//cardBin(2=65,12=624580715496) bankId(8=00010033,8=00010033) bankName(3=CSC,30=Joint-Stock Company Commercial) cardName(0=,30=CCB Macau Platinum Credit Card) cardDigits(0=,26=Debit card - Platinum Card) cardType(2=16,4=准贷记卡) bankCode(0=,7=SPABANK) bankName2(0=,11=浙江省农村信用社联合社)  
+			log.info(sb.toString());
+		}
 	}
 
 	private void addBankInfo(CardInfo bankInfo, Map<String, CardInfo> cardBinMap) {
