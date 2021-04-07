@@ -4,114 +4,85 @@ package com.xlongwei.light4j.util;
  * 卡bin搜索
  * @author xlongwei
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
-public class CardBin<E> {
-	
-	/** 搜索bin码 */
-	public E get(String bin) {
-		if(bin != null && bin.length() > 0) {
-			Node<E> cn = root;
-			for(char c : bin.toCharArray()) {
-				if(cn.children == null) {
-					break;
-				}else {
-					boolean found = false;
-					for(Node<E> n : cn.children) {
-						if(n.c == c) {
-							cn = n;
-							found = true;
-						}
-					}
-					if(found == false) {
-						break;
-					}
-				}
-			}
-			while(cn!=null && cn.data==null && cn.parent!=null) {
-				cn = cn.parent;
-			}
-			return cn == null ? null : cn.data;
-		}
-		return null;
-	}
+public class CardBin {
 	
 	/** 匹配bin码 */
 	public String bin(String bin) {
 		if(bin != null && bin.length() > 0) {
-			Node<E> cn = root;
+			Node cn = root;
 			for(char c : bin.toCharArray()) {
-				if(cn.children == null) {
+				if(cn.child == null) {
 					break;
 				}else {
 					boolean found = false;
-					for(Node<E> n : cn.children) {
+					Node n = cn.child;
+					while(n != null) {
 						if(n.c == c) {
 							cn = n;
 							found = true;
+							break;
 						}
+						n = n.sibling;
 					}
 					if(found == false) {
 						break;
 					}
 				}
 			}
-			while(cn!=null && cn.data==null && cn.parent!=null) {
-				cn = cn.parent;
-			}
-			return cn == null ? null : cn.toString().trim();
+			return cn == null ? null : cn.toString();
 		}
 		return null;
 	}
 
 	/** 添加bin码对应数据 */
-	public void add(String bin, E data) {
+	public void add(String bin) {
 		char[] cs = bin.toCharArray();
-		Node<E> cn = root;
+		Node cn = root;
 		for(char c : cs) {
-			if(cn.children != null) {
+			if(cn.child != null) {
 				boolean found = false;
-				for(Node<E> n : cn.children) {
+				Node n = cn.child;
+				while(n != null) {
 					if(n.c == c) {
 						cn = n;
 						found = true;
 						break;
 					}
+					n = n.sibling;
 				}
 				if(found == false) {
-					Node[] copy = new Node[cn.children.length+1];
-					System.arraycopy(cn.children, 0, copy, 0, cn.children.length);
-					Node<E> n = new Node<>();
-					n.c = c;
-					n.parent = cn;
-					copy[cn.children.length] = n;
-					cn.children = copy;
-					cn = n;
+					n = cn.child;
+					while(n.sibling != null) {
+						n = n.sibling;
+					}
+					n.sibling = new Node();
+					n.sibling.c = c;
+					n.sibling.parent = cn;
+					cn = n.sibling;
 				}
 			}else {
-				Node<E> n = new Node<>();
-				n.c = c;
-				n.parent = cn;
-				cn.children = new Node[] { n };
-				cn = n;
+				cn.child = new Node();
+				cn.child.c = c;
+				cn.child.parent = cn;
+				cn = cn.child;
 			}
 		}
-		cn.data = data;
 	}
 	
-	Node<E> root = new Node<>();
-	static class Node<E> {
+	Node root = new Node();
+	static class Node {
 		char c = 0;
-		Node<E>[] children;
-		Node<E> parent;
-		E data;
+		Node parent;
+		Node child;
+		Node sibling;
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			Node<?> cn = this;
-			do {
+			Node cn = this;
+			while(cn.parent != null) {
 				sb.append(cn.c);
 				cn = cn.parent;
-			}while(cn != null);
+			};
 			return sb.reverse().toString();
 		}
 	}

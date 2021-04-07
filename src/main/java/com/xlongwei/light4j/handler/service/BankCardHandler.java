@@ -57,10 +57,8 @@ public class BankCardHandler extends AbstractHandler {
 
 	static {
 		if(loadFromFile == false) {
-			CardInfo single = new CardInfo();
 			MySqlUtil.SQLMANAGER.execute(new SQLReady("select cardBin from bank_card"), CardInfo.class).forEach(cardInfo -> {
-				single.setCardBin(cardInfo.getCardBin());
-				BankUtil.addData(single);
+				BankUtil.addBin(cardInfo.getCardBin());
 			});
 			log.info("bank_card loaded");
 		}else {

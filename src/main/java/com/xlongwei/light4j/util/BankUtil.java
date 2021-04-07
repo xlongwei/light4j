@@ -1,6 +1,8 @@
 package com.xlongwei.light4j.util;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import lombok.Data;
 
@@ -10,7 +12,8 @@ import lombok.Data;
  *
  */
 public class BankUtil {
-	static CardBin<CardInfo> cardBin = new CardBin<>();
+	static CardBin cardBin = new CardBin();
+	static Map<String, CardInfo> cardMap = new HashMap<>();
 	
 	/**
 	 * 通过银行卡号查找卡片信息
@@ -18,7 +21,8 @@ public class BankUtil {
 	 * @return CardInfo
 	 */
 	public static CardInfo cardInfo(String accountNo) {
-		return cardBin.get(accountNo);
+		String bin = cardBin.bin(accountNo);
+		return bin==null ? null : cardMap.get(bin);
 	}
 	
 	/** 通过银行卡号查找卡bin码 */
@@ -31,7 +35,13 @@ public class BankUtil {
 	 * @param cardInfo
 	 */
 	public static void addData(CardInfo cardInfo) {
-		cardBin.add(cardInfo.getCardBin(), cardInfo);
+		cardBin.add(cardInfo.getCardBin());
+		cardMap.put(cardInfo.getCardBin(), cardInfo);
+	}
+	
+	/** 添加卡bin码 */
+	public static void addBin(String bin) {
+		cardBin.add(bin);
 	}
 
 	@Data
