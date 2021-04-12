@@ -146,6 +146,7 @@ public class DatetimeHandler extends AbstractHandler {
 					plan = StringUtil.isBlank(name) ? null : HolidayUtil.plans.get(DateUtil.yearFormat.format(day)+"."+name);
 				}else {
 					map.put("remark", HolidayUtil.nameOf(-flag)+"调班");
+					return;
 				}
 			}else {
 				Holiday guessHoliday = HolidayUtil.guessHoliday(day);

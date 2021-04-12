@@ -32,13 +32,7 @@ public class BankCardHandler extends AbstractHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		String bankCardNumber = HandlerUtil.getParam(exchange, "bankCardNumber");
 		if(StringUtil.isNumbers(bankCardNumber)) {
-			CardInfo cardInfo = null;
-			if(loadFromFile) {
-				cardInfo = BankUtil.cardInfo(bankCardNumber);
-			}else {
-				String cardBin = BankUtil.cardBin(bankCardNumber);
-				cardInfo = MySqlUtil.SQLMANAGER.executeQueryOne(new SQLReady("select cardBin,issuerCode as bankId,issuerName as bankName,cardName,cardDigits,cardType,bankCode,bankName as bankName2 from bank_card where cardBin=?", cardBin), CardInfo.class);
-			}
+			CardInfo cardInfo = cardInfo(bankCardNumber);
 			Map<String, String> map = new HashMap<>(16);
 			map.put("valid", Boolean.toString(StringUtil.isBankCardNumber(bankCardNumber)));
 			if(cardInfo != null) {
@@ -53,6 +47,17 @@ public class BankCardHandler extends AbstractHandler {
 			}
 			HandlerUtil.setResp(exchange, map);
 		}
+	}
+	
+	public static CardInfo cardInfo(String bankCardNumber) {
+		CardInfo cardInfo = null;
+		if(loadFromFile) {
+			cardInfo = BankUtil.cardInfo(bankCardNumber);
+		}else {
+			String cardBin = BankUtil.cardBin(bankCardNumber);
+			cardInfo = MySqlUtil.SQLMANAGER.executeQueryOne(new SQLReady("select cardBin,issuerCode as bankId,issuerName as bankName,cardName,cardDigits,cardType,bankCode,bankName as bankName2 from bank_card where cardBin=?", cardBin), CardInfo.class);
+		}
+		return cardInfo;
 	}
 
 	static {
