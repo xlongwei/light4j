@@ -12,6 +12,7 @@ import cn.hutool.core.date.DateRange;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.Week;
+import cn.hutool.core.date.chinese.SolarTerms;
 import cn.hutool.core.date.format.FastDateFormat;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,6 +25,9 @@ public class HolidayUtil {
 	public static final Map<String, String> plans = new HashMap<>(32);
 	public static final Map<String, Integer> holidays = new HashMap<>(64);
 	public static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy.MM.dd");
+	public static final String[] solarTerm = {"小寒","大寒","立春","雨水","惊蛰","春分","清明","谷雨","立夏","小满","芒种","夏至","小暑","大暑","立秋","处暑","白露","秋分","寒露","霜降","立冬","小雪","大雪","冬至"};
+	public static final Map<String, String> solarFestivals = StringUtil.params("02.14","情人节","03.08","妇女节","03.12","植树节","04.01","愚人节","05.04","青年节","05.12","护士节","06.01","儿童节","07.01","建党节","08.01","建军节","09.10","教师节","12.24","平安夜","12.25","圣诞节");
+	public static final Map<String, String> lularFestivals = StringUtil.params("正月十五","元宵节","二月初二","龙抬头","三月初三","上巳节","七月初七","七夕节","七月十五","中元节","九月初九","重阳节","十月十五","下元节","腊月初八","腊八节","腊月三十","除夕");
 	private static final String days2020 = "{\"元旦节\":\"1.1\",\"春节\":\"-1.19,1.24-2.2\",\"清明节\":\"4.4-6\",\"劳动节\":\"-4.26,5.1-5,-5.9\",\"端午节\":\"6.25-27,-6.28\",\"国庆节\":\"-9.27,10.1-8,-10.10\"}";
 	private static final String days2019 = "{\"元旦节\":\"1.1\",\"春节\":\"-2.2-3,2.4-10\",\"清明节\":\"4.5\",\"劳动节\":\"5.1\",\"端午节\":\"6.7\",\"中秋节\":\"9.13\",\"国庆节\":\"-9.29,10.1-7,-10.12\"}";
 	private static final String days2018 = "{\"元旦节\":\"1.1\",\"春节\":\"-2.11,2.15-21,-2.24\",\"清明节\":\"4.5-7,-4.8\",\"劳动节\":\"-4.28,4.29-5.1\",\"端午节\":\"6.18\",\"中秋节\":\"9.24\",\"国庆节\":\"-9.29-30,10.1-7\"}";
@@ -98,8 +102,37 @@ public class HolidayUtil {
 				return Holiday.中秋节;
 			}
 		}
-		//清明=春分+15日，比较复杂，后续再实现
+		//清明为24节气之一，4月第一个节为清明
+		if("04".equals(format.substring(5, 7))) {
+			int term = SolarTerms.getTerm(Integer.parseInt(format.substring(0, 4)), 2*4-1);
+			if(term == Integer.parseInt(format.substring(8))) {
+				return Holiday.清明节;
+			}
+		}
 		return null;
+	}
+	
+	/** 尝试猜测24节气和常见节日（非法定放假） */
+	public static String guessRemark(Date day) {
+		String format = dateFormat.format(day);
+		int year = Integer.parseInt(format.substring(0, 4)), month = Integer.parseInt(format.substring(5, 7)), date = Integer.parseInt(format.substring(8));
+		if(date == SolarTerms.getTerm(year, 2*month-1)) {
+			return solarTerm[2*month-2];
+		}else if(date == SolarTerms.getTerm(year, 2*month)) {
+			return solarTerm[2*month-1];
+		}else {
+			String yearMonth = format.substring(5);
+			String remark = solarFestivals.get(yearMonth);//阳历节日
+			if(remark == null) {
+				ZhDate zhDate = ZhDate.fromDate(day);
+				if(zhDate != null) {
+					String chinese = zhDate.chinese();
+					yearMonth = chinese.substring(chinese.indexOf('年')+1);
+					remark = lularFestivals.get(yearMonth);//农历节日
+				}
+			}
+			return remark;
+		}
 	}
 	
 	/**

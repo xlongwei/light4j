@@ -140,9 +140,13 @@ public class DatetimeHandler extends AbstractHandler {
 		String plan = StringUtil.isBlank(name) ? null : HolidayUtil.plans.get(year+"."+name);
 		if(plan==null) {
 			Integer flag = HolidayUtil.holidays.get(HolidayUtil.dateFormat.format(day));
-			if(flag!=null && flag.intValue()>0) {
-				name = HolidayUtil.nameOf(flag);
-				plan = StringUtil.isBlank(name) ? null : HolidayUtil.plans.get(DateUtil.yearFormat.format(day)+"."+name);
+			if(flag!=null) {
+				if(flag.intValue()>0) {
+					name = HolidayUtil.nameOf(flag);
+					plan = StringUtil.isBlank(name) ? null : HolidayUtil.plans.get(DateUtil.yearFormat.format(day)+"."+name);
+				}else {
+					map.put("remark", HolidayUtil.nameOf(-flag)+"调班");
+				}
 			}else {
 				Holiday guessHoliday = HolidayUtil.guessHoliday(day);
 				if(null != guessHoliday) {
@@ -154,6 +158,11 @@ public class DatetimeHandler extends AbstractHandler {
 			map.put("year", year);
 			map.put("holiday", name);
 			map.put("remark", plan==null ? "" : plan);
+		}else {
+			String remark = HolidayUtil.guessRemark(day);
+			if(StringUtil.hasLength(remark)) {
+				map.put("remark", remark);
+			}
 		}
 	}
 
