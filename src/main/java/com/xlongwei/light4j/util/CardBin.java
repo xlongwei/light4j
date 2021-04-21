@@ -29,7 +29,7 @@ public class CardBin {
 					}
 				}
 			}
-			return cn == null ? null : cn.toString();
+			return cn == null || cn.child != null ? null : cn.toString();
 		}
 		return null;
 	}

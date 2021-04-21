@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.beetl.sql.core.SQLReady;
 
+import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.BankUtil;
 import com.xlongwei.light4j.util.BankUtil.CardInfo;
@@ -50,14 +51,14 @@ public class BankCardHandler extends AbstractHandler {
 	}
 	
 	public static CardInfo cardInfo(String bankCardNumber) {
-		CardInfo cardInfo = null;
-		if(loadFromFile) {
-			cardInfo = BankUtil.cardInfo(bankCardNumber);
+		if(StringUtils.isBlank(bankCardNumber)) {
+			return null;
+		}else if(loadFromFile) {
+			return BankUtil.cardInfo(bankCardNumber);
 		}else {
 			String cardBin = BankUtil.cardBin(bankCardNumber);
-			cardInfo = MySqlUtil.SQLMANAGER.executeQueryOne(new SQLReady("select cardBin,issuerCode as bankId,issuerName as bankName,cardName,cardDigits,cardType,bankCode,bankName as bankName2 from bank_card where cardBin=?", cardBin), CardInfo.class);
+			return StringUtils.isBlank(cardBin) ? null : MySqlUtil.SQLMANAGER.executeQueryOne(new SQLReady("select cardBin,issuerCode as bankId,issuerName as bankName,cardName,cardDigits,cardType,bankCode,bankName as bankName2 from bank_card where cardBin=?", cardBin), CardInfo.class);
 		}
-		return cardInfo;
 	}
 
 	static {
