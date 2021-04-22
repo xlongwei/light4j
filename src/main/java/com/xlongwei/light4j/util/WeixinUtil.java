@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,6 +20,7 @@ import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractEvent.ClickEvent;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessage.TextMessage;
 
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ReflectUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -280,7 +280,7 @@ public class WeixinUtil {
 						}
 						String value = obj.get(field.getName());
 						if(value != null) {
-							Object convert = ConvertUtils.convert(value, field.getType());
+							Object convert = Convert.convert(field.getType(), value);
 							field.set(msg, convert);
 						}
 					}

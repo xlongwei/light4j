@@ -3,6 +3,7 @@ package com.xlongwei.light4j.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -28,7 +29,6 @@ import java.util.Enumeration;
 
 import javax.crypto.Cipher;
 
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
 
@@ -171,7 +171,7 @@ public class RsaUtil {
 		try {
 			Signature s = Signature.getInstance(RSA_SIGN);
 			s.initSign(privateKey);
-			s.update(data.getBytes(Charsets.UTF_8));
+			s.update(data.getBytes(StandardCharsets.UTF_8));
 			return Base64.encodeBase64String(s.sign());
 		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
 			log.warn("fail to sign: {}", e.getMessage());
@@ -186,7 +186,7 @@ public class RsaUtil {
 		try {
 			Signature s = Signature.getInstance(RSA_SIGN);
 			s.initVerify(publicKey);
-			s.update(data.getBytes(Charsets.UTF_8));
+			s.update(data.getBytes(StandardCharsets.UTF_8));
 			return s.verify(Base64.decodeBase64(signature));
 		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
 			log.warn("fail to verify: {}", e.getMessage());
@@ -201,7 +201,7 @@ public class RsaUtil {
 		try {
 			Cipher c = bouncyCastleProviderAvailable ? Cipher.getInstance(RSA_CIPHER, "BC") : Cipher.getInstance(RSA_CIPHER);
 			c.init(Cipher.ENCRYPT_MODE, publicKey);
-			byte[] bs = data.getBytes(Charsets.UTF_8);
+			byte[] bs = data.getBytes(StandardCharsets.UTF_8);
 			//1024限制117字节 2048限制245字节
 			int bufferSize = KEY_SIZE/8 - 11;
 			byte[] buffer = new byte[bufferSize];

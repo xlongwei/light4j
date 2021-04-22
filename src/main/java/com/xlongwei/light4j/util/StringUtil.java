@@ -1,8 +1,6 @@
 package com.xlongwei.light4j.util;
 
 import java.awt.Color;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -20,8 +18,8 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.CharEncoding;
 
 import com.networknt.utility.CharUtils;
 
@@ -87,7 +85,7 @@ public class StringUtil {
 		MessageDigest md;
 		try {
 			md = MessageDigest.getInstance(algorithm);
-			digest = md.digest(content.getBytes(CharEncoding.UTF_8));
+			digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
 		} catch (Exception e) {
 			log.warn("fail to digest "+algorithm+" of content: "+content, e);
 		}
@@ -1280,6 +1278,7 @@ public class StringUtil {
 		}
 		StringBuilder sb = new StringBuilder();
 		byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+		URLCodec urlCodec = new URLCodec();
 		for(int i=0; i<bytes.length; i++) {
 			byte b = bytes[i];
 			if(CharUtils.isAscii((char)b)){
@@ -1292,7 +1291,7 @@ public class StringUtil {
 			}else if((b & 0xF8) == 0xF0) {
 				String str1 = new String(bytes, i, 4, StandardCharsets.UTF_8);
 				try{
-					sb.append(URLEncoder.encode(str1, CharEncoding.UTF_8));
+					sb.append(urlCodec.encode(str1, StandardCharsets.UTF_8.name()));
 				}catch(Exception e) {
 					log.warn("fail to encode str: {}, ex: {}", str1, e.getMessage());
 				}
@@ -1310,7 +1309,7 @@ public class StringUtil {
 			return str;
 		}
 		try{
-			return URLDecoder.decode(str, CharEncoding.UTF_8);
+			return new URLCodec().decode(str, StandardCharsets.UTF_8.name());
 		}catch(Exception ignore) {
 			return str;
 		}

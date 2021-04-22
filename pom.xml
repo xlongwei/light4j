@@ -11,7 +11,7 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.main.class>com.networknt.server.Servers</project.main.class>
-        <version.light-4j>1.6.30</version.light-4j>
+        <version.light-4j>1.6.33</version.light-4j>
         <version.logback>1.2.3</version.logback>
         <version.junit>4.13.1</version.junit>
         <versions.maven-version>2.4</versions.maven-version>
@@ -26,7 +26,7 @@
         <version.poi>4.1.2</version.poi>
         <version.itext>2.0.8.1</version.itext>
         <version.httpmime>4.5.2</version.httpmime>
-        <version.fastjson>1.2.75</version.fastjson>
+        <version.fastjson>1.2.76</version.fastjson>
         <version.jodconverter>2.2.1</version.jodconverter>
         <version.jodreports>2.4.0</version.jodreports>
         <version.xom>1.2.5</version.xom>
@@ -35,14 +35,14 @@
         <version.easyexcel>2.2.7</version.easyexcel>
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.dbutils>1.7</version.dbutils>
-        <version.commons-io>2.6</version.commons-io>
+        <version.commons-io>2.8.0</version.commons-io>
         <version.hutool>5.6.1</version.hutool>
         <version.shiro>1.3.2</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
         <version.bouncycastle>1.64</version.bouncycastle>
-        <version.beetlsql>3.3.7-RELEASE</version.beetlsql>
+        <version.beetlsql>3.3.9-RELEASE</version.beetlsql>
         <version.antlr4>4.7.2</version.antlr4>
-        <version.apijson>4.6.0</version.apijson>
+        <version.apijson>4.6.7</version.apijson>
         <version.log4jdbc>1.2</version.log4jdbc>
         <version.guava>30.1.1-jre</version.guava>
     </properties>
@@ -183,6 +183,12 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
 			<version>${version.httpmime}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 		  <groupId>com.google.zxing</groupId>
@@ -204,11 +210,11 @@
             <artifactId>HikariCP</artifactId>
             <version>${version.hikaricp}</version>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>commons-dbutils</groupId>
             <artifactId>commons-dbutils</artifactId>
             <version>${version.dbutils}</version>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-exec</artifactId>
@@ -284,6 +290,21 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+        	<groupId>commons-codec</groupId>
+        	<artifactId>commons-codec</artifactId>
+        	<version>1.15</version>
+        </dependency>
+        <dependency>
+        	<groupId>org.apache.commons</groupId>
+        	<artifactId>commons-lang3</artifactId>
+        	<version>3.12.0</version>
+        </dependency>
+        <dependency>
+        	<groupId>org.slf4j</groupId>
+        	<artifactId>jcl-over-slf4j</artifactId>
+        	<version>1.7.30</version>
+        </dependency>
     </dependencies>
 
 

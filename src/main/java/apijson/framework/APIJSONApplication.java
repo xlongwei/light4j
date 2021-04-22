@@ -18,6 +18,7 @@ import java.rmi.ServerException;
 
 import com.xlongwei.light4j.util.NumberUtil;
 
+import apijson.Log;
 import apijson.NotNull;
 
 
@@ -26,8 +27,9 @@ import apijson.NotNull;
  * @author Lemon
  */
 public class APIJSONApplication {
-	private static final boolean test = NumberUtil.parseBoolean(System.getProperty("apijson.test"), false);
-
+	private static final boolean test = NumberUtil.parseBoolean(System.getProperty("apijson.test"), false);//xlongwei
+	public static final String TAG = "APIJSONApplication";
+	
 	@NotNull
 	public static APIJSONCreator DEFAULT_APIJSON_CREATOR;
 	static {
@@ -37,34 +39,34 @@ public class APIJSONApplication {
 
 	/**初始化，加载所有配置并校验
 	 * @return 
-	 * @throws ServerException
+	 * @throws Exception
 	 */
-	public static void init() throws ServerException {
+	public static void init() throws Exception {
 		init(true, DEFAULT_APIJSON_CREATOR);
 	}
 	/**初始化，加载所有配置并校验
 	 * @param shutdownWhenServerError 
 	 * @return 
-	 * @throws ServerException
+	 * @throws Exception
 	 */
-	public static void init(boolean shutdownWhenServerError) throws ServerException {
+	public static void init(boolean shutdownWhenServerError) throws Exception {
 		init(shutdownWhenServerError, DEFAULT_APIJSON_CREATOR);
 	}
 	/**初始化，加载所有配置并校验
 	 * @param creator 
 	 * @return 
-	 * @throws ServerException
+	 * @throws Exception
 	 */
-	public static void init(@NotNull APIJSONCreator creator) throws ServerException {
+	public static void init(@NotNull APIJSONCreator creator) throws Exception {
 		init(true, creator);
 	}
 	/**初始化，加载所有配置并校验
 	 * @param shutdownWhenServerError 
 	 * @param creator 
 	 * @return 
-	 * @throws ServerException
+	 * @throws Exception
 	 */
-	public static void init(boolean shutdownWhenServerError, @NotNull APIJSONCreator creator) throws ServerException {
+	public static void init(boolean shutdownWhenServerError, @NotNull APIJSONCreator creator) throws Exception {
 //		System.out.println("\n\n\n\n\n<<<<<<<<<<<<<<<<<<<<<<<<< APIJSON 开始启动 >>>>>>>>>>>>>>>>>>>>>>>>\n");
 		DEFAULT_APIJSON_CREATOR = creator;
 
@@ -78,8 +80,11 @@ public class APIJSONApplication {
 		try {
 			APIJSONVerifier.initAccess(shutdownWhenServerError, creator);
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 //			e.printStackTrace();
+			if (shutdownWhenServerError) {
+				onServerError("权限校验配置 初始化失败！", shutdownWhenServerError);
+			}
 		}
 //		System.out.println("\n完成初始化: 权限校验配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
@@ -89,8 +94,11 @@ public class APIJSONApplication {
 		try {
 			APIJSONFunctionParser.init(shutdownWhenServerError, creator);
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 //			e.printStackTrace();
+			if (shutdownWhenServerError) {
+				onServerError("远程函数配置 初始化失败！", shutdownWhenServerError);
+			}
 		}
 //		System.out.println("\n完成初始化: 远程函数配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
@@ -100,8 +108,11 @@ public class APIJSONApplication {
 				APIJSONFunctionParser.test();
 			}
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 //			e.printStackTrace();
+			if (shutdownWhenServerError) {
+				onServerError("远程函数配置 测试失败！", shutdownWhenServerError);
+			}
 		}
 //		System.out.println("\n完成测试: 远程函数 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
@@ -111,8 +122,11 @@ public class APIJSONApplication {
 		try {
 			APIJSONVerifier.initRequest(shutdownWhenServerError, creator);
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 //			e.printStackTrace();
+			if (shutdownWhenServerError) {
+				onServerError("请求结构校验配置 初始化失败！", shutdownWhenServerError);
+			}
 		}
 //		System.out.println("\n完成初始化: 请求结构校验配置 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
@@ -122,8 +136,11 @@ public class APIJSONApplication {
 				APIJSONVerifier.testStructure();
 			}
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 //			e.printStackTrace();
+			if (shutdownWhenServerError) {
+				onServerError("Request 和 Response 的数据结构校验 测试失败！", shutdownWhenServerError);
+			}
 		}
 //		System.out.println("\n完成测试: Request 和 Response 的数据结构校验 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
@@ -131,6 +148,16 @@ public class APIJSONApplication {
 
 
 //		System.out.println("\n\n<<<<<<<<<<<<<<<<<<<<<<<<< APIJSON 启动完成，试试调用自动化 API 吧 ^_^ >>>>>>>>>>>>>>>>>>>>>>>>\n");
+	}
+	
+	private static void onServerError(String msg, boolean shutdown) throws ServerException {
+		Log.e(TAG, "\n启动时自检测试未通过！原因：\n" + msg);
+
+		if (shutdown) {
+			System.exit(1);	
+		} else {
+			throw new ServerException(msg);
+		}
 	}
 
 }

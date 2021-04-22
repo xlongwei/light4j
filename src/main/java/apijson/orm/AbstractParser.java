@@ -414,9 +414,10 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 			Log.d(TAG, "parseResponse  return response = \n" + JSON.toJSONString(requestObject)
 			+ "\n >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> \n\n\n");
+			
+			Log.d(TAG, "parseResponse  endTime = " + endTime + ";  duration = " + duration
+					+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n");
 		}
-		Log.d(TAG, "parseResponse  endTime = " + endTime + ";  duration = " + duration
-				+ ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n\n");
 
 		return res;
 	}
@@ -800,7 +801,11 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			}
 		}
 
-		boolean isTable = apijson.JSONObject.isTableKey(name);
+		apijson.orm.Entry<String, String> entry = Pair.parseEntry(name, true);
+		String table = entry.getKey(); //Comment
+		// String alias = entry.getValue(); //to
+
+		boolean isTable = apijson.JSONObject.isTableKey(table);
 		boolean isArrayMainTable = isSubquery == false && isTable && type == SQLConfig.TYPE_ITEM_CHILD_0 && arrayConfig != null && RequestMethod.isGetMethod(arrayConfig.getMethod(), true);
 		boolean isReuse = isArrayMainTable && position > 0;
 
@@ -1068,7 +1073,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 		Set<Entry<String, Object>> set = joinMap == null ? null : joinMap.entrySet();
 		if (set == null || set.isEmpty()) {
-			Log.e(TAG, "doJoin  set == null || set.isEmpty() >> return null;");
+			Log.e(TAG, "onJoinParse  set == null || set.isEmpty() >> return null;");
 			return null;
 		}
 
@@ -1098,7 +1103,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 			int index = path.indexOf("/");
 			if (index < 0) {
-				throw new IllegalArgumentException(JSONRequest.KEY_JOIN + ":value 中value不合法！"
+				throw new IllegalArgumentException(JSONRequest.KEY_JOIN + ":value 中 value 值 " + path + " 不合法！"
 						+ "必须为 &/Table0/key0,</Table1/key1,... 或 { '&/Table0/key0':{}, '</Table1/key1':{},... } 这种形式！");
 			}
 			String joinType = path.substring(0, index); //& | ! < > ( ) <> () *
@@ -1111,40 +1116,85 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			String tableKey = index < 0 ? null : path.substring(0, index); //User:owner
 			apijson.orm.Entry<String, String> entry = Pair.parseEntry(tableKey, true);
 			String table = entry.getKey(); //User
-			String alias = entry.getValue(); //owner
-			String key = StringUtil.isEmpty(table, true) ? null : path.substring(index + 1);//id@
-			if (StringUtil.isEmpty(key, true)) {
-				throw new IllegalArgumentException(JSONRequest.KEY_JOIN + ":value 中value不合法！"
-						+ "必须为 &/Table0/key0,</Table1/key1,... 这种形式！");
+			if (StringUtil.isName(table) == false) {
+				throw new IllegalArgumentException(JSONRequest.KEY_JOIN + ":value 中 value 的 Table 值 " + table + " 不合法！"
+						+ "必须为 &/Table0/key0,</Table1:alias1/key1,... 这种形式！且 Table0 必须满足大写字母开头的表对象英文单词 key 格式！");
 			}
+			
+			String alias = entry.getValue(); //owner
+			if (StringUtil.isNotEmpty(alias, true) && StringUtil.isName(alias) == false) {
+				throw new IllegalArgumentException(JSONRequest.KEY_JOIN + ":value 中 value 的 alias 值 " + alias + " 不合法！"
+						+ "必须为 &/Table0/key0,</Table1:alias1/key1,... 这种形式！且 Table:alias 的 alias 必须满足英文单词变量名格式！");
+			}
+			
+			String key = StringUtil.isEmpty(table, true) ? null : path.substring(index + 1);//id@
 
 			//取出Table对应的JSONObject，及内部引用赋值 key:value
-			tableObj = request.getJSONObject(tableKey);
+			try {
+				tableObj = request.getJSONObject(tableKey);
+			}
+			catch (Exception e2) {
+				throw new IllegalArgumentException(JSONRequest.KEY_JOIN + ":'" + path + "' 对应的 " + tableKey + ":value 中 value 类型不合法！必须是 {} 这种 JSONObject 格式！" + e2.getMessage());
+			}
+			
 			targetPath = tableObj == null ? null : tableObj.getString(key);
 			if (StringUtil.isEmpty(targetPath, true)) {
-				throw new IllegalArgumentException("/" + path + ":value 中value必须为引用赋值的路径 '/targetTable/targetKey' ！");
+				throw new IllegalArgumentException("/" + path + ":value 中 value 值 " + targetPath + " 不合法！必须为引用赋值的路径 '/targetTable/targetKey' ！");
 			}
 
 			//取出引用赋值路径targetPath对应的Table和key
 			index = targetPath.lastIndexOf("/");
 			targetKey = index < 0 ? null : targetPath.substring(index + 1);
-			if (StringUtil.isEmpty(targetKey, true)) {
-				throw new IllegalArgumentException("/" + path + ":'/targetTable/targetKey' 中targetKey不能为空！");
+			if (StringUtil.isName(targetKey) == false) {
+				throw new IllegalArgumentException("/" + path + ":'/targetTable/targetKey' 中 targetKey 值 " + targetKey + " 不合法！必须满足英文单词变量名格式！");
 			}
 
 			targetPath = targetPath.substring(0, index);
 			index = targetPath.lastIndexOf("/");
-			targetTable = index < 0 ? targetPath : targetPath.substring(index + 1);
+			String targetTableKey = index < 0 ? targetPath : targetPath.substring(index + 1);
 
-
+			// 主表不允许别名
+			//			apijson.orm.Entry<String, String> targetEntry = Pair.parseEntry(targetTableKey, true);
+			//			targetTable = targetEntry.getKey(); //User
+			//			if (StringUtil.isName(targetTable) == false) {
+			//				throw new IllegalArgumentException("/" + path + ":'/targetTable/targetKey' 中 targetTable 值 " + targetTable + " 不合法！必须满足大写字母开头的表对象英文单词 key 格式！");
+			//			}
+			//			
+			//			String targetAlias = targetEntry.getValue(); //owner
+			//			if (StringUtil.isNotEmpty(targetAlias, true) && StringUtil.isName(targetAlias) == false) {
+			//				throw new IllegalArgumentException("/" + path + ":'/targetTable:targetAlias/targetKey' 中 targetAlias 值 " + targetAlias + " 不合法！必须满足英文单词变量名格式！");
+			//			}
+			
+			targetTable = targetTableKey;  // 主表不允许别名
+			if (StringUtil.isName(targetTable) == false) {
+				throw new IllegalArgumentException("/" + path + ":'/targetTable/targetKey' 中 targetTable 值 " + targetTable + " 不合法！必须满足大写字母开头的表对象英文单词 key 格式！");
+			}
+			
 			//对引用的JSONObject添加条件
-			targetObj = request.getJSONObject(targetTable);
+			try {
+				targetObj = request.getJSONObject(targetTableKey);
+			}
+			catch (Exception e2) {
+				throw new IllegalArgumentException("/" + path + ":'/targetTable/targetKey' 中路径对应的 '" + targetTableKey + "':value 中 value 类型不合法！必须是 {} 这种 JSONObject 格式！" + e2.getMessage());
+			}
+			
 			if (targetObj == null) {
-				throw new IllegalArgumentException(targetTable + "." + targetKey
-						+ ":'/targetTable/targetKey' 中路径对应的对象不存在！");
+				throw new IllegalArgumentException("/" + path + ":'/targetTable/targetKey' 中路径对应的对象 '" + targetTableKey + "':{} 不存在或值为 null ！必须是 {} 这种 JSONObject 格式！");
 			}
 
-			tableObj.put(key, tableObj.remove(key)); //保证和SQLExcecutor缓存的Config里where顺序一致，生成的SQL也就一致
+			// 保证和 SQLExcecutor 缓存的 Config 里 where 顺序一致，生成的 SQL 也就一致 <<<<<<<<<
+			// AbstractSQLConfig.newSQLConfig 中强制把 id, id{}, userId, userId{} 放到了最前面		tableObj.put(key, tableObj.remove(key));
+			
+			if (tableObj.size() > 1) {  // 把 key 强制放最前，AbstractSQLExcecutor 中 config.putWhere 也是放尽可能最前
+				JSONObject newTableObj = new JSONObject(tableObj.size(), true);
+				newTableObj.put(key, tableObj.remove(key));
+				newTableObj.putAll(tableObj);
+				
+				tableObj = newTableObj;
+				request.put(tableKey, tableObj);
+			}
+			// 保证和 SQLExcecutor 缓存的 Config 里 where 顺序一致，生成的 SQL 也就一致 >>>>>>>>>
+			
 
 			Join j = new Join();
 			j.setPath(path);
@@ -1153,11 +1203,16 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			j.setJoinType(joinType);
 			j.setTable(table);
 			j.setAlias(alias);
-			j.setTargetName(targetTable);
+			j.setTargetTable(targetTable);
+			//			j.setTargetAlias(targetAlias);
 			j.setTargetKey(targetKey);
 			j.setKeyAndType(key);
 			j.setRequest(getJoinObject(table, tableObj, key));
 			j.setOuter((JSONObject) e.getValue());
+			
+			if (StringUtil.isName(j.getKey()) == false) {
+				throw new IllegalArgumentException(JSONRequest.KEY_JOIN + ":value 中 value 的 key@ 中 key 值 " + j.getKey() + " 不合法！必须满足英文单词变量名格式！");
+			}
 
 			joinList.add(j);
 
@@ -1465,6 +1520,8 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 
 
 	public static final String KEY_CONFIG = "config";
+
+	public static final String KEY_SQL = "sql";
 	
 	protected Map<String, List<JSONObject>> arrayMainCacheMap = new HashMap<>();
 	public void putArrayMainCache(String arrayPath, List<JSONObject> mainTableDataList) {
@@ -1506,15 +1563,22 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 				config.setExplain(false); //对下面 config.getSQL(false); 生效
 				JSONObject res = getSQLExecutor().execute(config, false);
 
-				config.setExplain(explain);
-				JSONObject explainResult = config.isMain() && config.getPosition() != 0 ? null : getSQLExecutor().execute(config, false);
+				//如果是查询方法，才能执行explain
+				if (RequestMethod.isQueryMethod(config.getMethod())){
+					config.setExplain(explain);
+					JSONObject explainResult = config.isMain() && config.getPosition() != 0 ? null : getSQLExecutor().execute(config, false);
 
-				if (explainResult == null) {
-					result = res;
-				}
-				else {
+					if (explainResult == null) {
+						result = res;
+					}
+					else {
+						result = new JSONObject(true);
+						result.put(KEY_EXPLAIN, explainResult);
+						result.putAll(res);
+					}
+				}else{//如果是更新请求，不执行explain，但可以返回sql
 					result = new JSONObject(true);
-					result.put(KEY_EXPLAIN, explainResult);
+					result.put(KEY_SQL, config.getSQL(false));
 					result.putAll(res);
 				}
 			}

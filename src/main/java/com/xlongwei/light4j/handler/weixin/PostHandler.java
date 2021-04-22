@@ -3,7 +3,7 @@ package com.xlongwei.light4j.handler.weixin;
 import java.util.HashSet;
 import java.util.regex.Pattern;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 
 import com.xlongwei.light4j.util.IdCardUtil;
 import com.xlongwei.light4j.util.PostUtil;

@@ -134,8 +134,8 @@ install(){
 	install_file "$repos" "com.lowagie" "itext" "2.0.8.1"
 	install_file "$repos" "com.lowagie" "itext-asian" "2.0.8.1"
 	repos=https://jitpack.io/
-	install_file "$repos" "com.github.APIJSON" "apijson-framework" "4.6.0"
-	install_file "$repos" "com.github.tencent" "APIJSON" "4.6.0"
+	install_file "$repos" "com.github.APIJSON" "apijson-framework" "4.6.7"
+	install_file "$repos" "com.github.tencent" "APIJSON" "4.6.7"
 }
 install_file(){
     groupId="$2" && artifactId="$3" && version="$4" && url="$1${groupId//.//}/${artifactId}/${version}/${artifactId}-${version}"

@@ -51,7 +51,7 @@ public class BankCardHandler extends AbstractHandler {
 	}
 	
 	public static CardInfo cardInfo(String bankCardNumber) {
-		if(StringUtils.isBlank(bankCardNumber)) {
+		if(!StringUtil.isNumbers(bankCardNumber)) {
 			return null;
 		}else if(loadFromFile) {
 			return BankUtil.cardInfo(bankCardNumber);
