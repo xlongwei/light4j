@@ -24,6 +24,8 @@ JVM_OPS="$JVM_OPS -Duser.timezone=GMT+8 -DclientThreads=1"
 #ENV_OPS="$ENV_OPS enableHttp=false httpPort=8080"
 ENV_OPS="$ENV_OPS enableHttps=true httpsPort=8443"
 ENV_OPS="$ENV_OPS ioThreads=2 workerThreads=3"
+JVM_OPS="$JVM_OPS -Dlight-config-server-uri=https://git.xlongwei.com"
+ENV_OPS="$ENV_OPS config_server_authorization=Z3Vlc3Q6MTIzNDU2"
 #ENV_OPS="$ENV_OPS enableRegistry=true STATUS_HOST_IP=api.xlongwei.com"
 
 usage(){

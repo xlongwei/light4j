@@ -9,6 +9,8 @@ import javax.script.SimpleScriptContext;
 import org.beetl.sql.core.SQLReady;
 import org.beetl.sql.core.SqlId;
 
+import com.networknt.config.Config;
+import com.networknt.server.Servers;
 import com.xlongwei.light4j.beetl.dao.UserDao;
 import com.xlongwei.light4j.beetl.model.User;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
@@ -48,6 +50,12 @@ public class IndexHandler extends AbstractHandler {
 		default: obj = MySqlUtil.SQLMANAGER.getMetaDataManager().allTable(); break;
 		}
 		HandlerUtil.setResp(exchange, Collections.singletonMap("allTable", obj));
+	}
+	
+	public void refresh(HttpServerExchange exchange) throws Exception {
+		Map<String, Object> startup = Config.getInstance().getJsonMapConfig(Servers.STARTUP_CONFIG_NAME);
+		Servers.loadConfigs();
+		HandlerUtil.setResp(exchange, startup);
 	}
 	
 	public void script(HttpServerExchange exchange) throws Exception {

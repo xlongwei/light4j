@@ -1,0 +1,5 @@
+configLoaderClass: com.networknt.server.UrlConfigLoader
+projectName: light4j
+projectVersion: v1
+serviceName: light4j
+serviceVersion: v1

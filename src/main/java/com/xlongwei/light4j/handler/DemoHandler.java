@@ -66,8 +66,13 @@ public class DemoHandler implements LightHttpHandler {
 		exchange.setStatusCode(200);
 		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/html");
 		Template template = engine.getTemplate((StringUtil.isBlank(path) ? name : name+"/"+path)+".html");
-		String html = template.render((Map<?, ?>)exchange.removeAttachment(HandlerUtil.RESP));
-		exchange.getResponseSender().send(html);
+		String html = template.render((Map<?, ?>)exchange.getAttachment(HandlerUtil.RESP));
+		if(StringUtils.isBlank(html)) {
+			HandlerUtil.sendResp(exchange);
+		}else {
+			exchange.removeAttachment(HandlerUtil.RESP);
+			exchange.getResponseSender().send(html);
+		}
 	}
 
 	public static class DemoEndpointSource extends PathEndpointSource {
