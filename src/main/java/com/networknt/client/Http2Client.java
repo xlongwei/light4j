@@ -19,12 +19,9 @@
 package com.networknt.client;
 
 import com.networknt.client.circuitbreaker.CircuitBreaker;
-import com.networknt.client.http.Http2ClientCompletableFutureNoRequest;
-import com.networknt.client.http.Http2ClientCompletableFutureWithRequest;
-import com.networknt.client.http.Http2ClientConnectionPool;
-import com.networknt.client.http.Light4jHttp2ClientProvider;
-import com.networknt.client.http.Light4jHttpClientProvider;
+import com.networknt.client.http.*;
 import com.networknt.client.listener.ByteBufferReadChannelListener;
+import com.networknt.client.listener.ByteBufferWriteChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
@@ -36,6 +33,7 @@ import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
+import com.networknt.server.Servers;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.TlsUtil;
@@ -96,7 +94,7 @@ public class Http2Client {
     @Deprecated
     public static XnioSsl SSL;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
-    public static final AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
+    public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
 
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
@@ -108,9 +106,10 @@ public class Http2Client {
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
-    /** TokenManager is to manage cached jwt tokens for this client. */
+    // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
 
+    // Initialize connection pool
     private Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
 
     static {
@@ -156,7 +155,7 @@ public class Http2Client {
     }
 
     private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
-    	if (System.getProperty("java.version").startsWith("1.8.")) {
+    	if (System.getProperty("java.version").startsWith("1.8.")) {// Java 8
         	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
         		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
         	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
@@ -185,7 +184,27 @@ public class Http2Client {
         return connect(uri, worker, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect(uri, worker, null, bufferPool, options);
+    }
+
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        return connect(bindAddress, uri, worker, null, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
 
@@ -201,30 +220,42 @@ public class Http2Client {
         return SSL;
     }
 
+    public void returnConnection(ClientConnection connection) {
+        http2ClientConnectionPool.resetConnectionStatus(connection);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) {
-			ssl = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) {
-			ssl = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-            provider.connect(new ClientCallback<ClientConnection>() {
-                @Override
-                public void completed(ClientConnection r) {
-                    result.setResult(r);
-                }
+        provider.connect(new ClientCallback<ClientConnection>() {
+            @Override
+            public void completed(ClientConnection r) {
+                result.setResult(r);
+                http2ClientConnectionPool.cacheConnection(uri, r);
+            }
 
-                @Override
-                public void failed(IOException e) {
-                    result.setException(e);
-                }
-            }, bindAddress, uri, worker, ssl, bufferPool, options);
+            @Override
+            public void failed(IOException e) {
+                result.setException(e);
+            }
+        }, bindAddress, uri, worker, ssl, bufferPool, options);
         return result.getIoFuture();
     }
 
@@ -232,28 +263,55 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
+    }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect(bindAddress, uri, ioThread, null, bufferPool, options);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) {
-			ssl = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) {
-			ssl = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
                 result.setResult(r);
+                http2ClientConnectionPool.cacheConnection(uri, r);
             }
 
             @Override
@@ -273,17 +331,13 @@ public class Http2Client {
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) {
-			ssl = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, uri, worker, ssl, bufferPool, options);
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) {
-			ssl = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, bindAddress, uri, worker, ssl, bufferPool, options);
     }
@@ -298,17 +352,13 @@ public class Http2Client {
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) {
-			ssl = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, uri, ioThread, ssl, bufferPool, options);
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && ssl == null) {
-			ssl = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, bindAddress, uri, ioThread, ssl, bufferPool, options);
     }
@@ -476,15 +526,11 @@ public class Http2Client {
                     String keyStoreName = System.getProperty(KEY_STORE_PROPERTY);
                     String keyStorePass = System.getProperty(KEY_STORE_PASSWORD_PROPERTY);
                     if (keyStoreName != null && keyStorePass != null) {
-                        if(logger.isInfoEnabled()) {
-							logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
-						}
+                        if(logger.isInfoEnabled()) logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
                     } else {
                         keyStoreName = (String) tlsMap.get(KEY_STORE);
                         keyStorePass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
-                        if(logger.isInfoEnabled()) {
-							logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
-						}
+                        if(logger.isInfoEnabled()) logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
                     }
                     if (keyStoreName != null && keyStorePass != null) {
                         String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
@@ -508,15 +554,11 @@ public class Http2Client {
                     String trustStoreName = System.getProperty(TRUST_STORE_PROPERTY);
                     String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
                     if (trustStoreName != null && trustStorePass != null) {
-                        if(logger.isInfoEnabled()) {
-							logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
-						}
+                        if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
                         trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
-                        if(logger.isInfoEnabled()) {
-							logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
-						}
+                        if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
@@ -526,6 +568,8 @@ public class Http2Client {
                         trustManagerFactory.init(trustStore);
                         trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
                     }
+                }else {
+                	trustManagers = Servers.TRUST_ALL_CERTS;
                 }
             } catch (NoSuchAlgorithmException | KeyStoreException e) {
                 throw new IOException("Unable to initialise TrustManager[]", e);
@@ -548,11 +592,10 @@ public class Http2Client {
         StringBuilder result = new StringBuilder();
         boolean first = true;
         for(Map.Entry<String, String> entry : params.entrySet()){
-            if (first) {
-				first = false;
-			} else {
-				result.append("&");
-			}
+            if (first)
+                first = false;
+            else
+                result.append("&");
             result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
             result.append("=");
             result.append(URLEncoder.encode(entry.getValue(), "UTF-8").replaceAll("\\+", "%20"));
@@ -572,8 +615,8 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
@@ -615,14 +658,11 @@ public class Http2Client {
 
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
-        	@Override
             public void completed(ClientExchange result) {
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
-                	@Override
                     public void completed(final ClientExchange result) {
                         reference.set(result.getResponse());
                         (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
-                        	@Override
                             protected void bufferDone(List<Byte> out) {
                                 byte[] byteArray = new byte[out.size()];
                                 int index = 0;
@@ -632,13 +672,12 @@ public class Http2Client {
                                 result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
                                 latch.countDown();
                             }
-                        	@Override
+
                             protected void error(IOException e) {
                                 latch.countDown();
                             }
                         }).setup(result.getResponseChannel());
                     }
-                	@Override
                     public void failed(IOException e) {
                         latch.countDown();
                     }
@@ -655,7 +694,53 @@ public class Http2Client {
                 }
 
             }
-            @Override
+
+            public void failed(IOException e) {
+                latch.countDown();
+            }
+        };
+    }
+
+    public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final ByteBuffer requestBody) {
+        return new ClientCallback<ClientExchange>() {
+            public void completed(ClientExchange result) {
+                new ByteBufferWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    public void completed(final ClientExchange result) {
+                        reference.set(result.getResponse());
+                        (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
+                            protected void bufferDone(List<Byte> out) {
+                                byte[] byteArray = new byte[out.size()];
+                                int index = 0;
+                                for (byte b : out) {
+                                    byteArray[index++] = b;
+                                }
+                                result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
+                                latch.countDown();
+                            }
+
+                            protected void error(IOException e) {
+                                latch.countDown();
+                            }
+                        }).setup(result.getResponseChannel());
+                    }
+                    public void failed(IOException e) {
+                        latch.countDown();
+                    }
+                });
+
+                try {
+                    result.getRequestChannel().shutdownWrites();
+                    if (!result.getRequestChannel().flush()) {
+                        result.getRequestChannel().getWriteSetter().set(ChannelListeners.flushingChannelListener((ChannelListener)null, (ChannelExceptionHandler)null));
+                        result.getRequestChannel().resumeWrites();
+                    }
+                } catch (IOException var3) {
+                    latch.countDown();
+                }
+
+            }
+
             public void failed(IOException e) {
                 latch.countDown();
             }
@@ -674,8 +759,8 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
@@ -717,8 +802,8 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
@@ -775,8 +860,8 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
@@ -825,7 +910,7 @@ public class Http2Client {
         addHostHeader(request);
         CompletableFuture<ClientResponse> futureClientResponse;
         AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
-        if (currentConnection.get() != null) {
+        if (currentConnection.get() != null && currentConnection.get().isOpen()) {
             logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
             futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
         } else {
@@ -870,17 +955,13 @@ public class Http2Client {
      * @return CompletableFuture
      */
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
-        if("https".equals(uri.getScheme()) && SSL == null) {
-			SSL = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
                 ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
     public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-        if("https".equals(uri.getScheme()) && SSL == null) {
-			SSL = getDefaultXnioSsl();
-		}
+        if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         CompletableFuture<ClientConnection> completableFuture = new CompletableFuture<>();
             ClientProvider provider = clientProviders.get(uri.getScheme());
             try {

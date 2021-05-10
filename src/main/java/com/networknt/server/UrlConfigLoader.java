@@ -112,6 +112,9 @@ public class UrlConfigLoader implements IConfigLoader {
 
 	@Override
 	public void init() {
+		if(StringUtils.isBlank(configServerUri)) {
+			return;
+		}
 		try {
 			logger.info("init url config: {}{}", configServerUri, configServerPath);
 			URI uri = new URI(configServerUri);

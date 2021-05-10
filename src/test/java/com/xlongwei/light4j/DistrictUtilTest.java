@@ -165,6 +165,7 @@ public class DistrictUtilTest {
 		return parse;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void parseCounty() throws Exception {
 		SyncReadListener listener = new SyncReadListener();

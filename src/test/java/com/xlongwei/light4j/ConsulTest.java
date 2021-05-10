@@ -1,6 +1,8 @@
 package com.xlongwei.light4j;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -12,8 +14,13 @@ import org.xnio.OptionMap;
 import com.networknt.client.Http2Client;
 import com.networknt.cluster.Cluster;
 import com.networknt.exception.ClientException;
+import com.networknt.registry.Registry;
+import com.networknt.registry.URL;
+import com.networknt.registry.URLImpl;
 import com.networknt.server.Server;
+import com.networknt.server.ServerConfig;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.utility.Util;
 
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
@@ -36,12 +43,31 @@ public class ConsulTest {
     static Http2Client client = Http2Client.getInstance();
     static ClientConnection connection;
     static Map<String, ClientConnection> connections = new ConcurrentHashMap<>();
+    static final String STATUS_HOST_IP = "STATUS_HOST_IP";
+    
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	@Test public void register() throws Exception {
+    	Registry registry = SingletonServiceFactory.getBean(Registry.class);
+    	String ipAddress = System.getenv(STATUS_HOST_IP);
+        if (ipAddress == null) {
+            InetAddress inetAddress = Util.getInetAddress();
+            ipAddress = inetAddress.getHostAddress();
+        }
+        ServerConfig serverConfig = Server.getServerConfig();
+        Map parameters = new HashMap<>(4);
+        if (serverConfig.getEnvironment() != null) {
+			parameters.put(Server.ENV_PROPERTY_KEY, serverConfig.getEnvironment());
+		}
+        URL serviceUrl = new URLImpl("light", ipAddress, serverConfig.getHttpPort(), serverConfig.getServiceId(), parameters);
+        registry.register(serviceUrl);
+    }
     
 	@Test public void discover() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         if(connection == null || !connection.isOpen()) {
             try {
                 String apidHost = cluster.serviceToUrl("https", "com.xlongwei.light4j", tag, null);
+                log.info("host={}", apidHost);
                 connection = client.connect(new URI(apidHost), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
             } catch (Exception e) {
                 log.error("Exeption:", e);
