@@ -1,5 +1,9 @@
 package com.xlongwei.light4j;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.shiro.util.AntPathMatcher;
@@ -7,6 +11,11 @@ import org.apache.shiro.util.PatternMatcher;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.config.Config;
+import com.networknt.config.RefreshScope;
+import com.networknt.server.Server;
+import com.networknt.server.ServerConfig;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.ShiroUtil;
 
@@ -69,5 +78,31 @@ public class RedisTest {
 		RedisConfig.Sequence.update(name, -1);
 		Assert.assertEquals(1, RedisConfig.Sequence.next(name));
 		RedisConfig.Sequence.update(name, -1);
+	}
+	
+	@Test public void config() throws Exception {
+		String homeDir = System.getProperty("user.home");
+		System.setProperty(Config.LIGHT_4J_CONFIG_DIR, homeDir);
+		
+		File test = new File(homeDir + "/server.yml");
+		int oldPort = 8080, newPort = 8081;
+		
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> map = new HashMap<>();
+		map.put("httpPort", oldPort);
+		mapper.writeValue(test, map);
+		
+		ServerConfig serverConfig1 = (ServerConfig)Config.getInstance().getJsonObjectConfig(Server.SERVER_CONFIG_NAME, ServerConfig.class);
+		ServerConfig serverConfig2 = RefreshScope.getJsonObjectConfig(Server.SERVER_CONFIG_NAME, ServerConfig.class);
+		assertEquals(serverConfig1.getHttpPort(), serverConfig2.getHttpPort());
+		
+		map.put("httpPort", newPort);
+		mapper.writeValue(test, map);
+		Config.getInstance().clear();
+		
+		assertEquals(serverConfig1.getHttpPort(), oldPort);
+		assertEquals(serverConfig2.getHttpPort(), newPort);
+		
+		test.delete();
 	}
 }

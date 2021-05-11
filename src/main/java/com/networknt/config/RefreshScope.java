@@ -12,30 +12,30 @@ import net.sf.cglib.proxy.MethodProxy;
  * @author xlongwei
  *
  */
+@SuppressWarnings("unchecked")
 public class RefreshScope {
 
 	public static <T> T getJsonObjectConfig(String configName, Class<T> clazz) {
-		return create(new JsonObjectConfigCallback(configName, clazz, ""));
+		return (T)create(new JsonObjectConfigCallback(configName, clazz, ""));
 	}
 	
 	public static <T> T getJsonObjectConfig(String configName, Class<T> clazz, String path) {
-		return create(new JsonObjectConfigCallback(configName, clazz, path));
+		return (T)create(new JsonObjectConfigCallback(configName, clazz, path));
 	}
 	
 	public static Map<String, Object> getJsonMapConfig(String configName) {
-		return create(new JsonMapConfigCallback(configName, Map.class, ""));
+		return (Map<String, Object>)create(new JsonMapConfigCallback(configName, Map.class, ""));
 	}
 	
 	public static Map<String, Object> getJsonMapConfig(String configName, String path) {
-		return create(new JsonMapConfigCallback(configName, Map.class, path));
+		return (Map<String, Object>)create(new JsonMapConfigCallback(configName, Map.class, path));
 	}
 	
-	@SuppressWarnings("unchecked")
-	static <T> T create(ConfigCallback cc) {
+	static Object create(ConfigCallback cc) {
 		final Enhancer enhancer = new Enhancer();
 		enhancer.setSuperclass(cc.clazz);
 		enhancer.setCallback(cc);
-		return (T) enhancer.create();
+		return enhancer.create();
 	}
 	
 	static abstract class ConfigCallback implements MethodInterceptor {

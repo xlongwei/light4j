@@ -10,6 +10,7 @@ import org.apache.commons.io.IOUtils;
 import org.beetl.sql.core.SQLReady;
 
 import com.networknt.utility.StringUtils;
+import com.xlongwei.light4j.apijson.DemoApplication;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.BankUtil;
 import com.xlongwei.light4j.util.BankUtil.CardInfo;
@@ -28,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BankCardHandler extends AbstractHandler {
-	static boolean loadFromFile = false;
+	static boolean loadFromFile = !DemoApplication.apijsonEnabled;//停用apijson时不从数据库加载数据
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		String bankCardNumber = HandlerUtil.getParam(exchange, "bankCardNumber");

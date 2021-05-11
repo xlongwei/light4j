@@ -94,7 +94,7 @@ public class Http2Client {
     @Deprecated
     public static XnioSsl SSL;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
-    public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
+    public static final AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
 
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
@@ -658,11 +658,14 @@ public class Http2Client {
 
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
+        	@Override
             public void completed(ClientExchange result) {
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
+                	@Override
                     public void completed(final ClientExchange result) {
                         reference.set(result.getResponse());
                         (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
+                        	@Override
                             protected void bufferDone(List<Byte> out) {
                                 byte[] byteArray = new byte[out.size()];
                                 int index = 0;
@@ -672,12 +675,13 @@ public class Http2Client {
                                 result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
                                 latch.countDown();
                             }
-
+                        	@Override
                             protected void error(IOException e) {
                                 latch.countDown();
                             }
                         }).setup(result.getResponseChannel());
                     }
+                	@Override
                     public void failed(IOException e) {
                         latch.countDown();
                     }
@@ -694,7 +698,7 @@ public class Http2Client {
                 }
 
             }
-
+        	@Override
             public void failed(IOException e) {
                 latch.countDown();
             }
@@ -703,12 +707,15 @@ public class Http2Client {
 
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final ByteBuffer requestBody) {
         return new ClientCallback<ClientExchange>() {
+        	@Override
             public void completed(ClientExchange result) {
                 new ByteBufferWriteChannelListener(requestBody).setup(result.getRequestChannel());
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
+                	@Override
                     public void completed(final ClientExchange result) {
                         reference.set(result.getResponse());
                         (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
+                        	@Override
                             protected void bufferDone(List<Byte> out) {
                                 byte[] byteArray = new byte[out.size()];
                                 int index = 0;
@@ -718,12 +725,13 @@ public class Http2Client {
                                 result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
                                 latch.countDown();
                             }
-
+                        	@Override
                             protected void error(IOException e) {
                                 latch.countDown();
                             }
                         }).setup(result.getResponseChannel());
                     }
+                	@Override
                     public void failed(IOException e) {
                         latch.countDown();
                     }
@@ -740,7 +748,7 @@ public class Http2Client {
                 }
 
             }
-
+            @Override
             public void failed(IOException e) {
                 latch.countDown();
             }
