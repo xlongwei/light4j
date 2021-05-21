@@ -131,8 +131,8 @@ public class TokenCounter {
 						}
 					}
 				} catch (InterruptedException e) {
-					log.error("TokenCountUtil.ClickTokensConsumer has unexpectedly exception.", e);
-					Thread.currentThread().interrupt();
+					log.error("tokenTypesConsumer interrupted");
+					break;
 				}
 			}
 	};
@@ -150,8 +150,8 @@ public class TokenCounter {
 						merge(tokenCount);
 					}
 				} catch (InterruptedException e) {
-					log.error("TokenCountUtil.RemoveKeysConsumer has unexpectedly exception.", e);
-					Thread.currentThread().interrupt();
+					log.error("removeKeysConsumer interrupted");
+					break;
 				}
 			}
 	};

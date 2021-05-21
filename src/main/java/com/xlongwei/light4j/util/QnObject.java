@@ -7,9 +7,6 @@ import java.util.List;
 
 import com.xlongwei.light4j.util.QnObject.Condition.Cond;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 /**
  * 用法：
  * <pre>
@@ -197,8 +194,10 @@ public class QnObject {
 		}
 	}
 
-	@AllArgsConstructor
 	static class Var {
+		Var(String name) {
+			this.name = name;
+		}
 		String name;
 		@Override
 		public String toString() {
@@ -210,8 +209,11 @@ public class QnObject {
 		}
 	}
 	
-	@AllArgsConstructor
 	public static class Condition {
+		Condition(Cond cond, QnObject obj) {
+			this.cond = cond;
+			this.obj = obj;
+		}
 		Cond cond;
 		QnObject obj;
 		@Override
@@ -483,8 +485,11 @@ public class QnObject {
 		}
 	}
 	
-	@AllArgsConstructor
 	static class Loop {
+		Loop(String name, QnObject obj) {
+			this.name = name;
+			this.obj = obj;
+		}
 		private String name;
 		QnObject obj;
 		@Override
@@ -519,7 +524,6 @@ public class QnObject {
 		}
 	}
 	
-	@Getter
 	@SuppressWarnings("serial")
 	public static class QnException extends RuntimeException {
 		public static final String MISS_VAR_END = String.format("变量缺少结束符：%s", VAR_END);
@@ -537,6 +541,9 @@ public class QnObject {
 		public static final String MISS_COND_OP = "条件缺少比较符";
 		public static final String MISS_COND_VAR = "条件缺少比较参数";
 		private int pos;
+		public int getPos() {
+			return pos;
+		}
 		public QnException(int pos, String error) {
 			super(error);
 			this.pos = pos;

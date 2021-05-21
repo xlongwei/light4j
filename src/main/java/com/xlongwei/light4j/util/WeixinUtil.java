@@ -11,6 +11,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
 import com.qq.weixin.mp.aes.AesException;
@@ -22,21 +24,18 @@ import com.xlongwei.light4j.util.WeixinUtil.AbstractMessage.TextMessage;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ReflectUtil;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * weixin util
  * @author xlongwei
  *
  */
-@Slf4j
 @SuppressWarnings({"rawtypes","unchecked"})
 public class WeixinUtil {
 	public static final String service = "https://api.weixin.qq.com/cgi-bin/", appid = StringUtil.firstNotBlank(System.getProperty("weixin.appid"), "wx78b808148023e9fa");
 	public static final String appidTest = StringUtil.firstNotBlank(System.getProperty("weixin.appidTest"), "wx5bb3e90365f54b7a"), touserTest = StringUtil.firstNotBlank(System.getProperty("weixin.touserTest"), "gh_f6216a9ae70b");
 	public static final String cache = "weixin", accessTokenKey = "access_token", jsapiTicketKey = "jsapi_ticket";
+	private static final Logger log = LoggerFactory.getLogger(WeixinUtil.cache);
 	private static final Map<Class<?>,Field[]> fieldsCache = new HashMap<>(32);
 	private static final Map<String, Class<? extends AbstractMessage>> classCache = new HashMap<>(16);
 	private static final Map<String, WXBizMsgCrypt> wxBizMsgCrypts = new HashMap<>(4);
@@ -204,8 +203,6 @@ public class WeixinUtil {
 	}
 	
 	/** 微信公众号消息的封装 */
-	@Getter
-	@Setter
 	public static abstract class AbstractMessage {
 		/** 开发者微信号  */
 	    private String toUserName;
@@ -217,7 +214,36 @@ public class WeixinUtil {
 	    protected String msgType;
 	    /**  消息id，64位整型   */
 	    private long msgId;
-		
+		public String getToUserName() {
+			return toUserName;
+		}
+		public void setToUserName(String toUserName) {
+			this.toUserName = toUserName;
+		}
+		public String getFromUserName() {
+			return fromUserName;
+		}
+		public void setFromUserName(String fromUserName) {
+			this.fromUserName = fromUserName;
+		}
+		public long getCreateTime() {
+			return createTime;
+		}
+		public void setCreateTime(long createTime) {
+			this.createTime = createTime;
+		}
+		public String getMsgType() {
+			return msgType;
+		}
+		public void setMsgType(String msgType) {
+			this.msgType = msgType;
+		}
+		public long getMsgId() {
+			return msgId;
+		}
+		public void setMsgId(long msgId) {
+			this.msgId = msgId;
+		}
 		public String toXML() {
 			XmlObject xml = new XmlObject("xml");
 			try {
@@ -325,24 +351,36 @@ public class WeixinUtil {
 			map.put(Type.voice, VoiceMessage.class);
 			return map;
 		}
-	    @Getter
-	    @Setter
 	    public static class TextMessage extends AbstractMessage {
 	    	/**  消息内容   */
 	    	private String content;
+			public String getContent() {
+				return content;
+			}
+			public void setContent(String content) {
+				this.content = content;
+			}
 			public TextMessage() { this.msgType = Type.text; }
 	    }
-	    @Getter
-	    @Setter
 	    public static class ImageMessage extends AbstractMessage {
 	    	/** 图片链接  */
 	    	private String picUrl;
 	    	/** 图片消息媒体id，可以调用多媒体文件下载接口拉取数据。 */
 	    	private long mediaId;
+			public String getPicUrl() {
+				return picUrl;
+			}
+			public void setPicUrl(String picUrl) {
+				this.picUrl = picUrl;
+			}
+			public long getMediaId() {
+				return mediaId;
+			}
+			public void setMediaId(long mediaId) {
+				this.mediaId = mediaId;
+			}
 			public ImageMessage() { this.msgType = Type.image; }
 	    }
-	    @Getter
-	    @Setter
 	    public static class VoiceMessage extends AbstractMessage {
 	    	/** 语音消息媒体id，可以调用多媒体文件下载接口拉取数据。 */
 	    	private long mediaId;
@@ -350,22 +388,48 @@ public class WeixinUtil {
 	    	private String format;
 	    	/** 开通语音识别后有值 */
 	    	private String recognition;
+			public long getMediaId() {
+				return mediaId;
+			}
+			public void setMediaId(long mediaId) {
+				this.mediaId = mediaId;
+			}
+			public String getFormat() {
+				return format;
+			}
+			public void setFormat(String format) {
+				this.format = format;
+			}
+			public String getRecognition() {
+				return recognition;
+			}
+			public void setRecognition(String recognition) {
+				this.recognition = recognition;
+			}
 			public VoiceMessage() { this.msgType = Type.voice; }
 	    }
-	    @Getter
-	    @Setter
 	    public static class VideoMessage extends AbstractMessage {
 	    	/** 视频消息媒体id，可以调用多媒体文件下载接口拉取数据。  */
 	    	private long mediaId;
 	    	/** 视频消息缩略图的媒体id，可以调用多媒体文件下载接口拉取数据。  */
 	    	private long thumbMediaId;
+			public long getMediaId() {
+				return mediaId;
+			}
+			public void setMediaId(long mediaId) {
+				this.mediaId = mediaId;
+			}
+			public long getThumbMediaId() {
+				return thumbMediaId;
+			}
+			public void setThumbMediaId(long thumbMediaId) {
+				this.thumbMediaId = thumbMediaId;
+			}
 			public VideoMessage() { this.msgType = Type.video; }
 	    }
 	    public static class ShortVideoMessage extends VideoMessage { 
 	    	public ShortVideoMessage() { this.msgType = Type.shortvideo; }
 	    }
-	    @Getter
-	    @Setter
 	    public static class LocationMessage extends AbstractMessage {
 	    	/** 地理位置维度  */
 	    	private double locationX;
@@ -375,10 +439,32 @@ public class WeixinUtil {
 	    	private int scale;
 	    	/** 地理位置信息  */
 	    	private String label;
+			public double getLocationX() {
+				return locationX;
+			}
+			public void setLocationX(double locationX) {
+				this.locationX = locationX;
+			}
+			public double getLocationY() {
+				return locationY;
+			}
+			public void setLocationY(double locationY) {
+				this.locationY = locationY;
+			}
+			public int getScale() {
+				return scale;
+			}
+			public void setScale(int scale) {
+				this.scale = scale;
+			}
+			public String getLabel() {
+				return label;
+			}
+			public void setLabel(String label) {
+				this.label = label;
+			}
 			public LocationMessage() { this.msgType = Type.location; }
 	    }
-	    @Getter
-	    @Setter
 	    public static class LinkMessage extends AbstractMessage {
 	    	/** 消息标题  */
 	    	private String title;
@@ -386,14 +472,36 @@ public class WeixinUtil {
 	    	private String description;
 	    	/** 消息链接 */
 	    	private String url;
+			public String getTitle() {
+				return title;
+			}
+			public void setTitle(String title) {
+				this.title = title;
+			}
+			public String getDescription() {
+				return description;
+			}
+			public void setDescription(String description) {
+				this.description = description;
+			}
+			public String getUrl() {
+				return url;
+			}
+			public void setUrl(String url) {
+				this.url = url;
+			}
 			public LinkMessage() { this.msgType = Type.link; }
 	    }
 	}
-	@Getter
-	@Setter
     public static abstract class AbstractEvent extends AbstractMessage {
 		/** 事件类型，subscribe(订阅)、unsubscribe(取消订阅)  */
     	protected String event;
+		public String getEvent() {
+			return event;
+		}
+		public void setEvent(String event) {
+			this.event = event;
+		}
 		public AbstractEvent() { this.msgType = AbstractMessage.Type.event; }
 		
 		public static class Type {
@@ -420,17 +528,25 @@ public class WeixinUtil {
 		public static class UnsubscribeEvent extends AbstractEvent {
 			public UnsubscribeEvent() { this.event = Type.unsubscribe; }
 		}
-		@Getter
-		@Setter
 		public static class ScanEvent extends AbstractEvent {
 			/** 事件KEY值，qrscene_为前缀，后面为二维码的参数值 ，或创建二维码时的二维码scene_id */
 			private String eventKey;
 			/** 二维码的ticket，可用来换取二维码图片 */
 			private String ticket;
+			public String getEventKey() {
+				return eventKey;
+			}
+			public void setEventKey(String eventKey) {
+				this.eventKey = eventKey;
+			}
+			public String getTicket() {
+				return ticket;
+			}
+			public void setTicket(String ticket) {
+				this.ticket = ticket;
+			}
 			public ScanEvent() { this.event = Type.SCAN; }
 		}
-		@Getter
-		@Setter
 		public static class LocationEvent extends AbstractEvent {
 			/** 地理位置纬度  */
 			private double latitude;
@@ -438,19 +554,45 @@ public class WeixinUtil {
 			private double longitude;
 			/** 地理位置精度  */
 			private double precision;
+			public double getLatitude() {
+				return latitude;
+			}
+			public void setLatitude(double latitude) {
+				this.latitude = latitude;
+			}
+			public double getLongitude() {
+				return longitude;
+			}
+			public void setLongitude(double longitude) {
+				this.longitude = longitude;
+			}
+			public double getPrecision() {
+				return precision;
+			}
+			public void setPrecision(double precision) {
+				this.precision = precision;
+			}
 			public LocationEvent() { this.event = Type.LOCATION; }
 		}
-		@Getter
-		@Setter
 		public static class ClickEvent extends AbstractEvent {
 			/** 事件KEY值，与自定义菜单接口中KEY值对应  */
 			private String eventKey;
+			public String getEventKey() {
+				return eventKey;
+			}
+			public void setEventKey(String eventKey) {
+				this.eventKey = eventKey;
+			}
 			public ClickEvent() { this.event = Type.CLICK; }
 		}
-		@Getter
-		@Setter
 		public static class ViewEvent extends ClickEvent {
 			private long menuId;
+			public long getMenuId() {
+				return menuId;
+			}
+			public void setMenuId(long menuId) {
+				this.menuId = menuId;
+			}
 			public ViewEvent() { this.event = Type.VIEW; }
 		}
     }
