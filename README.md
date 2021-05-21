@@ -7,6 +7,7 @@
 1. 获取依赖：sh start.sh install，项目构建：sh start.sh package
 2. 启动缓存：redis-server，运行项目：start.bat
 3. 测试访问：[chat](http://localhost:8080/ws/chat.html)，[datetime](http://localhost:8080/service/datetime.json)
+4. VSCode+Mysql："vmArgs": "-Dapijson.enabled=true", "env": {"db.hostPort": "host:port"}
 
 #### 线上部署
 1. 获取依赖：sh start.sh install，项目打包：sh start.sh deploy

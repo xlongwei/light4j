@@ -2,6 +2,7 @@ target/
 bower_components/
 node_modules/
 dist/
+.history
 .idea/
 .settings
 *.iml
