@@ -1,5 +1,8 @@
 package com.xlongwei.light4j.util;
 
+import java.util.Iterator;
+import java.util.List;
+
 import javax.sql.DataSource;
 
 //import org.apache.commons.dbutils.QueryRunner;
@@ -10,6 +13,7 @@ import org.beetl.sql.core.DefaultNameConversion;
 import org.beetl.sql.core.Interceptor;
 import org.beetl.sql.core.SQLManager;
 import org.beetl.sql.core.db.MySqlStyle;
+import org.beetl.sql.core.page.DefaultPageRequest;
 import org.beetl.sql.ext.DebugInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +36,7 @@ public class MySqlUtil {
 		}
 	}).setDbStyle(new MySqlStyle()).setSqlLoader("beetl/sql", "UTF-8").build();
 	public static final Interceptor[] INTERS = new Interceptor[]{new DebugInterceptor()}, EMPTY_INTERS = new Interceptor[] {};
+	public static int ITERATOR_PAGE_SIZE = 10000;
 	private static final Logger log = LoggerFactory.getLogger(MySqlUtil.class);
 	
 	static {
@@ -40,6 +45,37 @@ public class MySqlUtil {
 		}
 		TaskUtil.addShutdownHook(DATASOURCE);
 		log.info("datasource config loaded");
+	}
+	
+	public static <T> Iterator<T> iterator(String sqlTemplate, Class<T> clazz, Object paras) {
+		return new Iterator<T>() {
+			private DefaultPageRequest<T> pageRequest = null;
+			private long pageNumber = 1;
+			private Iterator<T> iterator = null;
+			private boolean hasNextPage = false;
+			{
+				pageRequest = new DefaultPageRequest<>();
+				pageRequest.setPageSize(ITERATOR_PAGE_SIZE);
+				nextPage();
+			}
+			@Override
+			public boolean hasNext() {
+				if (!iterator.hasNext() && hasNextPage) {
+					nextPage();
+				}
+				return iterator.hasNext();
+			}
+			@Override
+			public T next() {
+				return iterator.next();
+			}
+			private void nextPage() {
+				pageRequest.setPageNumber(pageNumber++);
+				List<T> list = SQLMANAGER.executePageQuery(sqlTemplate, clazz, paras, pageRequest).getList();
+				iterator = list.iterator();
+				hasNextPage = list.size() == ITERATOR_PAGE_SIZE;
+			}
+		};
 	}
 	
 	/** QueryRunner回调 */

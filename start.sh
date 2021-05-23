@@ -19,6 +19,7 @@ JVM_OPS="$JVM_OPS -Dlight4j.directory=/soft/softwares/library/"
 #JVM_OPS="$JVM_OPS -Dredis.cacheDbs=xlongwei:6379:3-7"
 #JVM_OPS="$JVM_OPS -Dsoffice.hosts=xlongwei:8100-8102:true"
 #JVM_OPS="$JVM_OPS -Dupload.url=http://ip/uploads/"
+JVM_OPS="$JVM_OPS -Dlight-search=http://localhost:9200"
 JVM_OPS="$JVM_OPS -Duser.timezone=GMT+8 -DclientThreads=1"
 #JVM_OPS="$JVM_OPS -Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n"
 #ENV_OPS="$ENV_OPS enableHttp=false httpPort=8080"
@@ -95,7 +96,7 @@ jar(){
 }
 
 jars(){
-	mvn $profile dependency:copy-dependencies -DoutputDirectory=target
+	mvn $profile dependency:copy-dependencies  -DincludeScope=runtime -DoutputDirectory=target
 }
 
 deploy(){
