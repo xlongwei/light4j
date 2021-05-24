@@ -1,13 +1,9 @@
 package com.xlongwei.light4j.handler.service;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import org.lionsoul.ip2region.DataBlock;
-import org.lionsoul.ip2region.DbConfig;
-import org.lionsoul.ip2region.DbSearcher;
-import org.lionsoul.ip2region.Util;
 
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
@@ -15,6 +11,11 @@ import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
+
+import org.lionsoul.ip2region.DataBlock;
+import org.lionsoul.ip2region.DbConfig;
+import org.lionsoul.ip2region.DbSearcher;
+import org.lionsoul.ip2region.Util;
 
 import cn.hutool.core.map.MapUtil;
 import io.undertow.server.HttpServerExchange;
@@ -48,7 +49,45 @@ public class IpHandler extends AbstractHandler {
 			HandlerUtil.setResp(exchange, map);
 		}
 	}
-	
+
+	public void lock(HttpServerExchange exchange) throws Exception {
+		String key = HandlerUtil.getParam(exchange, "key");
+		if (StringUtil.isBlank(key)) {
+			return;
+		}
+		String locker = HandlerUtil.getParam(exchange, "locker");
+		int seconds = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "seconds"), 10);
+		boolean isShowapiRequest = HandlerUtil.isShowapiRequest(exchange);
+		String userName = "common";
+		if (isShowapiRequest) {
+			String showapiUserName = HandlerUtil.getShowapiUserName(exchange);
+			if (!StringUtil.isBlank(showapiUserName)) {
+				userName = showapiUserName;
+			}
+			if (StringUtil.isBlank(locker)) {
+				locker = HandlerUtil.getParam(exchange, "showapi_userIp");
+			}
+		}
+		if (StringUtil.isBlank(locker)) {
+			locker = HandlerUtil.getIp(exchange);
+		}
+		final String redisKey = RedisConfig.CACHE + ":lock." + userName + "." + key;
+		final String redisValue = locker;
+		final int redisSeconds = seconds >= 6 && seconds <= 600 ? seconds : 60;
+		Map<String, Object> map = new HashMap<>();
+		RedisConfig.execute(jedis -> {
+			Long setnx = jedis.setnx(redisKey, redisValue);
+			if (setnx != null && setnx.longValue() == 1L) {
+				jedis.expire(redisKey, redisSeconds);
+			}
+			map.put("locker", jedis.get(redisKey));
+			map.put("ttl", jedis.ttl(redisKey));
+			return null;
+		});
+		map.put("lock", locker.equals(map.get("locker")));
+		HandlerUtil.setResp(exchange, map);
+	}
+
 	public void config(HttpServerExchange exchange) throws Exception {
 		String memory = HandlerUtil.getParam(exchange, "memory");
 		Boolean search = "true".equals(memory) ? Boolean.TRUE : ("false".equals(memory) ? Boolean.FALSE : null);

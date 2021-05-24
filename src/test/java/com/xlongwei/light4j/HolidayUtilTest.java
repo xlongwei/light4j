@@ -4,12 +4,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.TreeMap;
-
-import org.junit.Test;
+import java.util.stream.Collectors;
 
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HolidayUtil;
+
+import org.apache.commons.lang3.time.DateUtils;
+import org.junit.Test;
 
 /**
  * holiday util test
@@ -24,6 +29,33 @@ public class HolidayUtilTest {
 		assertEquals("元旦节", HolidayUtil.nameOf(1));
 		assertEquals("春节", HolidayUtil.nameOf(2));
 		assertEquals("中秋节", HolidayUtil.nameOf(7));
+	}
+
+	@Test
+	public void abnormal() {
+		String year = "2021";
+		String plan = "{\"元旦节\":\"1.1-3\",\"春节\":\"2.11-17,-2.7,-2.20\",\"清明节\":\"4.3-5\",\"劳动节\":\"5.1-5,-4.25,-5.8\",\"端午节\":\"6.12-14\",\"中秋节\":\"-9.18,9.19-21\",\"国庆节\":\"-9.26,10.1-7,-10.9\"}";
+		HolidayUtil.addPlan(year, plan);
+		Date date = DateUtil.parse(year + "0101");
+		Date end = DateUtil.parse(year + "1231");
+		List<Date> weekendWorks = new ArrayList<>();
+		List<Date> weekdayBreaks = new ArrayList<>();
+		do {
+			boolean isweekend = HolidayUtil.isweekend(date);
+			boolean isworkday = HolidayUtil.isworkday(date);
+			if (isweekend && isworkday) {
+				weekendWorks.add(date);
+			} else if (!isweekend && !isworkday) {
+				weekdayBreaks.add(date);
+			}
+			date = DateUtils.addDays(date, 1);
+		} while (date.before(end));
+		System.out.println("weekend workdays");
+		System.out.println(String.join(",",
+				weekendWorks.stream().map(cn.hutool.core.date.DateUtil::formatDate).collect(Collectors.toList())));
+		System.out.println("weekday breakdays");
+		System.out.println(String.join(",",
+				weekdayBreaks.stream().map(cn.hutool.core.date.DateUtil::formatDate).collect(Collectors.toList())));
 	}
 
 	@Test public void isworkday() throws Exception {
