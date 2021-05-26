@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Http2Util {
     /** 请求超时（毫秒） */
-    public static long timeout = 10000;
+    public static long timeout = 30000;
     private static Http2Client client = Http2Client.getInstance();
 
     public static String execute(URI host, ClientRequest clientRequest, String body) {

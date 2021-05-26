@@ -3,31 +3,41 @@ package com.xlongwei.light4j;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-
-import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.event.SyncReadListener;
+import com.networknt.config.Config;
 import com.xlongwei.light4j.util.FileUtil;
+import com.xlongwei.light4j.util.Http2Util;
 import com.xlongwei.light4j.util.FileUtil.CharsetNames;
 import com.xlongwei.light4j.util.FileUtil.LineHandler;
 import com.xlongwei.light4j.util.FileUtil.TextReader;
 import com.xlongwei.light4j.util.FileUtil.TextWriter;
+import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.SqlInsert;
 import com.xlongwei.light4j.util.StringUtil;
 
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
+
 import cn.hutool.json.JSONSupport;
 import cn.hutool.poi.excel.ExcelUtil;
+import io.undertow.client.ClientRequest;
+import io.undertow.util.Headers;
+import io.undertow.util.Methods;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -39,7 +49,72 @@ import lombok.extern.slf4j.Slf4j;
  * @author xlongwei
  */
 @Slf4j
+@SuppressWarnings({ "rawtypes" })
 public class DistrictUtilTest {
+	@Test
+	public void pushDocs() throws Exception {
+		List<Map<String, String>> list = new LinkedList<>();
+		Map<String, String> codeNames = new HashMap<>();
+		int[] arr = new int[] { 2, 4, 6, 9 };
+		AtomicInteger counter = new AtomicInteger(0);
+		Consumer<Map> add = (map) -> {
+			int count = counter.incrementAndGet();
+			String code = (String) map.get("code");
+			String name = (String) map.get("name");
+			codeNames.put(code, name);
+			StringBuilder sb = new StringBuilder();
+			for (int i : arr) {
+				if (code.length() > i) {
+					sb.append(codeNames.get(code.substring(0, i)));
+				} else {
+					break;
+				}
+			}
+			sb.append(name);
+			list.add(StringUtil.params("code", code, "name", sb.toString()));
+			if (count % 2000 == 0) {
+				try {
+					String post = post(list);
+					log.info("post={}", post);
+				} catch (Exception e) {
+					log.error(e.getMessage(), e);
+					System.exit(0);
+				}
+				list.clear();
+			}
+		};
+		long start = System.currentTimeMillis();
+		consume("Province", add);
+		log.info("Province done counter={}", counter.get());
+		consume("City", add);
+		log.info("City done counter={}", counter.get());
+		consume("County", add);
+		log.info("County done counter={}", counter.get());
+		consume("Town", add);
+		log.info("Town done counter={}", counter.get());
+		consume("Village", add);
+		log.info("Village done counter={}", counter.get());
+		if (list.size() > 0) {
+			String post = post(list);
+			log.info("post={}", post);
+		}
+		log.info("millis={}", System.currentTimeMillis() - start);
+		log.info("success createIndex");// counter=677391
+	}
+
+	private void consume(String table, Consumer<Map> consumer) throws Exception {
+		MySqlUtil.iterator("select code,name from " + table, Map.class, null).forEachRemaining(consumer);
+	}
+
+	private String post(List<Map<String, String>> list) throws Exception {
+		URI uri = new URI("http://localhost:9200");
+		ClientRequest clientRequest = new ClientRequest().setMethod(Methods.POST)
+				.setPath("/service/index/docs?name=district");
+		clientRequest.getRequestHeaders().put(Headers.HOST, "localhost");
+		clientRequest.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+		String body = Config.getInstance().getMapper().writeValueAsString(Collections.singletonMap("add", list));
+		return Http2Util.execute(uri, clientRequest, body);
+	}
 	@Data
 	static class District {
 		private String province;
