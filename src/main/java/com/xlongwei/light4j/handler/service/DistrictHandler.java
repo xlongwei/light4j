@@ -168,6 +168,9 @@ public class DistrictHandler extends AbstractHandler {
 			final String finalType = type;
 			type = codeLengthMapTable.entrySet().stream().filter(entry -> entry.getValue().equals(finalType)).map(entry -> entry.getKey()).findFirst().orElse(null);
 		}
+		String ancestor = StringUtils.trimToEmpty(HandlerUtil.getParam(exchange, "ancestor"));
+		int num = 10, n = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "n"), num);
+		n = n > 0 ? n : num;
 		ClientRequest clientRequest = new ClientRequest();
 		clientRequest.setMethod(Methods.GET);
 		clientRequest.setPath("/service/district/search");
@@ -176,7 +179,8 @@ public class DistrictHandler extends AbstractHandler {
 				ContentType.APPLICATION_FORM_URLENCODED_VALUE.value());
 		clientRequest.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 		URI uri = new URI(System.getProperty("light-search", "http://localhost:9200"));
-		String response = Http2Util.execute(uri, clientRequest, "name=" + Util.urlEncode(name) + "&length=" + StringUtils.trimToEmpty(type));
+		String response = Http2Util.execute(uri, clientRequest, "name=" + Util.urlEncode(name) + "&length="
+				+ StringUtils.trimToEmpty(type) + "&ancestor=" + ancestor + "&n=" + n);
 		JSONObject json = JsonUtil.parseNew(response);
 		if (json.containsKey("codes")) {
 			String[] codes = json.getJSONArray("codes").toArray(new String[0]);
