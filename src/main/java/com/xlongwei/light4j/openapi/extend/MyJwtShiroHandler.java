@@ -165,8 +165,8 @@ public class MyJwtShiroHandler extends DummyMiddlewareHandler {
 	}
 	
 	/** 使用jwt token认证 */
-	@SuppressWarnings("serial")
 	public static class JwtAuthenticationToken implements AuthenticationToken {
+		private static final long serialVersionUID = 2084281951776671254L;
 		private String token;
 		public JwtAuthenticationToken(String token) {
 			this.token = token;

@@ -523,9 +523,9 @@ public class QnObject {
 			}
 		}
 	}
-	
-	@SuppressWarnings("serial")
+
 	public static class QnException extends RuntimeException {
+		private static final long serialVersionUID = 6020260112358514571L;
 		public static final String MISS_VAR_END = String.format("变量缺少结束符：%s", VAR_END);
 		public static final String MISS_CONDITION_INNER = String.format("条件缺少分隔符：%s", CONDITION_INNER);
 		public static final String MISS_LOOP_INNER = String.format("循环缺少分隔符：%s", LOOP_INNER);

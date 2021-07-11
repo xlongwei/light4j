@@ -720,8 +720,8 @@ public class ExpUtil {
 	 * @author hongwei
 	 * @date 2009-10-14
 	 */
-	@SuppressWarnings("serial")
 	public class ExpException extends Exception {
+		private static final long serialVersionUID = 3492746779913024756L;
 		public ExpException(String message) {
 			super(message);
 		}

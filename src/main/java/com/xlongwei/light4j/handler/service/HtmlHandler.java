@@ -44,11 +44,15 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * html handler
+ * <p>
+ * <code>.settings/org.eclipse.jdt.core.prefs</code>
+ * <code>org.eclipse.jdt.core.compiler.problem.forbiddenReference=ignore</code>
+ * 
  * @author xlongwei
  *
  */
 @Slf4j
-@SuppressWarnings({ "unchecked", "restriction" })
+@SuppressWarnings({ "unchecked" })
 public class HtmlHandler extends AbstractHandler {
 	private static final ObjectPool<ScriptEngine> POOL = new SimpleObjectPool<ScriptEngine>(
 			NumberUtil.parseInt(RedisConfig.get(""), 6), () -> new NashornScriptEngineFactory().getScriptEngine("-strict", "--no-java", "--no-syntax-extensions"),
