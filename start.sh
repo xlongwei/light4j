@@ -137,8 +137,8 @@ install(){
 	install_file "$repos" "com.lowagie" "itext" "2.0.8.1"
 	install_file "$repos" "com.lowagie" "itext-asian" "2.0.8.1"
 	repos=https://jitpack.io/
-	install_file "$repos" "com.github.APIJSON" "apijson-framework" "4.6.7"
-	install_file "$repos" "com.github.tencent" "APIJSON" "4.6.7"
+	install_file "$repos" "com.github.APIJSON" "apijson-framework" "4.7.0"
+	install_file "$repos" "com.github.tencent" "APIJSON" "4.7.0"
 	install_file "$repos" "com.github.TommyLemon" "unitauto-java" "2.6.0"
 	install_file "$repos" "com.github.TommyLemon" "unitauto-jar" "2.6.1"
 }

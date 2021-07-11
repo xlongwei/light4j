@@ -190,6 +190,16 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 	public String getGlobleSchema() {
 		return globleSchema;
 	}
+	protected String globleDatasource;
+	@Override
+	public String getGlobleDatasource() {
+		return globleDatasource;
+	}
+	public AbstractParser<T> setGlobleDatasource(String globleDatasource) {
+		this.globleDatasource = globleDatasource;
+		return this;
+	}
+	
 	protected Boolean globleExplain;
 	public AbstractParser<T> setGlobleExplain(Boolean globleExplain) {
 		this.globleExplain = globleExplain;
@@ -352,12 +362,14 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 			setGlobleFormat(requestObject.getBoolean(JSONRequest.KEY_FORMAT));
 			setGlobleDatabase(requestObject.getString(JSONRequest.KEY_DATABASE));
 			setGlobleSchema(requestObject.getString(JSONRequest.KEY_SCHEMA));
+			setGlobleDatasource(requestObject.getString(JSONRequest.KEY_DATASOURCE));
 			setGlobleExplain(requestObject.getBoolean(JSONRequest.KEY_EXPLAIN));
 			setGlobleCache(requestObject.getString(JSONRequest.KEY_CACHE));
 
 			requestObject.remove(JSONRequest.KEY_FORMAT);
 			requestObject.remove(JSONRequest.KEY_DATABASE);
 			requestObject.remove(JSONRequest.KEY_SCHEMA);
+			requestObject.remove(JSONRequest.KEY_DATASOURCE);
 			requestObject.remove(JSONRequest.KEY_EXPLAIN);
 			requestObject.remove(JSONRequest.KEY_CACHE);
 		} catch (Exception e) {
@@ -852,6 +864,10 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 							}
 							
 							JSONObject pagination = new JSONObject(true);
+							Object explain = rp.get(JSONResponse.KEY_EXPLAIN);
+							if (explain instanceof JSONObject) {
+								pagination.put(JSONResponse.KEY_EXPLAIN, explain);
+							}
 							pagination.put(JSONResponse.KEY_TOTAL, total);
 							pagination.put(JSONRequest.KEY_COUNT, count);
 							pagination.put(JSONRequest.KEY_PAGE, page);
@@ -1238,6 +1254,7 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_ROLE);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_DATABASE);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_SCHEMA);
+		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_DATASOURCE);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_COLUMN);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_COMBINE);
 		JOIN_COPY_KEY_LIST.add(JSONRequest.KEY_GROUP);
@@ -1436,9 +1453,11 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		queryResultMap.put(path, result);
 		//		}
 	}
+	//CS304 Issue link: https://github.com/Tencent/APIJSON/issues/48
 	/**根据路径获取值
-	 * @param valuePath
+	 * @param valuePath -the path need to get value
 	 * @return parent == null ? valuePath : parent.get(keys[keys.length - 1])
+	 * <p>use entrySet+getValue() to replace keySet+get() to enhance efficiency</p>
 	 */
 	@Override
 	public Object getValueByPath(String valuePath) {
@@ -1453,13 +1472,13 @@ public abstract class AbstractParser<T> implements Parser<T>, ParserCreator<T>, 
 		}
 
 		//取出key被valuePath包含的result，再从里面获取key对应的value
-		Set<String> set = queryResultMap.keySet();
 		JSONObject parent = null;
 		String[] keys = null;
-		for (String path : set) {
+		for (Entry<String,Object> entry : queryResultMap.entrySet()){
+			String path = entry.getKey();
 			if (valuePath.startsWith(path + "/")) {
 				try {
-					parent = (JSONObject) queryResultMap.get(path);
+					parent = (JSONObject) entry.getValue();
 				} catch (Exception e) {
 					Log.e(TAG, "getValueByPath  try { parent = (JSONObject) queryResultMap.get(path); } catch { "
 							+ "\n parent not instanceof JSONObject!");

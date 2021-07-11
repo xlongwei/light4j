@@ -1,0 +1,10 @@
+@host=http://localhost:8080
+@service={{host}}/service
+@apijson={{service}}/apijson
+
+### APIJSONApplication.init初始化时会读取access function request表，并且access表需要有这三张表的权限控制数据
+POST {{apijson}}/get
+
+{"Access":{"id":"1"}}
+
+
