@@ -7,4 +7,13 @@ POST {{apijson}}/get
 
 {"Access":{"id":"1"}}
 
+### APIAuto会发送以下请求获取文档：access.name=Table需要debug=0，加载access时调试模式APIJSONVerifier会加上debug:0查询参数
+POST {{apijson}}/get
+
+{"format":false,"@database":"MYSQL","sql@":{"from":"Access","Access":{"@column":"name"}},"Access[]":{"count":100,"page":0,"Access":{"@column":"name,alias,get,head,gets,heads,post,put,delete","@order":"date-,name+","name()":"getWithDefault(alias,name)","r0()":"removeKey(alias)","name$":null,"alias$":null,"@combine":null}},"[]":{"count":100,"page":0,"Table":{"table_schema":"sys","table_type":"BASE TABLE","table_name$":null,"table_comment$":null,"@combine":null,"table_name{}@":"sql","@order":"table_name+","@column":"table_name:table_name,table_comment:table_comment"},"PgClass":null,"SysTable":null,"ExtendedProperty":null,"[]":{"count":0,"Column":{"table_schema":"sys","table_name@":"[]/Table/table_name","@order":null,"@column":"column_name:column_name,column_type:column_type,is_nullable:is_nullable,column_comment:column_comment"},"PgAttribute":null,"SysColumn":null,"ExtendedProperty":null}},"Function[]":{"count":100,"page":0,"Function":{"@order":"date-,name+","@column":"name,arguments,demo,detail","demo()":"getFunctionDemo()","detail()":"getFunctionDetail()","r0()":"removeKey(name)","r1()":"removeKey(arguments)","name$":null,"detail$":null,"@combine":null}},"Request[]":{"count":100,"page":0,"Request":{"@order":"version-,method-","@json":"structure","tag$":null}}}
+
+### 查询用户动态和评论：apijson_user、apijson_privacy、moment、comment
+POST {{apijson}}/get
+
+{"User":{"id":38710},"[]":{"Comment":{"userId@":"User/id"}}}
 

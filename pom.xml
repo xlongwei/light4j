@@ -273,6 +273,11 @@
 			<version>${version.apijson}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.github.APIJSON</groupId>
+			<artifactId>apijson-column</artifactId>
+			<version>1.1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>com.googlecode.log4jdbc</groupId>
 			<artifactId>log4jdbc</artifactId>
 			<version>${version.log4jdbc}</version>

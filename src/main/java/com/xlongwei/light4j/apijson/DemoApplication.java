@@ -3,6 +3,8 @@ package com.xlongwei.light4j.apijson;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.parser.Feature;
 import com.xlongwei.light4j.util.NumberUtil;
 
 import apijson.Log;
@@ -29,7 +31,10 @@ public class DemoApplication {
 	public static final DemoController apijson = new DemoController();
 	
 	public static void start() {
-		if(apijsonEnabled) {
+		if (apijsonEnabled) {
+			//JSON.getCorrectJson调用JSON.parse未加有序特性时造成bug，可以考虑JSON默认有序
+			JSON.DEFAULT_PARSER_FEATURE |= Feature.OrderedField.getMask();
+			//Verifier校验参数规则Operation.VERIFY时支持预定义正则PHONE EMAIL ID_CARD等
 			Map<String, Pattern> COMPILE_MAP = AbstractVerifier.COMPILE_MAP;
 			COMPILE_MAP.put("PHONE", StringUtil.PATTERN_PHONE);
 			COMPILE_MAP.put("EMAIL", StringUtil.PATTERN_EMAIL);

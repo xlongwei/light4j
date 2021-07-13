@@ -40,8 +40,10 @@ public class JSON {
 	 * @return
 	 */
 	public static String getCorrectJson(String s) {
-//		return getCorrectJson(s, false);//xlongwei
-		return getCorrectJson((com.alibaba.fastjson.JSON)com.alibaba.fastjson.JSON.parse(s)).toJSONString();
+//		return getCorrectJson(s, false);//xlongwei 可以考虑DemoApplication.start给JSON默认配置加上有序特性
+		int features = com.alibaba.fastjson.JSON.DEFAULT_PARSER_FEATURE;
+		features |= Feature.OrderedField.getMask();
+		return getCorrectJson((com.alibaba.fastjson.JSON)com.alibaba.fastjson.JSON.parse(s, features)).toJSONString();
 	}
 	/**获取有效的json
 	 * @param s
