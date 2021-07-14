@@ -9,6 +9,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.util.List;
 
 /**阿里FastJSON封装类 防止解析时异常
@@ -62,7 +64,8 @@ public class JSON {
 		//		}
 		return s;//isJsonCorrect(s) ? s : null;
 	}
-	
+	//Method+Function.demo Moment.praiseUserIdList+pictureList Request+Response.structure User.contactIdList+pictureList
+	private static final String[] JSON_FIELDS = {"demo","praiseUserIdList","pictureList","structure","contactIdList"};
 	/**
 	 * xlongwei: MySQL老版本不支持json类型，因此特殊处理String=\"[1,2,3]\"为JSONArray=[1,2,3] 
 	 */
@@ -78,7 +81,7 @@ public class JSON {
 				Object value = entry.getValue();
 				if(value instanceof String) {
 					String str = (String)value;
-					if(str!=null && str.length()>=2 && str.charAt(0)=='[' && str.charAt(str.length()-1)==']') {
+					if(str!=null && str.length()>=2 && str.charAt(0)=='[' && str.charAt(str.length()-1)==']' && ArrayUtils.contains(JSON_FIELDS, entry.getKey())) {
 						entry.setValue(com.alibaba.fastjson.JSON.parseArray(str));
 					}
 				}else if(value instanceof JSONObject) {
