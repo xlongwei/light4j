@@ -1,9 +1,6 @@
 @host=http://localhost:8080
-# @host=https://api.xlongwei.com
-# @host=https://apijson.xlongwei.com
 @service={{host}}/service
 @apijson={{service}}/apijson
-# @apijson={{host}}
 
 ### APIJSONApplication.init初始化时会读取access function request表，并且access表需要有Access Function Reqeust权限配置
 POST {{apijson}}/get
@@ -20,4 +17,26 @@ POST {{apijson}}/get
 POST {{apijson}}/get
 
 {"User":{"id":38710},"[]":{"Comment":{"userId@":"User/id"}}}
+
+### UnitAuto需要登录
+POST {{apijson}}/login
+
+{"type":0,"phone":"13000082001","password":"123456","version":1,"remember":true,"format":false}
+
+### UnitAuto登录后会读取Method表，apijson.sql留了两条method数据
+POST  {{apijson}}/get
+
+{"format":false,"[]":{"count":50,"page":0,"Method":{"@order":"date-","userId{}":[0,38710],"arguments()":"getMethodArguments(genericMethodArgs)","defination()":"getMethodDefination(method,arguments,type,exceptions,null)","request()":"getMethodRequest()","package$":null,"class$":null,"package*~":null,"class*~":null,"method*~":null,"type*~":null,"detail*~":null,"@combine":null},"TestRecord":{"documentId@":"/Method/id","userId":38710,"testAccountId":null,"randomId":0,"@order":"date-","@column":"id,userId,documentId,duration,minDuration,maxDuration,response","@having":null}},"@role":"LOGIN"}
+
+### 配置apijson.conf时，转发请求/method/list到{{apijson}}/method_list
+POST {{apijson}}/method_list
+
+{"package":"com.xlongwei.light4j.util","class":"PinyinUtil"}
+
+### 直接调用静态方法，bean调用比较复杂
+POST {{apijson}}/method_invoke
+
+{"package":"com.xlongwei.light4j.util","class":"PinyinUtil","method":"getPinyin","methodArgs":[{"type":"String","value":"拼音"}],"static":true}
+
+#{"package":"com.networknt.registry","class":"URL","method":"getHost"}
 

@@ -30,12 +30,15 @@ import static apijson.framework.APIJSONConstant.REQUEST_;
 import static apijson.framework.APIJSONConstant.USER_ID;
 import static apijson.framework.APIJSONConstant.VERSION;
 
+import java.lang.reflect.Method;
 import java.rmi.ServerException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import javax.servlet.http.HttpSession;
 
@@ -56,6 +59,9 @@ import apijson.orm.exception.ConditionErrorException;
 import apijson.orm.exception.ConflictException;
 import apijson.orm.exception.NotExistException;
 import apijson.orm.exception.OutOfRangeException;
+import lombok.extern.slf4j.Slf4j;
+import unitauto.MethodUtil;
+import unitauto.MethodUtil.InterfaceProxy;
 
 
 /**request controller
@@ -65,6 +71,7 @@ import apijson.orm.exception.OutOfRangeException;
  * <br > 3.调试方便 - 建议使用 APIJSON在线测试工具 或 Postman
  * @author Lemon
  */
+@Slf4j
 public class DemoController extends APIJSONController {
 	private static final String TAG = "DemoController";
 
@@ -133,7 +140,7 @@ public class DemoController extends APIJSONController {
 			try {
 				result.put(ACCESS_, DemoVerifier.initAccess(false, null, value));
 			} catch (ServerException e) {
-				e.printStackTrace();
+				log.warn(e.getMessage(), e);
 				result.put(ACCESS_, DemoParser.newErrorResult(e));
 			}
 		}
@@ -142,7 +149,7 @@ public class DemoController extends APIJSONController {
 			try {
 				result.put(FUNCTION_, DemoFunctionParser.init(false, null, value));
 			} catch (ServerException e) {
-				e.printStackTrace();
+				log.warn(e.getMessage(), e);
 				result.put(FUNCTION_, DemoParser.newErrorResult(e));
 			}
 		}
@@ -151,7 +158,7 @@ public class DemoController extends APIJSONController {
 			try {
 				result.put(REQUEST_, DemoVerifier.initRequest(false, null, value));
 			} catch (ServerException e) {
-				e.printStackTrace();
+				log.warn(e.getMessage(), e);
 				result.put(REQUEST_, DemoParser.newErrorResult(e));
 			}
 		}
@@ -823,4 +830,47 @@ public class DemoController extends APIJSONController {
 				);
 	}
 
+	//UnitAuto
+	public JSONObject listMethod(String request) {
+		return MethodUtil.listMethod(request);
+	}
+
+	public JSONObject invokeMethod(String request) {
+		ListenerAndSupplier<JSONObject> listener = new ListenerAndSupplier<JSONObject>();
+		try {
+			MethodUtil.invokeMethod(request, null, listener);
+		} catch (Exception e) {
+			Log.e(TAG, "invokeMethod  try { JSONObject req = JSON.parseObject(request); ... } catch (Exception e) { \n"
+					+ e.getMessage());
+			try {
+				listener.complete(MethodUtil.JSON_CALLBACK.newErrorResult(e));
+			} catch (Exception e1) {
+				log.warn(e1.getMessage(), e1);
+			}
+		}
+		return listener.get();
+	}
+
+	@Slf4j
+	public static class ListenerAndSupplier<T> implements Supplier<T>, MethodUtil.Listener<T> {
+		T data = null;
+		CountDownLatch latch = new CountDownLatch(1);
+
+		@Override
+		public void complete(T data, Method method, InterfaceProxy proxy, Object... extras) throws Exception {
+			this.data = data;
+			latch.countDown();
+		}
+
+		@Override
+		public T get() {
+			try {
+				latch.await(30, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				log.warn(e.getMessage(), e);
+			}
+			return data;
+		}
+
+	}
 }

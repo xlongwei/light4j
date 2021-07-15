@@ -64,7 +64,7 @@ INSERT INTO `access` VALUES ('20','1','SysColumn',null,'["UNKNOWN", "LOGIN", "CO
 INSERT INTO `access` VALUES ('21','1','ExtendedProperty',null,'["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','[]','[]','[]','2019-10-04 01:33:45',null);
 INSERT INTO `access` VALUES ('22','1','Random',null,'["LOGIN", "ADMIN"]','["LOGIN", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["LOGIN", "OWNER", "ADMIN"]','["OWNER", "ADMIN"]','2019-12-01 15:13:13',null);
 INSERT INTO `access` VALUES ('23','1','Swagger',null,'["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','[]','[]','[]','2018-11-28 16:38:15',null);
-INSERT INTO `access` VALUES ('24','1','Method',null,'["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["LOGIN", "ADMIN"]','["OWNER", "ADMIN"]','2018-11-28 16:38:15',null);
+INSERT INTO `access` VALUES ('24','0','Method',null,'["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["LOGIN", "ADMIN"]','["OWNER", "ADMIN"]','2018-11-28 16:38:15',null);
 INSERT INTO `access` VALUES ('25','1','Input',null,'["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["OWNER", "ADMIN"]','2020-01-10 07:12:49',null);
 INSERT INTO `access` VALUES ('26','1','Device',null,'["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["OWNER", "ADMIN"]','2020-01-10 07:12:49',null);
 INSERT INTO `access` VALUES ('27','1','System',null,'["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["UNKNOWN", "LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["LOGIN", "CONTACT", "CIRCLE", "OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["OWNER", "ADMIN"]','["OWNER", "ADMIN"]','2020-01-10 07:12:49',null);
@@ -100,6 +100,7 @@ CREATE TABLE `apijson_privacy` (
 -- ----------------------------
 INSERT INTO `apijson_privacy` VALUES ('38710', '1', '13000038710', '33376.00', '666666', '123456');
 INSERT INTO `apijson_privacy` VALUES ('70793', '0', '13000070793', '56000.00', 'apijson', '123456');
+INSERT INTO `apijson_privacy` VALUES ('82001', '1', '13000082001', '99867.38', '123456', '123456');
 
 -- ----------------------------
 -- Table structure for apijson_user
@@ -122,6 +123,7 @@ CREATE TABLE `apijson_user` (
 -- ----------------------------
 INSERT INTO `apijson_user` VALUES ('38710', '0', 'TommyLemon', 'Android&Java', 'http://static.oschina.net/uploads/user/1218/2437072_100.jpg?t=1461076033000', '[70793]', '[\"http://static.oschina.net/uploads/user/1218/2437072_100.jpg?t=1461076033000\", \"http://common.cnblogs.com/images/icon_weibo_24.png\"]', '2017-02-01 19:21:50');
 INSERT INTO `apijson_user` VALUES ('70793', '0', 'Strong', 'djdj', 'http://static.oschina.net/uploads/user/585/1170143_50.jpg?t=1390226446000', '[38710]', '[\"http://static.oschina.net/uploads/img/201604/22172508_eGDi.jpg\"]', '2017-02-01 19:21:50');
+INSERT INTO `apijson_user` VALUES ('82001', '0', '测试账号', 'Dev', 'https://static.oschina.net/uploads/user/19/39085_50.jpg', '[93793]', '[\"http://common.cnblogs.com/images/icon_weibo_24.png\"]', '2017-02-01 19:21:50');
 
 -- ----------------------------
 -- Table structure for moment
@@ -260,6 +262,9 @@ CREATE TABLE `Method` (
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1604152910193 DEFAULT CHARSET=utf8 COMMENT='要做单元测试的方法(如果用到单元测试，则必须)';
+
+insert into method(id,userId,package,class,classArgs,genericClassArgs,method,methodArgs,genericMethodArgs,exceptions,genericExceptions,type,genericType,static,ui,request,demo,detail,date) values('1592232543066','82001','unitauto.test','TestUtil',null,null,'pow','[{"type":"double","value":117},{"type":"double","value":16}]','[{"type":"double","value":-1.8},{"type":"double","value":-40.27}]',null,null,'double','double','1','0',null,null,'pow','2020-06-15 14:49:02');
+insert into method(id,userId,package,class,classArgs,genericClassArgs,method,methodArgs,genericMethodArgs,exceptions,genericExceptions,type,genericType,static,ui,request,demo,detail,date) values('1592232544336','82001','unitauto.test','TestUtil',null,null,'plus','[{"type":"long","value":43},{"type":"long","value":178}]','[{"type":"long","value":32},{"type":"long","value":30}]',null,null,'long','long','1','0',null,null,'plus','2020-06-15 14:49:04');
 
 -- ----------------------------
 -- Table structure for praise
