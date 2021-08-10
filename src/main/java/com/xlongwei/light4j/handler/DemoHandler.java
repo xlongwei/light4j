@@ -58,19 +58,19 @@ public class DemoHandler implements LightHttpHandler {
 			HandlerUtil.parseBody(exchange);
 			handler.handleRequest(exchange);
 			String accept = exchange.getRequestHeaders().getFirst(Headers.ACCEPT);
-			if(accept!=null && accept.startsWith("application/json")) {
+			if (accept == null || !accept.contains("html")) {
 				HandlerUtil.sendResp(exchange);
 				return;
 			}
 		}
-		exchange.setStatusCode(200);
-		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/html");
 		Template template = engine.getTemplate((StringUtil.isBlank(path) ? name : name+"/"+path)+".html");
 		String html = template.render((Map<?, ?>)exchange.getAttachment(HandlerUtil.RESP));
 		if(StringUtils.isBlank(html)) {
 			HandlerUtil.sendResp(exchange);
 		}else {
 			exchange.removeAttachment(HandlerUtil.RESP);
+			exchange.setStatusCode(200);
+			exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/html");
 			exchange.getResponseSender().send(html);
 		}
 	}

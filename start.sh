@@ -8,7 +8,7 @@ jarfile=target/light4j.jar
 Survivor=2 Old=64 NewSize=$[Survivor*10] Xmx=$[NewSize+Old] #NewSize=Survivor*(1+1+8) Xmx=NewSize+Old
 JVM_OPS="-Xmx${Xmx}m -Xms${Xmx}m -XX:NewSize=${NewSize}m -XX:MaxNewSize=${NewSize}m -XX:SurvivorRatio=8 -Xss228k"
 #JVM_OPS="$JVM_OPS -Dredis -Dredis.host=localhost -Dredis.port=6379 -Dredis.pubsub=false -Dredis.pushpop=true -Dredis.queueSize=10240"
-JVM_OPS="$JVM_OPS -Djava.compiler=none -Dlogserver -DcontextName=light4j"
+JVM_OPS="$JVM_OPS -Djava.compiler=none -Dlogserver -DcontextName=light4j -Dtoken=xlongwei"
 #JVM_OPS="$JVM_OPS -Dapijson.enabled=true -Dapijson.debug=false -Dapijson.test=false"
 #JVM_OPS="$JVM_OPS -Dweixin.appid=wx78b808148023e9fa -Dweixin.appidTest=wx5bb3e90365f54b7a -Dweixin.touserTest=gh_f6216a9ae70b"
 #JVM_OPS="$JVM_OPS -Dservice.controller.ips.config=service.controller.ips.config"
@@ -25,7 +25,7 @@ JVM_OPS="$JVM_OPS -Duser.timezone=GMT+8 -DclientThreads=1"
 #ENV_OPS="$ENV_OPS enableHttp=false httpPort=8080"
 ENV_OPS="$ENV_OPS enableHttps=true httpsPort=8443"
 ENV_OPS="$ENV_OPS ioThreads=2 workerThreads=3"
-JVM_OPS="$JVM_OPS -Dlight-config-server-uri=https://git.xlongwei.com"
+#JVM_OPS="$JVM_OPS -Dlight-config-server-uri=https://git.xlongwei.com"
 ENV_OPS="$ENV_OPS config_server_authorization=Z3Vlc3Q6MTIzNDU2"
 #ENV_OPS="$ENV_OPS enableRegistry=true STATUS_HOST_IP=api.xlongwei.com"
 

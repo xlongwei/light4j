@@ -1,11 +1,10 @@
 package com.xlongwei.light4j.handler.demo;
 
-import java.util.Deque;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
@@ -26,30 +25,26 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LogHandler extends AbstractHandler {
+	public static final String token = System.getProperty("token");
 	
 	public void log(HttpServerExchange exchange) throws Exception {
-		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
-		Deque<String> loggerParams = queryParameters.get("logger");
+		LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+		String loggerName = HandlerUtil.getParam(exchange, "logger");
 		List<ch.qos.logback.classic.Logger> loggers = null;
-		if(loggerParams!=null && loggerParams.size()>0) {
-			Set<String> loggerNames = loggerParams.stream().map(StringUtils::trimToEmpty).collect(Collectors.toSet());
-			if(!loggerNames.isEmpty()) {
-				loggers = loggerNames.stream().map(loggerName -> (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(loggerName)).filter(Objects::nonNull).collect(Collectors.toList());
-				if(!loggers.isEmpty()) {
-					Deque<String> levelParams = queryParameters.get("level");
-					if(levelParams!=null && levelParams.size()>0) {
-						String levelName = levelParams.getFirst();
-						Level level = Level.toLevel(levelName, null);
-						loggers.forEach(logger -> {
-							log.info("change logger:{} level from:{} to:{}", logger.getName(), logger.getLevel(), level);
-							logger.setLevel(level);
-						});
-					}
+		if (StringUtils.isNotBlank(loggerName)) {
+			ch.qos.logback.classic.Logger logger = lc.getLogger(loggerName);
+			if (logger != null) {
+				loggers = Arrays.asList(logger);
+				String levelName = HandlerUtil.getParam(exchange, "level");
+				if (StringUtils.isNotBlank(levelName)
+						&& (StringUtils.isBlank(token) || token.equals(HandlerUtil.getParam(exchange, "token")))) {
+					Level level = Level.toLevel(levelName, null);
+					log.warn("change logger:{} level from:{} to:{}", logger.getName(), logger.getLevel(), level);
+					logger.setLevel(level);
 				}
 			}
 		}
-		if(loggers == null) {
-			LoggerContext lc = (LoggerContext)LoggerFactory.getILoggerFactory();
+		if (loggers == null) {
 			loggers = lc.getLoggerList();
 		}
 		log.info("check logger level, loggers:{}", loggers.size());
