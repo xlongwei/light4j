@@ -43,7 +43,7 @@
         <version.bouncycastle>1.64</version.bouncycastle>
         <version.beetlsql>3.6.0-RELEASE</version.beetlsql>
         <version.antlr4>4.7.2</version.antlr4>
-        <version.apijson>4.7.0</version.apijson>
+        <version.apijson>4.7.2</version.apijson>
         <version.log4jdbc>1.2</version.log4jdbc>
         <version.guava>30.1.1-jre</version.guava>
     </properties>
@@ -275,7 +275,7 @@
 		<dependency>
 			<groupId>com.github.APIJSON</groupId>
 			<artifactId>apijson-column</artifactId>
-			<version>1.1.0</version>
+			<version>1.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.log4jdbc</groupId>

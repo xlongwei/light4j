@@ -129,10 +129,11 @@ public class APIJSONSQLExecutor extends AbstractSQLExecutor {
 		if(connectionMap == null) {
 			connectionMap = new HashMap<>();
 		}
-		Connection connection = connectionMap.get(config.getDatabase());
+		String connectionKey = config.getDatasource() + "-" + config.getDatabase();
+		Connection connection = connectionMap.get(connectionKey);
 		if(connection == null) {
 			connection = threadConnection.get();
-			connectionMap.put(config.getDatabase(), connection);
+			connectionMap.put(connectionKey, connection);
 		}
 		//AbstractSQLExecutor每次通过DriverManager获取连接，这里提前从连接池获取连接，close方法会释放连接（回到连接池）
 		return super.getConnection(config);

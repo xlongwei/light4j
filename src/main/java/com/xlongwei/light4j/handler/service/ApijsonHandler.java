@@ -68,7 +68,7 @@ public class ApijsonHandler extends AbstractHandler {
 		}
 		//全局监控apijson是否有连接泄露，apijson不抛异常出来因此这里不必try-finally
 		if(APIJSONSQLExecutor.borrowedConnections.get() > borrowedConnections) {
-			log.error("apijson connection leak, path={} borrowedConnections={} -> {}", path, borrowedConnections, APIJSONSQLExecutor.borrowedConnections);
+			log.error("apijson connection leak, path={} borrowedConnections={} -> {}", path, borrowedConnections, APIJSONSQLExecutor.borrowedConnections.get());
 			try{
 				APIJSONSQLExecutor.threadConnection.get().close();
 				log.info("apijson connection release, returned to {}", APIJSONSQLExecutor.borrowedConnections.decrementAndGet());
