@@ -27,8 +27,8 @@ public class ImageUtil {
 	public static final String attr = "imgCode";
 	private static char[] normalChars = "ABCDEFGHJKLMNPRSTUWX3456789".toCharArray();
 	private static char[] specialChars = "@#$%&3456789ABCDEFGHJKMNPQRSTUWX@#$%&3456789".toCharArray();
-	private static char[] chineseChars = DictUtil.frequent().toCharArray();
-	private static char[] simpleChars = DictUtil.simple().toCharArray();
+//	private static char[] chineseChars = DictUtil.frequent().toCharArray();
+//	private static char[] simpleChars = DictUtil.simple().toCharArray();
 	private static char[] operatorChars = "+-*".toCharArray();
 	
 	/** 生成字母数字随机串 */
@@ -53,12 +53,12 @@ public class ImageUtil {
 			type = RandomUtils.nextInt(0, 3);
 		}
 		switch(type) {
-		case 0: 
-			StringBuilder random = new StringBuilder();
-			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
-			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
-			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
-			return new String[]{random.toString()};
+//		case 0: 
+//			StringBuilder random = new StringBuilder();
+//			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
+//			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
+//			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
+//			return new String[]{random.toString()};
 		case 1:
 			int op1 = RandomUtils.nextInt(0, 10), op2 = RandomUtils.nextInt(0, 10);
 			char op = operatorChars[RandomUtils.nextInt(0, operatorChars.length)];
@@ -77,16 +77,16 @@ public class ImageUtil {
 				return new String[] {op1+String.valueOf(op)+"?"+"="+result, String.valueOf(op2)};
 			}
 			return new String[] {op1+String.valueOf(op)+op2+"=?", String.valueOf(result)};
-		case 2:
-			String word = String.valueOf(simpleChars[RandomUtils.nextInt(0, simpleChars.length)]);
-			String[] parts = DictUtil.parts(word);
-			if(RandomUtils.nextBoolean()) {
-				return new String[] {"?+"+parts[1]+"="+word, parts[0]};
-			}
-			if(RandomUtils.nextBoolean()) {
-				return new String[] {parts[0]+"+?="+word, parts[1]};
-			}
-			return new String[] {parts[0]+"+"+parts[1]+"=?", word};
+//		case 2:
+//			String word = String.valueOf(simpleChars[RandomUtils.nextInt(0, simpleChars.length)]);
+//			String[] parts = DictUtil.parts(word);
+//			if(RandomUtils.nextBoolean()) {
+//				return new String[] {"?+"+parts[1]+"="+word, parts[0]};
+//			}
+//			if(RandomUtils.nextBoolean()) {
+//				return new String[] {parts[0]+"+?="+word, parts[1]};
+//			}
+//			return new String[] {parts[0]+"+"+parts[1]+"=?", word};
 		default: return null;
 		}
 	}
