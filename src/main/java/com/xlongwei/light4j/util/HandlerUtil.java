@@ -71,6 +71,8 @@ public class HandlerUtil {
 	 */
 	public static final AttachmentKey<Object> RESP = AttachmentKey.create(Object.class);
 
+	public static final AttachmentKey<Object> REQUEST_START_TIME = AttachmentKey.create(Object.class);
+
 	/**
 	 * 解析body为Map<String, Object>
 	 * <br>Object可能是String、List<String>、FileItem、List<FileItem>
@@ -236,7 +238,8 @@ public class HandlerUtil {
 					map.put("url", domain.toString()+path.toString());
 				}
 				if(StringUtils.isNotBlank(getParam(exchange, SHOWAPI_USER_ID))) {
-					map.put("ret_code", map.containsKey("error") ? "1" : "0");
+					// map.put("ret_code", map.containsKey("error") ? "1" : "0");
+					map.put("ret_code", "0");
 				}
 				response = JSONObject.toJSONString(map);
 			}else if(resp instanceof String) {
@@ -246,7 +249,7 @@ public class HandlerUtil {
 		}
 		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, mimeType);
 		exchange.setStatusCode(200);
-		log.info("res({}): {}", (System.nanoTime()-exchange.getRequestStartTime())/1000, response);
+		log.info("res({}): {}", HandlerUtil.requestTime(exchange), response);
 		exchange.getResponseSender().send(response);
 	}
 	
@@ -359,5 +362,22 @@ public class HandlerUtil {
 			ipsCounter.remove(ip);
 		}
 		log.info("ipsCounter clear done");
+	}
+	public static void requestStartTime(HttpServerExchange exchange) {
+		if(exchange.getRequestStartTime()==-1) {
+			exchange.putAttachment(REQUEST_START_TIME, System.nanoTime());
+		}
+	}
+	public static long requestTime(HttpServerExchange exchange) {
+		long requestStartTime = exchange.getRequestStartTime();
+		if(requestStartTime == -1) {
+			Object obj = exchange.getAttachment(REQUEST_START_TIME);
+			if(obj != null) {
+				requestStartTime = (Long)obj;
+			}else{
+				return 0;
+			}
+		}
+		return (System.nanoTime() - requestStartTime)/1000;
 	}
 }

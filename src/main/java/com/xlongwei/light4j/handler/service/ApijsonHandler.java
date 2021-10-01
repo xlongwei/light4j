@@ -88,7 +88,7 @@ public class ApijsonHandler extends AbstractHandler {
 			}
 			exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, HandlerUtil.MIMETYPE_JSON);
 			exchange.setStatusCode(200);
-			log.info("res({}): {}", (System.nanoTime()-exchange.getRequestStartTime())/1000, response);
+			log.info("res({}): {}", HandlerUtil.requestTime(exchange), response);
 			exchange.getResponseSender().send(response);
 		}
 	}
