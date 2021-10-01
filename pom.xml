@@ -38,7 +38,7 @@
         <version.dbutils>1.7</version.dbutils>
         <version.commons-io>2.11.0</version.commons-io>
         <version.hutool>5.7.9</version.hutool>
-        <version.shiro>1.3.2</version.shiro>
+        <version.shiro>1.8.0</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
         <version.bouncycastle>1.64</version.bouncycastle>
         <version.beetlsql>3.9.0-RELEASE</version.beetlsql>
