@@ -43,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ServiceHandler implements LightHttpHandler {
 	public static final String BAD_REQUEST = "{\"error\":\"bad request\"}";
+	public static final String BAD_REQUEST_SHOWAPI = "{\"error\":\"bad request\",\"ret_code\":\"0\"}";
 	public static final Map<String, AbstractHandler> handlers = new HashMap<>();
 	public static volatile boolean serviceCount = true;
 	private static final ServiceCounter serviceCounter = new ServiceCounter(64, TimeUnit.SECONDS.toMillis(18));
@@ -71,7 +72,7 @@ public class ServiceHandler implements LightHttpHandler {
 			String name = split[0];
 			AbstractHandler handler = handlers.get(name);
 			if(handler != null) {
-				String path = split.length>1 ? split[1] : "";
+				String path = split.length>1 ? split[1] : StringUtils.EMPTY;
 				exchange.putAttachment(AbstractHandler.PATH, path);
 				HandlerUtil.parseBody(exchange);
 				boolean ipsConfig = HandlerUtil.ipsConfig(exchange, name);

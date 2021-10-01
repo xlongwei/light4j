@@ -139,7 +139,11 @@ public class HandlerUtil {
 			log.info("fail to parse body: {}", e.getMessage());
 		}
 		if(!body.isEmpty()) {
-			log.info("body: {}", body);
+			Object obj = body.remove(BODYSTRING);
+			log.info("body: {}", JSONObject.toJSONString(body));
+			if(obj != null) {
+				body.put(BODYSTRING, obj);
+			}
 			exchange.putAttachment(BODY, body);
 		}
 	}
@@ -225,7 +229,8 @@ public class HandlerUtil {
 			//LayuiHandler.captcha直接输出图片字节流，不响应json
 			return;
 		}
-		String response = ServiceHandler.BAD_REQUEST;
+		boolean isShowapiRequest = isShowapiRequest(exchange);
+		String response = isShowapiRequest ? ServiceHandler.BAD_REQUEST_SHOWAPI : ServiceHandler.BAD_REQUEST;
 		Object resp = exchange.removeAttachment(HandlerUtil.RESP);
 		String mimeType = MIMETYPE_JSON;
 		if(resp != null) {
@@ -237,8 +242,7 @@ public class HandlerUtil {
 					//接口响应了domain+path，添加响应参数url
 					map.put("url", domain.toString()+path.toString());
 				}
-				if(StringUtils.isNotBlank(getParam(exchange, SHOWAPI_USER_ID))) {
-					// map.put("ret_code", map.containsKey("error") ? "1" : "0");
+				if(isShowapiRequest) {
 					map.put("ret_code", "0");
 				}
 				response = JSONObject.toJSONString(map);
