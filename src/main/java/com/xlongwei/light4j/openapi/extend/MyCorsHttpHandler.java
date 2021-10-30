@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import com.networknt.cors.CorsUtil;
+import com.xlongwei.light4j.util.HandlerUtil;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
@@ -40,6 +41,7 @@ public class MyCorsHttpHandler extends DummyMiddlewareHandler {
             }
             setCorsResponseHeaders(exchange);
         }
+        HandlerUtil.requestStartTime(exchange);
         super.handleRequest(exchange);
 	}
 

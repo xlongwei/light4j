@@ -12,7 +12,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.main.class>com.networknt.server.Servers</project.main.class>
-        <version.light-4j>1.6.33</version.light-4j>
+        <version.light-4j>1.6.36</version.light-4j>
         <version.logback>1.2.3</version.logback>
         <version.junit>4.13.1</version.junit>
         <versions.maven-version>2.4</versions.maven-version>
@@ -26,22 +26,22 @@
         <version.janino>2.6.1</version.janino>
         <version.poi>4.1.2</version.poi>
         <version.itext>2.0.8.1</version.itext>
-        <version.httpmime>4.5.2</version.httpmime>
-        <version.fastjson>1.2.76</version.fastjson>
+        <version.httpmime>4.5.13</version.httpmime>
+        <version.fastjson>1.2.78</version.fastjson>
         <version.jodconverter>2.2.1</version.jodconverter>
         <version.jodreports>2.4.0</version.jodreports>
         <version.xom>1.2.5</version.xom>
-        <version.zxing>3.2.1</version.zxing>
+        <version.zxing>3.4.1</version.zxing>
         <version.vcard>0.10.0</version.vcard>
         <version.easyexcel>2.2.7</version.easyexcel>
-        <version.hikaricp>3.1.0</version.hikaricp>
+        <version.hikaricp>4.0.3</version.hikaricp>
         <version.dbutils>1.7</version.dbutils>
-        <version.commons-io>2.8.0</version.commons-io>
-        <version.hutool>5.6.1</version.hutool>
+        <version.commons-io>2.11.0</version.commons-io>
+        <version.hutool>5.7.9</version.hutool>
         <version.shiro>1.3.2</version.shiro>
         <version.ip2region>1.7.2</version.ip2region>
         <version.bouncycastle>1.64</version.bouncycastle>
-        <version.beetlsql>3.6.0-RELEASE</version.beetlsql>
+        <version.beetlsql>3.9.0-RELEASE</version.beetlsql>
         <version.antlr4>4.7.2</version.antlr4>
         <version.apijson>4.7.2</version.apijson>
         <version.log4jdbc>1.2</version.log4jdbc>
