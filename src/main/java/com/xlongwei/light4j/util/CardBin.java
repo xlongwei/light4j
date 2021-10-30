@@ -29,7 +29,7 @@ public class CardBin {
 					}
 				}
 			}
-			return cn == null || cn.child != null ? null : cn.toString();
+			return cn == null || (cn.child != null && !cn.leaf) ? null : cn.toString();
 		}
 		return null;
 	}
@@ -67,6 +67,7 @@ public class CardBin {
 				cn = cn.child;
 			}
 		}
+		cn.leaf = true;
 	}
 	
 	Node root = new Node();
@@ -75,6 +76,7 @@ public class CardBin {
 		Node parent;
 		Node child;
 		Node sibling;
+		boolean leaf = false;
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
