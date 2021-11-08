@@ -5,7 +5,7 @@ enableHttp2: true
 httpsPort: ${httpsPort:8443}
 enableHttps: ${enableHttps:false}
 keystoreName: server.keystore
-serviceId: com.xlongwei.light4j
+serviceId: light4j
 enableRegistry: ${enableRegistry:false}
 dynamicPort: ${dynamicPort:false}
 minPort: ${minPort:12400}

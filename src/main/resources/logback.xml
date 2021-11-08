@@ -2,7 +2,7 @@
 <configuration scan="false" scanPeriod="5 seconds" debug="false">
     <contextName>${contextName:-light4j}</contextName>
     <property name="logLevel" value="${logLevel:-INFO}"/>
-    <property name="logPattern" value="%cn %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{0}:%L %msg%n"/>
+    <property name="logPattern" value="%cn %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{0}:%L %X{cId:-} %msg%n"/>
     
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

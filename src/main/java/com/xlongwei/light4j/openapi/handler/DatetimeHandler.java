@@ -7,16 +7,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.xnio.OptionMap;
-
 import com.networknt.client.Http2Client;
 import com.networknt.cluster.Cluster;
+import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.server.Server;
 import com.networknt.service.SingletonServiceFactory;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.StringUtil;
+
+import org.xnio.OptionMap;
 
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
@@ -62,6 +63,12 @@ public class DatetimeHandler extends AbstractHandler {
 		        //缺少此行时报400错误
 		        request.getRequestHeaders().put(Headers.HOST, "localhost");
 		        //client.propagateHeaders(request, exchange);
+				String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
+				String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+				String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
+		        if(tid != null) request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, tid);
+		        if(token != null) request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
+		        if(cid != null) request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, cid);
 	            connection.sendRequest(request, client.createClientCallback(reference, latch));
 	            
 	            latch.await();

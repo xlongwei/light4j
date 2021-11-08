@@ -8,7 +8,10 @@ handlers:
   - com.xlongwei.light4j.provider.WebSocketHandlerProvider@websocket
 # openapi
   - com.networknt.exception.ExceptionHandler@exception
-  - com.xlongwei.light4j.openapi.extend.MyCorsHttpHandler@cors
+  - com.networknt.cors.CorsHttpHandler@cors
+  - com.networknt.traceability.TraceabilityHandler@traceability
+  # - com.networknt.correlation.CorrelationHandler@correlation
+  - com.xlongwei.light4j.openapi.extend.MyCorrelationHandler@correlation
   - com.networknt.openapi.JwtVerifyHandler@security  
   - com.xlongwei.light4j.openapi.extend.MyJwtShiroHandler@shiro  
   - com.networknt.specification.SpecDisplayHandler@spec
@@ -20,6 +23,8 @@ chains:
   service:
     - exception
     - cors
+    - traceability
+    - correlation
     - service
   weixin:
     - exception
@@ -28,6 +33,8 @@ chains:
   openapi:
     - exception
     - cors
+    - traceability
+    - correlation
     - security
     - shiro
     - openapi

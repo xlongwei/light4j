@@ -41,16 +41,18 @@ singletons:
 
 - com.networknt.registry.URL:
   - com.networknt.registry.URLImpl:
-      protocol: light
-      host: localhost
-      port: 8080
-      path: consul
+      # protocol: light
+      # host: localhost
+      # port: 8080
+      # path: consul
       parameters:
-        registryRetryPeriod: '30000'
+        # registryRetryPeriod: '30000'
+        light4j: http://localhost:8080
 - com.networknt.consul.client.ConsulClient:
   - com.networknt.consul.client.ConsulClientImpl
 - com.networknt.registry.Registry:
-  - com.networknt.consul.ConsulRegistry
+  # - com.networknt.consul.ConsulRegistry
+  - com.networknt.registry.support.DirectRegistry
 - com.networknt.balance.LoadBalance:
   - com.networknt.balance.RoundRobinLoadBalance
 - com.networknt.cluster.Cluster:

@@ -1,0 +1,3 @@
+enabled: true
+# false使用请求头X-Traceability-Id，true重新生成X-Correlation-Id
+autogenCorrelationID: false

@@ -61,16 +61,15 @@ public class ConfigUtil {
 		if(StringUtils.isBlank(resource)) {
 			return null;
 		}else {
-			String url = DIRECTORY + resource;
 			try {
-				if(StringUtil.isUrl(url)) {
-					return new URL(url).openStream();
+				if(StringUtil.isUrl(DIRECTORY)) {
+					return new URL(DIRECTORY+resource).openStream();
 				}else {
-					File file = new File(url);
+					File file = new File(DIRECTORY, resource);
 					if(file.exists() && file.isFile()) {
 						return new FileInputStream(file);
 					}else {
-						log.info("file not exist or is not file, resource: {}, exists: {}, isFile: {}", url, file.exists(), file.isFile());
+						log.info("file not exist or is not file, resource: {}, exists: {}, isFile: {}", resource, file.exists(), file.isFile());
 					}
 				}
 			}catch(Exception e) {

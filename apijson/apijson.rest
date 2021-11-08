@@ -40,3 +40,22 @@ POST {{apijson}}/method_invoke
 
 #{"package":"com.networknt.registry","class":"URL","method":"getHost"}
 
+### traceability和correlation，提供请求头X-Traceability-Id时会生成cId跟踪整个请求过程，light4j需配置环境变量enableRegistry=true
+POST {{host}}/openapi/datetime
+    ?type=isworkday
+    &day=2022-11-08
+Authorization: Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTg4MjUwNjM1NiwianRpIjoiQTlaUHVjM3RsS1BoWmM0RnpzTlJjQSIsImlhdCI6MTU2NzE0NjM1NiwibmJmIjoxNTY3MTQ2MjM2LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6ImFkbWluIn0.Jb89PTAOY7zDQBUpLS-5L9iDz28__fBUhXgmXqjXByiu6HG1sSemHHs-C0n-ZFUH4Tn3yfVbcHndSjNtVQ__gZMmpKi4PCg7NTiSo7TZZmVYI9uinQEdnDlFT2YA97AL6jBCGJW2Ol6q-odSajpCdoMfOh9KM2yXKQPqr95P5v4Du7L-MNL8dW7evfa0gBpGA2FF4Sr4txerS_SXJg3ED4_px_WbbkqZYpzo6_MupNK9nfJVG7ycP50r21-HMrSnBR7pUN1JvF8mxpfmcQi8j0W4TiYFZV2PKV2AGqsJ9d4IuPu--3YHNpevG3Pv78982o6qK22o_4h4Z8VFzr_NUQ
+X-Traceability-Id: {{$guid}}
+
+# 
+### 复制shiro.ini到-Dlight4j.directory目录，执行此请求会读取权限配置并更新到redis（再通过pubsub通知所有节点更新权限配置）
+POST {{host}}/service/weixin/chat
+    ?text=ipsConfigUpdate
+
+### /openapi/service*/**=roles[service]，此token为admin角色，不能访问/openapi/service
+POST {{host}}/openapi/service
+    ?handler=datetime
+    &type=isworkday
+    &day=2022-11-08
+Authorization: Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTg4MjUwNjM1NiwianRpIjoiQTlaUHVjM3RsS1BoWmM0RnpzTlJjQSIsImlhdCI6MTU2NzE0NjM1NiwibmJmIjoxNTY3MTQ2MjM2LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6ImFkbWluIn0.Jb89PTAOY7zDQBUpLS-5L9iDz28__fBUhXgmXqjXByiu6HG1sSemHHs-C0n-ZFUH4Tn3yfVbcHndSjNtVQ__gZMmpKi4PCg7NTiSo7TZZmVYI9uinQEdnDlFT2YA97AL6jBCGJW2Ol6q-odSajpCdoMfOh9KM2yXKQPqr95P5v4Du7L-MNL8dW7evfa0gBpGA2FF4Sr4txerS_SXJg3ED4_px_WbbkqZYpzo6_MupNK9nfJVG7ycP50r21-HMrSnBR7pUN1JvF8mxpfmcQi8j0W4TiYFZV2PKV2AGqsJ9d4IuPu--3YHNpevG3Pv78982o6qK22o_4h4Z8VFzr_NUQ
+
