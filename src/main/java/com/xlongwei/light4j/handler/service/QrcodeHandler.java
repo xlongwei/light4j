@@ -129,7 +129,7 @@ public class QrcodeHandler extends AbstractHandler {
 		String code = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "code"), "xlongwei.com");
 		String url = HandlerUtil.getParam(exchange, "url");
 		
-		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+		String userName = HandlerUtil.getShowapiUserName(exchange);
 		if(StringUtil.isBlank(userName)) {
 			String liveqrcodeUserName = HandlerUtil.getParam(exchange, "liveqrcode_userName");
 			if(!StringUtil.isBlank(liveqrcodeUserName)) {

@@ -92,7 +92,7 @@ public class CheckcodeHandler extends AbstractHandler {
 			if(StringUtil.isBlank(checkcode)) {
 				checkcode = ImageUtil.random(NumberUtil.parseInt(HandlerUtil.getParam(exchange, "length"), 6), false);
 			}
-			String showapiUserName = HandlerUtil.getParam(exchange, "showapi_userName");
+			String showapiUserName = HandlerUtil.getShowapiUserName(exchange);
 			String template = "您的验证码为{0}，有效期{1}分钟，超时请重新获取。";
 			if(!StringUtil.isBlank(showapiUserName)) {
 				//Your verification code is {0}, valid for {1} minutes, please get it again after timeout.

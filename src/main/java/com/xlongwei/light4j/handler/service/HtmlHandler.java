@@ -120,7 +120,7 @@ public class HtmlHandler extends AbstractHandler {
 			//demo为演示配置，不允许外部使用
 		}else {
 			String key = "crawler.crawl.light4j-"+crawl;
-			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			String userName = HandlerUtil.getShowapiUserName(exchange);
 			boolean isClient = ConfigUtil.isClient(userName);
 			if(isClient) {
 				key = key.replace("light4j", userName);
@@ -143,7 +143,7 @@ public class HtmlHandler extends AbstractHandler {
 	public void crawlData(HttpServerExchange exchange) throws Exception {
 		String crawl = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "crawl"), "temp");
 		String key = "crawler.crawl.light4j-"+crawl;
-		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+		String userName = HandlerUtil.getShowapiUserName(exchange);
 		boolean isClient = ConfigUtil.isClient(userName), isTemp = "temp".equals(crawl);
 		if(isClient) {
 			key = key.replace("light4j", userName);
@@ -196,7 +196,7 @@ public class HtmlHandler extends AbstractHandler {
 	}
 	
 	public void jsConfig(HttpServerExchange exchange) throws Exception {
-		String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+		String userName = HandlerUtil.getShowapiUserName(exchange);
 		boolean isClient = ConfigUtil.isClient(userName);
 		String data = HandlerUtil.getParam(exchange, "data"), datakey = HandlerUtil.getParam(exchange, "datakey");
 		String js = HandlerUtil.getParam(exchange, "js"), jskey = HandlerUtil.getParam(exchange, "jskey");
@@ -254,7 +254,7 @@ public class HtmlHandler extends AbstractHandler {
 			js = HandlerUtil.getBodyString(exchange);
 		}
 		if(StringUtil.hasLength(data) && StringUtil.hasLength(js)) {
-			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			String userName = HandlerUtil.getShowapiUserName(exchange);
 			boolean isClient = ConfigUtil.isClient(userName);
 			String clientName = isClient==false?"":userName+".";
 			//优先取redis配置，其次取原值，userName独立配置
@@ -282,7 +282,7 @@ public class HtmlHandler extends AbstractHandler {
 		if(StringUtil.isBlank(jskeys) || (StringUtil.isBlank(datakeys) && StringUtil.isBlank(data))) {
 			HandlerUtil.setResp(exchange, StringUtil.params("error", "empty datakeys or jskeys"));
 		}else {
-			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			String userName = HandlerUtil.getShowapiUserName(exchange);
 			boolean isClient = ConfigUtil.isClient(userName);
 			String clientName = isClient==false?"":userName+".", js = null;
 			List<Map<String, String>> results = new LinkedList<>();
@@ -330,7 +330,7 @@ public class HtmlHandler extends AbstractHandler {
 			return;
 		}
 		if(StringUtil.isBlank(data) || (data.charAt(0)!='{' && data.charAt(0)!='[')) {
-			String userName = HandlerUtil.getParam(exchange, "showapi_userName");
+			String userName = HandlerUtil.getShowapiUserName(exchange);
 			boolean isClient = ConfigUtil.isClient(userName);
 			String clientName = isClient==false?"":userName+".";
 			datakey = "js." + clientName + StringUtil.firstNotBlank(data, datakey);

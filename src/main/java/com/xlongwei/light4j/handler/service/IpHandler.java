@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.ConfigUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
@@ -57,7 +58,7 @@ public class IpHandler extends AbstractHandler {
 		}
 		String locker = HandlerUtil.getParam(exchange, "locker");
 		int seconds = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "seconds"), 10);
-		boolean isShowapiRequest = HandlerUtil.isShowapiRequest(exchange);
+		boolean isShowapiRequest = StringUtils.isNotBlank(HandlerUtil.getShowapiUserName(exchange));
 		String userName = "common";
 		if (isShowapiRequest) {
 			String showapiUserName = HandlerUtil.getShowapiUserName(exchange);

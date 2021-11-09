@@ -49,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 public class HandlerUtil {
 	public static final String MIMETYPE_JSON = MimeMappings.DEFAULT.getMimeType("json"), MIMETYPE_TXT = MimeMappings.DEFAULT.getMimeType("txt");
 	private static final String TEXT = "text", XML = "xml", JSON = "json";
-	private static final String SHOWAPI_USER_ID = "showapi_userId", SHOWAPI_USER_NAME = "showapi_userName";
+	private static final String SHOWAPI_USER_NAME = "showapi_userName";
 	private static final SessionManager sessionManager = SingletonServiceFactory.getBean(SessionManager.class);
 	private static final SessionAttachmentHandler sessionAttachmentHandler = sessionManager != null ? null
 			: new SessionAttachmentHandler(
@@ -229,7 +229,7 @@ public class HandlerUtil {
 			//LayuiHandler.captcha直接输出图片字节流，不响应json
 			return;
 		}
-		boolean isShowapiRequest = isShowapiRequest(exchange);
+		boolean isShowapiRequest = StringUtils.isNotBlank(getShowapiUserName(exchange));
 		String response = isShowapiRequest ? ServiceHandler.BAD_REQUEST_SHOWAPI : ServiceHandler.BAD_REQUEST;
 		Object resp = exchange.removeAttachment(HandlerUtil.RESP);
 		String mimeType = MIMETYPE_JSON;
@@ -277,19 +277,12 @@ public class HandlerUtil {
 		return exchange.getSourceAddress().getAddress().getHostAddress();
 	}
 	
-	/** 判断是否showapi用户 */
-	public static boolean isShowapiRequest(HttpServerExchange exchange) {
-		return StringUtils.isNotBlank(getParam(exchange, SHOWAPI_USER_ID));
-	}
-	
-	/** 判断是否showapi客户 */
-	public static boolean isShowapiClient(HttpServerExchange exchange) {
-		return ConfigUtil.isClient(getParam(exchange, SHOWAPI_USER_ID));
-	}
-	
 	/** 获取showapi用户名 */
 	public static String getShowapiUserName(HttpServerExchange exchange) {
-		String showapiUserName = getParam(exchange, SHOWAPI_USER_NAME);
+		String showapiUserName = exchange.getRequestHeaders().getFirst(SHOWAPI_USER_NAME);
+		if(StringUtils.isBlank(showapiUserName)){
+			showapiUserName = getParam(exchange, SHOWAPI_USER_NAME);
+		}
 		return StringUtils.trimToEmpty(showapiUserName);
 	}
 	
@@ -367,6 +360,7 @@ public class HandlerUtil {
 		}
 		log.info("ipsCounter clear done");
 	}
+	/** Undertow.Builder.setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, true) */
 	public static void requestStartTime(HttpServerExchange exchange) {
 		if(exchange.getRequestStartTime()==-1) {
 			exchange.putAttachment(REQUEST_START_TIME, System.nanoTime());

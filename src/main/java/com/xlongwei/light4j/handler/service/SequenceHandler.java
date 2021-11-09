@@ -37,7 +37,7 @@ public class SequenceHandler extends AbstractHandler {
 	private String sequence(HttpServerExchange exchange) {
 		String name = StringUtils.trimToEmpty(HandlerUtil.getParam(exchange, "name"));
 		String userName = "common";
-		if(HandlerUtil.isShowapiRequest(exchange)) {
+		if(StringUtils.isNotBlank(HandlerUtil.getShowapiUserName(exchange))) {
 			String showapiUserName = HandlerUtil.getShowapiUserName(exchange);
 			userName = StringUtils.isNotBlank(showapiUserName) ? showapiUserName : userName;
 		}

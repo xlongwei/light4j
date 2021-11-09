@@ -79,7 +79,7 @@ public class ApijsonHandler extends AbstractHandler {
 		}
 		if(json != null) {
 			String response = json;
-			if(HandlerUtil.isShowapiRequest(exchange)) {
+			if(StringUtils.isNotBlank(HandlerUtil.getShowapiUserName(exchange))) {
 				JSONObject obj = JsonUtil.parse(json);
 				if(obj != null) {
 					obj.put("ret_code", "0");
