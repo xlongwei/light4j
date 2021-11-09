@@ -5,6 +5,7 @@ import com.networknt.correlation.CorrelationHandler;
 import com.networknt.handler.Handler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.StringUtils;
 import com.networknt.utility.Util;
 
 import org.slf4j.Logger;
@@ -25,6 +26,10 @@ public class MyCorrelationHandler extends DummyMiddlewareHandler {
         if (cId == null) {
             // if not set, check the autgen flag and generate if set to true
             String tId = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
+            if (StringUtils.isBlank(tId)) {// showapi转发请求头有bug
+                tId = exchange.getRequestHeaders().getFirst("showapi_res_id");
+                exchange.getResponseHeaders().put(HttpStringConstants.TRACEABILITY_ID, tId);
+            }
             if (CorrelationHandler.config.isAutogenCorrelationID()) {
                 // generate a UUID and put it into the request header
                 cId = Util.getUUID();
