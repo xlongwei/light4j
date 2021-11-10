@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,16 +17,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.codec.CharEncoding;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.alibaba.fastjson.JSONObject;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.session.Session;
 import com.networknt.session.SessionManager;
 import com.networknt.utility.StringUtils;
+import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.handler.ServiceHandler;
+
+import org.apache.commons.codec.CharEncoding;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
@@ -80,70 +82,74 @@ public class HandlerUtil {
 	 */
 	public static void parseBody(HttpServerExchange exchange) {
 		Map<String, Object> body = new HashMap<>(4);
+		List<Tuple<String, Object>> others = new LinkedList<>();
 		Map<String, Deque<String>> params = exchange.getQueryParameters();
-		for(Entry<String, Deque<String>> entry : params.entrySet()) {
+		for (Entry<String, Deque<String>> entry : params.entrySet()) {
 			String param = entry.getKey();
 			Deque<String> deque = entry.getValue();
-			if(deque.size() > 1) {
+			if (deque.size() > 1) {
 				body.put(param, new ArrayList<>(deque));
-			}else {
+			} else {
 				body.put(param, deque.getFirst());
 			}
 		}
 		String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
 		try {
-			exchange.startBlocking();//参考BodyHandler
-			boolean isForm = StringUtils.isNotBlank(contentType) && (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded"));
-			if(isForm) {
+			exchange.startBlocking();// 参考BodyHandler
+			boolean isForm = StringUtils.isNotBlank(contentType) && (contentType.startsWith("multipart/form-data")
+					|| contentType.startsWith("application/x-www-form-urlencoded"));
+			if (isForm) {
 				Builder builder = FormParserFactory.builder();
 				builder.setDefaultCharset(CharEncoding.UTF_8);
 				FormParserFactory formParserFactory = builder.build();
-				//MultiPartParserDefinition#93，exchange.addExchangeCompleteListener，在请求结束时关闭parser并删除临时文件
-		        FormDataParser parser = formParserFactory.createParser(exchange);
-			        if (parser != null) {
-			            FormData formData = parser.parseBlocking();
-			            for(String name : formData) {
-			            	Deque<FormValue> deque = formData.get(name);
-			            	if(deque.size() > 1) {
-			            		List<Object> list = new ArrayList<>();
-			            		for(FormValue formValue : deque) {
-			            			list.add(formValue.isFileItem() ? formValue : formValue.getValue());
-			            		}
-			            		body.put(name, list);
-			            	}else {
-			            		FormValue formValue = deque.getFirst();
-			            		body.put(name, formValue.isFileItem() ? formValue : formValue.getValue());
-			            	}
-			            }
-			        }else {
-			        	InputStream inputStream = exchange.getInputStream();
-						String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
-			        	body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, StandardCharsets.UTF_8));
-			        }
-			}else if(StringUtils.isBlank(contentType) || StringUtil.containsOneOfIgnoreCase(contentType, TEXT, JSON, XML)) {
+				// MultiPartParserDefinition#93，exchange.addExchangeCompleteListener，在请求结束时关闭parser并删除临时文件
+				FormDataParser parser = formParserFactory.createParser(exchange);
+				if (parser != null) {
+					FormData formData = parser.parseBlocking();
+					for (String name : formData) {
+						Deque<FormValue> deque = formData.get(name);
+						if (deque.size() > 1) {
+							List<Object> strings = new ArrayList<>();
+							List<Object> list = new ArrayList<>();
+							for (FormValue formValue : deque) {
+								strings.add(formValue.isFileItem() ? formValue.getFileName() : formValue.getValue());
+								list.add(formValue.isFileItem() ? formValue : formValue.getValue());
+							}
+							body.put(name, strings);
+							others.add(new Tuple<>(name, list));
+						} else {
+							FormValue formValue = deque.getFirst();
+							body.put(name, formValue.isFileItem() ? formValue.getFileName() : formValue.getValue());
+							others.add(new Tuple<>(name, formValue.isFileItem() ? formValue : formValue.getValue()));
+						}
+					}
+				} else {
+					InputStream inputStream = exchange.getInputStream();
+					String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
+					body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, StandardCharsets.UTF_8));
+				}
+			} else if (StringUtils.isBlank(contentType)
+					|| StringUtil.containsOneOfIgnoreCase(contentType, TEXT, JSON, XML)) {
 				InputStream inputStream = exchange.getInputStream();
 				String string = StringUtils.trimToEmpty(HtmlUtil.string(inputStream));
 				if (string.length() > 0) {
 					Map<String, Object> bodyMap = ConfigUtil.stringMapObject(string);
-					if(bodyMap!=null && bodyMap.size()>0) {
+					if (bodyMap != null && bodyMap.size() > 0) {
 						body.putAll(bodyMap);
-					}else if(string.indexOf('=')>0){
+					} else if (string.indexOf('=') > 0) {
 						body.putAll(cn.hutool.http.HttpUtil.decodeParamMap(string, StandardCharsets.UTF_8));
 					}
-					body.put(BODYSTRING, string);
+					others.add(new Tuple<>(BODYSTRING, string));
 				}
-			}else {
+			} else {
 				log.info("not suppoert Content-Type: {}", contentType);
 			}
-		}catch(Exception e) {
+		} catch (Exception e) {
 			log.info("fail to parse body: {}", e.getMessage());
 		}
-		if(!body.isEmpty()) {
-			Object obj = body.remove(BODYSTRING);
+		if (!body.isEmpty()) {
 			log.info("body: {}", JSONObject.toJSONString(body));
-			if(obj != null) {
-				body.put(BODYSTRING, obj);
-			}
+			others.forEach(tuple -> body.put(tuple.first, tuple.second));
 			exchange.putAttachment(BODY, body);
 		}
 	}
