@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.main.class>com.networknt.server.Servers</project.main.class>
         <version.light-4j>1.6.36</version.light-4j>
-        <version.logback>1.2.3</version.logback>
+        <version.logback>1.2.7</version.logback>
         <version.junit>4.13.1</version.junit>
         <versions.maven-version>2.4</versions.maven-version>
         <version.lombok>1.18.8</version.lombok>
@@ -438,6 +438,17 @@
 		        	<version>5.1.49</version>
 		        </dependency>
 			</dependencies>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/java/com/mysql/jdbc</directory>
+                        <includes>
+                            <include>*.class</include>
+                        </includes>
+                        <targetPath>com/mysql/jdbc</targetPath>
+                    </resource>
+                </resources>
+            </build>
 		</profile>        
     </profiles>
 
@@ -447,12 +458,12 @@
 			<resource>
 				<directory>src/main/resources</directory>
 			</resource>
-			<resource>
-				<directory>.</directory>
-				<includes>
-					<include>start.sh</include>
-				</includes>
-			</resource>
+            <resource>
+                <directory>.</directory>
+                <includes>
+                    <include>start.sh</include>
+                </includes>
+            </resource>
 		</resources>    	
         <plugins>
             <plugin>

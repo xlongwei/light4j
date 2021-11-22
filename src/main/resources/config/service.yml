@@ -14,8 +14,8 @@ singletons:
       jdbcUrl: jdbc:log4jdbc:mysql://${db.hostPort:localhost:3306}/${db.database:apijson}?useUnicode=true&characterEncoding=UTF8&zeroDateTimeBehavior=convertToNull&serverTimezone=GMT%2B8
       username: ${db.username:apijson}
       password: ${db.password:apijson}
-      minimumIdle: 2
-      maximumPoolSize: 6
+      minimumIdle: 1
+      maximumPoolSize: ${db.maximumPoolSize:1}
       autoCommit: true
       useServerPrepStmts: true
       cachePrepStmts: true

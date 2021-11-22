@@ -12,13 +12,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import ch.qos.logback.core.util.ExecutorServiceUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -34,8 +30,10 @@ public class TaskUtil {
 	private static Map<Future<?>, Callback> callbackdTasks = null;
 	private static List<Object> shutdownHooks = new LinkedList<>();
 	static {
-		cachedExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new TaskUtilThreadFactory("cached"));
-		scheduledExecutor = new ScheduledThreadPoolExecutor(1, new TaskUtilThreadFactory("scheduled"));
+		// cachedExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new TaskUtilThreadFactory("cached"));
+		// scheduledExecutor = new ScheduledThreadPoolExecutor(1, new TaskUtilThreadFactory("scheduled"));
+		cachedExecutor = ExecutorServiceUtil.scheduler.getExecutorService();
+		scheduledExecutor = ExecutorServiceUtil.scheduler;
 		Runtime.getRuntime().addShutdownHook(new Thread() { @Override public void run() { TaskUtil.shutdown(); } });
 	}
 	
@@ -314,20 +312,20 @@ public class TaskUtil {
 	/**
 	 * 自定义线程名称Task-idx-name-idx2
 	 */
-	private static class TaskUtilThreadFactory implements ThreadFactory {
-		private static AtomicInteger taskutilThreadNumber = new AtomicInteger(1);
-		private final String threadNamePrefix;
-		TaskUtilThreadFactory(String threadNamePrefix){
-			this.threadNamePrefix = threadNamePrefix;
-		}
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread t = new Thread(r, String.format("TaskUtil-%d-%s", taskutilThreadNumber.getAndIncrement(), this.threadNamePrefix));
-		    t.setDaemon(true);
-		    t.setPriority(Thread.MIN_PRIORITY);
-			return t;
-		}
-	}
+	// private static class TaskUtilThreadFactory implements ThreadFactory {
+	// 	private static AtomicInteger taskutilThreadNumber = new AtomicInteger(1);
+	// 	private final String threadNamePrefix;
+	// 	TaskUtilThreadFactory(String threadNamePrefix){
+	// 		this.threadNamePrefix = threadNamePrefix;
+	// 	}
+	// 	@Override
+	// 	public Thread newThread(Runnable r) {
+	// 		Thread t = new Thread(r, String.format("TaskUtil-%d-%s", taskutilThreadNumber.getAndIncrement(), this.threadNamePrefix));
+	// 	    t.setDaemon(true);
+	// 	    t.setPriority(Thread.MIN_PRIORITY);
+	// 		return t;
+	// 	}
+	// }
 	
 	/**
 	 * 封装定时任务，每次调度时使用cached thread运行，基本不占用调度执行时间
