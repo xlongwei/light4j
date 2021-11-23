@@ -1,3 +1,4 @@
+#daemon=true
 #profile="-P mysql5"
 token=xlongwei
 ipsConfig=service.controller.ips.config

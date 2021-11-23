@@ -1,0 +1,11 @@
+exclusionConfigFileList:
+  - openapi
+  - swagger
+  - values
+  - status
+
+decryptorClass:
+  com.networknt.config.AesCrypto
+#  com.networknt.decrypt.AESDecryptor
+#  com.networknt.decrypt.ManualAESDecryptor
+#  com.networknt.decrypt.AutoAESDecryptor
