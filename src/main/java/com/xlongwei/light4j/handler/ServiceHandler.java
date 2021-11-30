@@ -65,7 +65,7 @@ public class ServiceHandler implements LightHttpHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
 		String service = queryParameters.remove("*").getFirst();
-		log.info("{} {}", exchange.getRequestMethod(), exchange.getRequestURI());
+		if(log.isInfoEnabled()) log.info("{} {}", exchange.getRequestMethod(), exchange.getRequestURI());
 		int dot = service.indexOf('.');
 		String[] split = StringUtils.split(dot>0 ? service.substring(0, dot) : service, "/");
 		if(split.length > 0) {

@@ -147,11 +147,11 @@ public class HandlerUtil {
 		} catch (Exception e) {
 			log.info("fail to parse body: {}", e.getMessage());
 		}
-		if (!body.isEmpty()) {
+		if (!body.isEmpty() && log.isInfoEnabled()) {
 			log.info("body: {}", JSONObject.toJSONString(body));
-			others.forEach(tuple -> body.put(tuple.first, tuple.second));
-			exchange.putAttachment(BODY, body);
 		}
+		others.forEach(tuple -> body.put(tuple.first, tuple.second));
+		exchange.putAttachment(BODY, body);
 	}
 	
 	/** 获取请求参数 */
@@ -259,7 +259,7 @@ public class HandlerUtil {
 		}
 		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, mimeType);
 		exchange.setStatusCode(200);
-		log.info("res({}): {}", HandlerUtil.requestTime(exchange), response);
+		if(log.isInfoEnabled()) log.info("res({}): {}", HandlerUtil.requestTime(exchange), response);
 		exchange.getResponseSender().send(response);
 	}
 	

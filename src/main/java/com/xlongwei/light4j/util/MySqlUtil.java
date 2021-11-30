@@ -40,9 +40,9 @@ public class MySqlUtil {
 	private static final Logger log = LoggerFactory.getLogger(MySqlUtil.class);
 	
 	static {
-		if(!SQLMANAGER.isProductMode()) {
-			SQLMANAGER.setInters(INTERS);
-		}
+		// if(!SQLMANAGER.isProductMode()) {
+		// 	SQLMANAGER.setInters(INTERS);
+		// }
 		TaskUtil.addShutdownHook(DATASOURCE);
 		log.info("datasource config loaded");
 	}
