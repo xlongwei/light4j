@@ -472,7 +472,7 @@ public class MethodUtil {
 					}
 
 					if (instance != null) {
-						result.put(KEY_THIS, parseJSON(instance.getClass(), instance)); //TODO InterfaceProxy proxy 改成泛型 I instance ？
+						result.put(KEY_THIS, parseJSON(instance.getClass(), instance)); // InterfaceProxy proxy 改成泛型 I instance ？
 					}
 
 					listener.complete(result);
@@ -1050,7 +1050,7 @@ public class MethodUtil {
 		  public Type $_delegate_$method(Type0 arg0, Type1 arg1...) {
 		    Type returnVal = method(arg0, arg1...)
 		    if (returnVal instanceof Void) {
-		      return new Object[]{ watchVar0, watchVar1... }  //FIXME void 方法需要指定要观察的变量
+		      return new Object[]{ watchVar0, watchVar1... }  // void 方法需要指定要观察的变量
 		    }
 		    return returnVal;
 		  }
@@ -1077,7 +1077,7 @@ public class MethodUtil {
 			Object[] vs = new Object[genericTypes.length];
 			for (int i = 0; i < genericTypes.length; i++) {
 				try {
-					vs[i] = mockValue(types[i], genericTypes[i]);  //FIXME 这里应该用 ParameterTypes 还是 GenericParameterTypes ?
+					vs[i] = mockValue(types[i], genericTypes[i]);  // 这里应该用 ParameterTypes 还是 GenericParameterTypes ?
 				}
 				catch (Exception e) {
 					e.printStackTrace();
@@ -1338,7 +1338,7 @@ public class MethodUtil {
 
 
 		ParameterizedType pType = null;
-		Type type = clazz.getGenericSuperclass();  //TODO 改用 getTypeName 获取 List<User> 这种，然后截取 <> 中的 User 就知道参数类型了
+		Type type = clazz.getGenericSuperclass();  // 改用 getTypeName 获取 List<User> 这种，然后截取 <> 中的 User 就知道参数类型了
 		if (type instanceof ParameterizedType){
 			pType = (ParameterizedType) type;
 
@@ -1551,7 +1551,7 @@ public class MethodUtil {
 		boolean allPackage = isEmpty(packageOrFileName, true);
 		boolean allName = isEmpty(className, true);
 
-		//将包名替换成目录  TODO 应该一层层查找进去，实时判断是 package 还是 class，如果已经是 class 还有下一级，应该用 $ 隔开内部类。简单点也可以认为大驼峰是类
+		//将包名替换成目录   应该一层层查找进去，实时判断是 package 还是 class，如果已经是 class 还有下一级，应该用 $ 隔开内部类。简单点也可以认为大驼峰是类
 		String fileName = allPackage ? File.separator : dot2Separator(packageOrFileName);
 
 		ClassLoader loader = Thread.currentThread().getContextClassLoader();
@@ -1721,7 +1721,7 @@ public class MethodUtil {
 
 	/**
 	 * 将 interface 转成 JSONObject，便于返回时查看
-	 * TODO 应该在 JSON.parseObject(json, clazz) 时代理 clazz 内所有的 interface
+	 *  应该在 JSON.parseObject(json, clazz) 时代理 clazz 内所有的 interface
 	 */
 	public static class InterfaceProxy extends JSONObject {
 		private static final long serialVersionUID = 1L;
@@ -1861,13 +1861,13 @@ public class MethodUtil {
 
 			String type = null;
 			Object value = callSuper ? super.invoke(proxy, method, args) : null;
-			if (callSuper == false) {  //TODO default 方法如何执行里面的代码块？可能需要参考热更新，把方法动态加进去
+			if (callSuper == false) {  // default 方法如何执行里面的代码块？可能需要参考热更新，把方法动态加进去
 				if (Modifier.isStatic(method.getModifiers())) {  //正常情况不会进这个分支，因为 interface 中 static 方法不允许用实例来调用
 					value = method.invoke(null, args);
 				}
 				else if (handlerValue instanceof JSONObject) {
 					JSONObject handler = (JSONObject) handlerValue;
-					value = handler.get(KEY_RETURN);  //TODO 可能根据传参而返回不同值
+					value = handler.get(KEY_RETURN);  // 可能根据传参而返回不同值
 					type = handler.getString(KEY_TYPE);
 				}
 				else {

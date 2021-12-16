@@ -12,7 +12,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.main.class>com.networknt.server.Servers</project.main.class>
-        <version.light-4j>1.6.36</version.light-4j>
+        <version.light-4j>1.6.37</version.light-4j>
         <version.logback>1.2.7</version.logback>
         <version.junit>4.13.1</version.junit>
         <versions.maven-version>2.4</versions.maven-version>
@@ -271,11 +271,11 @@
 		  <artifactId>antlr4-runtime</artifactId>
 		  <version>${version.antlr4}</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.github.tencent</groupId>
 			<artifactId>APIJSON</artifactId>
 			<version>${version.apijson}</version>
-		</dependency>
+		</dependency> -->
 		<!-- https://jitpack.io -->
 		<dependency>
 			<groupId>com.github.APIJSON</groupId>

@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.alibaba.fastjson.JSONObject;
 import com.networknt.config.Config;
 
 import cn.hutool.core.date.DateField;
@@ -26,14 +25,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class HolidayUtil {
-	public static final Map<String, String> plans = new HashMap<>(32);
-	public static final Map<String, Integer> holidays = new HashMap<>(2048);
+	public static final Map<String, String> plans = new HashMap<>(256);
+	public static final Map<String, Integer> holidays = new HashMap<>(1024);
 	public static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy.MM.dd");
 	public static final FastDateFormat weekFormat = FastDateFormat.getInstance("MM.F.u");
-	public static final String[] solarTerm = {"小寒","大寒","立春","雨水","惊蛰","春分","清明","谷雨","立夏","小满","芒种","夏至","小暑","大暑","立秋","处暑","白露","秋分","寒露","霜降","立冬","小雪","大雪","冬至"};
-	public static final Map<String, String> solarFestivals = new LinkedHashMap<>();
-	public static final Map<String, String> lularFestivals = new LinkedHashMap<>();
-	public static final Map<String, String> monthWeeks = new LinkedHashMap<>();
+	public static final Map<String, String> solarFestivals = new LinkedHashMap<>(128);
+	public static final Map<String, String> lularFestivals = new LinkedHashMap<>(16);
+	public static final Map<String, String> monthWeeks = new LinkedHashMap<>(8);
 	private static final FastDateFormat dayFormat = FastDateFormat.getInstance("M月d日");
 	
 	static {
@@ -46,14 +44,7 @@ public class HolidayUtil {
 		HolidayUtil.lularFestivals.putAll((Map<String,String>)map.get("lularFestivals"));
 		HolidayUtil.solarFestivals.putAll((Map<String,String>)map.get("solarFestivals"));
 		HolidayUtil.monthWeeks.putAll((Map<String,String>)map.get("monthWeeks"));
-		((Map<Object,Object>)map.get("holidays")).forEach((k,v)->{
-			try{
-				String json=Config.getInstance().getMapper().writeValueAsString(v);
-				HolidayUtil.addPlan(k.toString(), json);
-			}catch(Exception e){
-				log.warn(e.getMessage());
-			}
-		});
+		((Map<String,Object>)map.get("holidays")).forEach((k,v)->HolidayUtil.addPlan(k, (Map<String,String>)v));
 		map.clear();
 	}
 	
@@ -105,12 +96,12 @@ public class HolidayUtil {
 			}else if(zhDate.getLunarMonth()==8 && zhDate.getLunarDay()==15) {
 				return Holiday.中秋节;
 			}
-		}
-		//清明为24节气之一，4月第一个节为清明
-		if("04".equals(format.substring(5, 7))) {
-			int term = SolarTerms.getTerm(Integer.parseInt(format.substring(0, 4)), 2*4-1);
-			if(term == Integer.parseInt(format.substring(8))) {
-				return Holiday.清明节;
+			//清明为24节气之一，4月第一个节为清明
+			if("04".equals(format.substring(5, 7))) {
+				int term = SolarTerms.getTerm(Integer.parseInt(format.substring(0, 4)), 2*4-1);
+				if(term == Integer.parseInt(format.substring(8))) {
+					return Holiday.清明节;
+				}
 			}
 		}
 		return null;
@@ -119,39 +110,29 @@ public class HolidayUtil {
 	/** 尝试猜测24节气和常见节日（非法定放假） */
 	public static String guessRemark(Date day) {
 		String format = dateFormat.format(day);
-		int year = Integer.parseInt(format.substring(0, 4)), month = Integer.parseInt(format.substring(5, 7)), date = Integer.parseInt(format.substring(8));
-		if(date == SolarTerms.getTerm(year, 2*month-1)) {
-			return solarTerm[2*month-2];
-		}else if(date == SolarTerms.getTerm(year, 2*month)) {
-			return solarTerm[2*month-1];
-		}else {
-			String yearMonth = format.substring(5), week = null;
-			String remark = solarFestivals.get(yearMonth);//阳历节日
-			if(remark == null) {
-				ZhDate zhDate = ZhDate.fromDate(day);
-				if(zhDate != null) {
-					String chinese = zhDate.chinese();
-					yearMonth = chinese.substring(chinese.indexOf('年')+1);
-					remark = lularFestivals.get(yearMonth);//农历节日
-				}
-			}
-			if(remark == null) {
-				yearMonth = format.substring(5);
-				remark = solarFestivals.get(yearMonth);//阳历节日
-			}
-			if(remark == null) {
-				yearMonth = weekFormat.format(day);
-				remark = monthWeeks.get(yearMonth);
-				week = yearMonth.substring(yearMonth.lastIndexOf(".")+1);
-			}
-			if(remark == null && month == 3 && "1".equals(week)) {
-				int length = Month.MARCH.length(Year.of(year).isLeap());
-				if(length - date < 7) {
-					remark = "中小学安全教育日";
-				}
-			}
-			return remark;
+		String yearMonth = format.substring(5);
+		String remark = solarFestivals.get(yearMonth);//阳历节日
+		if(remark != null) return remark;
+		ZhDate zhDate = ZhDate.fromDate(day);
+		if(zhDate != null) {
+			String chinese = zhDate.chinese();
+			yearMonth = chinese.substring(chinese.indexOf('月')-1);
+			remark = lularFestivals.get(yearMonth);//农历节日
+			if (remark != null) return remark;
+			String term = SolarTerms.getTerm(day); //24节气
+			if (term != null && term.length() > 0) return term;
 		}
+		yearMonth = weekFormat.format(day);
+		remark = monthWeeks.get(yearMonth); //某月第几周，母亲节等
+		if(remark != null) return remark;
+		String week = yearMonth.substring(yearMonth.lastIndexOf(".")+1);
+		if("1".equals(week) && Integer.parseInt(format.substring(5, 7)) == 3) {
+			int length = Month.MARCH.length(Year.of(Integer.parseInt(format.substring(0, 4))).isLeap());
+			if(length - Integer.parseInt(format.substring(8)) < 7) {
+				return "中小学安全教育日"; // 3月最后一个周一
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -259,13 +240,12 @@ public class HolidayUtil {
 	 * @param plan {"春节":"-1.19,1.24-30,-2.1"}
 	 * @descr 减号开头表示调班，减号分隔表示连休
 	 */
-	public static void addPlan(String year, String plan) {
+	public static void addPlan(String year, Map<String,String> plan) {
 		if(StringUtil.isNumbers(year)==false || year.length()!=4) {
 			return;
 		}
-		JSONObject json = JsonUtil.parseNew(plan);
-		for(String key : json.keySet()) {
-			String value = json.getString(key);
+		for(String key : plan.keySet()) {
+			String value = plan.get(key);
 			Holiday holiday = Holiday.nameOf(key);
 			if(StringUtil.isBlank(value) || holiday==null) {
 				continue;

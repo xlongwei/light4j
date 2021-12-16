@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import com.networknt.config.Config;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HolidayUtil;
+// import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.ZhDate;
 
 import org.apache.commons.lang3.time.DateUtils;
@@ -49,15 +50,21 @@ public class HolidayUtilTest {
 			if(field.getName().startsWith("days2")){
 				field.setAccessible(true);
 				System.out.println(" \""+field.getName().substring(4)+"\": "+field.get(HolidayUtil.class));
+			}else if(field.getType().isAssignableFrom(Map.class)){
+				field.setAccessible(true);
+				Map<?,?> m=(Map<?,?>)field.get(HolidayUtil.class);
+				System.out.println(field.getName()+".size="+m.size());
 			}
 		}
 	}
 
 	@Test public void lunar() throws Exception {
-		System.out.println(HolidayUtil.guessRemark(new ZhDate(2023,2,2,false).toDate()));
-		System.out.println(HolidayUtil.guessRemark(new ZhDate(2023,2,2,true).toDate()));
-		System.out.println(HolidayUtil.guessRemark(DateUtil.parse("2021-06-20")));
-		System.out.println(HolidayUtil.guessRemark(DateUtil.parse("2021-03-29")));
+		assertEquals("龙抬头", HolidayUtil.guessRemark(new ZhDate(2023,2,2,false).toDate()));
+		assertEquals("世界气象日", HolidayUtil.guessRemark(new ZhDate(2023,2,2,true).toDate()));
+		assertEquals("父亲节", HolidayUtil.guessRemark(DateUtil.parse("2021-06-20")));
+		assertEquals("中小学安全教育日", HolidayUtil.guessRemark(DateUtil.parse("2021-03-29")));
+		assertEquals("七夕节", HolidayUtil.guessRemark(DateUtil.parse("1968-08-30")));
+		assertEquals("七夕节", HolidayUtil.guessRemark(DateUtil.parse("1968-07-31")));
 	}
 
 	@Test public void test() throws Exception {
@@ -70,9 +77,9 @@ public class HolidayUtilTest {
 
 	@Test
 	public void abnormal() {
-		String year = "2021";
-		String plan = "{\"元旦节\":\"1.1-3\",\"春节\":\"2.11-17,-2.7,-2.20\",\"清明节\":\"4.3-5\",\"劳动节\":\"5.1-5,-4.25,-5.8\",\"端午节\":\"6.12-14\",\"中秋节\":\"-9.18,9.19-21\",\"国庆节\":\"-9.26,10.1-7,-10.9\"}";
-		HolidayUtil.addPlan(year, plan);
+		String year = "2022";
+		// String plan = "{\"元旦节\":\"1.1-3\",\"春节\":\"2.11-17,-2.7,-2.20\",\"清明节\":\"4.3-5\",\"劳动节\":\"5.1-5,-4.25,-5.8\",\"端午节\":\"6.12-14\",\"中秋节\":\"-9.18,9.19-21\",\"国庆节\":\"-9.26,10.1-7,-10.9\"}";
+		// HolidayUtil.addPlan(year, JsonUtil.convert(JsonUtil.parse(plan)));
 		Date date = DateUtil.parse(year + "0101");
 		Date end = DateUtil.parse(year + "1231");
 		List<Date> weekendWorks = new ArrayList<>();
@@ -89,10 +96,10 @@ public class HolidayUtilTest {
 		} while (date.before(end));
 		System.out.println("weekend workdays");
 		System.out.println(String.join(",",
-				weekendWorks.stream().map(cn.hutool.core.date.DateUtil::formatDate).collect(Collectors.toList())));
+				weekendWorks.stream().map(DateUtil.dateFormat::format).collect(Collectors.toList())));
 		System.out.println("weekday breakdays");
 		System.out.println(String.join(",",
-				weekdayBreaks.stream().map(cn.hutool.core.date.DateUtil::formatDate).collect(Collectors.toList())));
+				weekdayBreaks.stream().map(DateUtil.dateFormat::format).collect(Collectors.toList())));
 	}
 
 	@Test public void isworkday() throws Exception {
