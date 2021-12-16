@@ -4,14 +4,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import com.networknt.config.Config;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HolidayUtil;
+import com.xlongwei.light4j.util.ZhDate;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Test;
@@ -23,6 +27,39 @@ import org.junit.Test;
  */
 public class HolidayUtilTest {
 	
+	// @SuppressWarnings("unchecked")
+	@Test public void yml() throws Exception {
+		Map<String, Object> map = Config.getInstance().getJsonMapConfig("datetime");
+		System.out.println(map);
+		// HolidayUtil.lularFestivals.putAll((Map<String,String>)map.get("lularFestivals"));
+		// HolidayUtil.solarFestivals.putAll((Map<String,String>)map.get("solarFestivals"));
+		// ((Map<Object,Object>)map.get("holidays")).forEach((k,v)->{
+		// 	try{
+		// 		String json=Config.getInstance().getMapper().writeValueAsString(v);
+		// 		HolidayUtil.addPlan(k.toString(), json);
+		// 	}catch(Exception e){
+
+		// 	}
+		// });
+		System.out.println(HolidayUtil.holidays.size());
+		HolidayUtil.lularFestivals.forEach((k,v)->System.out.println("  "+k+": "+v));
+		System.out.println();
+		HolidayUtil.solarFestivals.forEach((k,v)->System.out.println("  \""+k+"\": "+v));
+		for(Field field:HolidayUtil.class.getDeclaredFields()){
+			if(field.getName().startsWith("days2")){
+				field.setAccessible(true);
+				System.out.println(" \""+field.getName().substring(4)+"\": "+field.get(HolidayUtil.class));
+			}
+		}
+	}
+
+	@Test public void lunar() throws Exception {
+		System.out.println(HolidayUtil.guessRemark(new ZhDate(2023,2,2,false).toDate()));
+		System.out.println(HolidayUtil.guessRemark(new ZhDate(2023,2,2,true).toDate()));
+		System.out.println(HolidayUtil.guessRemark(DateUtil.parse("2021-06-20")));
+		System.out.println(HolidayUtil.guessRemark(DateUtil.parse("2021-03-29")));
+	}
+
 	@Test public void test() throws Exception {
 		new TreeMap<>(HolidayUtil.holidays).forEach((k,v) -> System.out.println(k+"="+v));
 		new TreeMap<>(HolidayUtil.plans).forEach((k,v) -> System.out.println(k+"="+v));

@@ -1,11 +1,15 @@
 package com.xlongwei.light4j.util;
 
+import java.time.Month;
+import java.time.Year;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.alibaba.fastjson.JSONObject;
+import com.networknt.config.Config;
 
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateRange;
@@ -23,34 +27,34 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class HolidayUtil {
 	public static final Map<String, String> plans = new HashMap<>(32);
-	public static final Map<String, Integer> holidays = new HashMap<>(64);
+	public static final Map<String, Integer> holidays = new HashMap<>(2048);
 	public static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy.MM.dd");
+	public static final FastDateFormat weekFormat = FastDateFormat.getInstance("MM.F.u");
 	public static final String[] solarTerm = {"小寒","大寒","立春","雨水","惊蛰","春分","清明","谷雨","立夏","小满","芒种","夏至","小暑","大暑","立秋","处暑","白露","秋分","寒露","霜降","立冬","小雪","大雪","冬至"};
-	public static final Map<String, String> solarFestivals = StringUtil.params("02.14","情人节","03.08","妇女节","03.12","植树节","04.01","愚人节","05.04","青年节","05.12","护士节","06.01","儿童节","07.01","建党节","08.01","建军节","09.10","教师节","12.24","平安夜","12.25","圣诞节");
-	public static final Map<String, String> lularFestivals = StringUtil.params("正月十五","元宵节","二月初二","龙抬头","三月初三","上巳节","七月初七","七夕节","七月十五","中元节","九月初九","重阳节","十月十五","下元节","腊月初八","腊八节","腊月三十","除夕");
-	private static final String days2020 = "{\"元旦节\":\"1.1\",\"春节\":\"-1.19,1.24-2.2\",\"清明节\":\"4.4-6\",\"劳动节\":\"-4.26,5.1-5,-5.9\",\"端午节\":\"6.25-27,-6.28\",\"国庆节\":\"-9.27,10.1-8,-10.10\"}";
-	private static final String days2019 = "{\"元旦节\":\"1.1\",\"春节\":\"-2.2-3,2.4-10\",\"清明节\":\"4.5\",\"劳动节\":\"5.1\",\"端午节\":\"6.7\",\"中秋节\":\"9.13\",\"国庆节\":\"-9.29,10.1-7,-10.12\"}";
-	private static final String days2018 = "{\"元旦节\":\"1.1\",\"春节\":\"-2.11,2.15-21,-2.24\",\"清明节\":\"4.5-7,-4.8\",\"劳动节\":\"-4.28,4.29-5.1\",\"端午节\":\"6.18\",\"中秋节\":\"9.24\",\"国庆节\":\"-9.29-30,10.1-7\"}";
-	private static final String days2017 = "{\"元旦节\":\"1.1-2\",\"春节\":\"-1.22,1.27-2.2,-2.4\",\"清明节\":\"-4.1,4.2-4\",\"劳动节\":\"5.1\",\"端午节\":\"-5.27,5.28-30\",\"中秋节\":\"-9.30,10.4\",\"国庆节\":\"10.1-8\"}";
-	private static final String days2016 = "{\"元旦节\":\"1.1\",\"春节\":\"-2.6,2.7-13,-2.14\",\"清明节\":\"4.4\",\"劳动节\":\"5.1-2\",\"端午节\":\"-6.12,6.9-11\",\"中秋节\":\"-9.18,9.15-17\",\"国庆节\":\"10.1-7,-10.8-9\"}";
-	private static final String days2015 = "{\"元旦节\":\"1.1-3,-1.4\",\"春节\":\"-2.15,2.18-24,-2.28\",\"清明节\":\"4.5-6\",\"劳动节\":\"5.1\",\"端午节\":\"6.20,6.22\",\"中秋节\":\"9.27\",\"国庆节\":\"10.1-7,-10.10\"}";
-	private static final String days2014 = "{\"元旦节\":\"1.1\",\"春节\":\"-1.26,1.31-2.6,-2.8\",\"清明节\":\"4.5,4.7\",\"劳动节\":\"5.1-3,-5.4\",\"端午节\":\"6.2\",\"中秋节\":\"9.8\",\"国庆节\":\"-9.28,10.1-7,-10.11\"}";
-	private static final String days2013 = "{\"元旦节\":\"1.1-3,-1.5-6\",\"春节\":\"2.9-15,-2.16-17\",\"清明节\":\"4.4-6,-4.7\",\"劳动节\":\"-4.27-28,4.29-5.1\",\"端午节\":\"-6.8-9,6.10-12\",\"中秋节\":\"9.19-21,-9.22\",\"国庆节\":\"-9.29,10.1-7,-10.12\"}";
-	private static final String days2012 = "{\"元旦节\":\"1.1-3\",\"春节\":\"-1.21,1.22-28,-1.29\",\"清明节\":\"4.2-4,-3.31-4.1\",\"劳动节\":\"-4.28,4.29-5.1\",\"端午节\":\"6.22-24\",\"中秋节\":\"-9.29,9.30\",\"国庆节\":\"10.1-7\"}";
-	private static final String days2011 = "{\"元旦节\":\"1.1-3,-12.31\",\"春节\":\"-1.30,2.2-8,-2.12\",\"清明节\":\"-4.2,4.3-5\",\"劳动节\":\"4.30-5.2\",\"端午节\":\"6.4-6\",\"中秋节\":\"9.10-12\",\"国庆节\":\"10.1-7,-10.8-9\"}";
+	public static final Map<String, String> solarFestivals = new LinkedHashMap<>();
+	public static final Map<String, String> lularFestivals = new LinkedHashMap<>();
+	public static final Map<String, String> monthWeeks = new LinkedHashMap<>();
 	private static final FastDateFormat dayFormat = FastDateFormat.getInstance("M月d日");
 	
 	static {
-		addPlan("2020", days2020);
-		addPlan("2019", days2019);
-		addPlan("2018", days2018);
-		addPlan("2017", days2017);
-		addPlan("2016", days2016);
-		addPlan("2015", days2015);
-		addPlan("2014", days2014);
-		addPlan("2013", days2013);
-		addPlan("2012", days2012);
-		addPlan("2011", days2011);
+		loadFromConfig();
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void loadFromConfig() {
+		Map<String, Object> map = Config.getInstance().getJsonMapConfig("datetime");
+		HolidayUtil.lularFestivals.putAll((Map<String,String>)map.get("lularFestivals"));
+		HolidayUtil.solarFestivals.putAll((Map<String,String>)map.get("solarFestivals"));
+		HolidayUtil.monthWeeks.putAll((Map<String,String>)map.get("monthWeeks"));
+		((Map<Object,Object>)map.get("holidays")).forEach((k,v)->{
+			try{
+				String json=Config.getInstance().getMapper().writeValueAsString(v);
+				HolidayUtil.addPlan(k.toString(), json);
+			}catch(Exception e){
+				log.warn(e.getMessage());
+			}
+		});
+		map.clear();
 	}
 	
 	/**
@@ -87,10 +91,10 @@ public class HolidayUtil {
 		String monthDay = format.substring(5);
 		if("01.01".equals(monthDay)) {
 			return Holiday.元旦节;
-		}else if("05.01".equals(monthDay) && Integer.parseInt(format.substring(0, 4))>=1889) {
-			return Holiday.劳动节;
-		}else if("10.01".equals(monthDay) && Integer.parseInt(format.substring(0, 4))>=1949) {
-			return Holiday.国庆节;
+		} else if ("05.01".equals(monthDay)) {
+			return Holiday.劳动节;// Integer.parseInt(format.substring(0, 4))>=1889
+		} else if ("10.01".equals(monthDay)) {
+			return Holiday.国庆节;// Integer.parseInt(format.substring(0, 4))>=1949
 		}
 		ZhDate zhDate = ZhDate.fromDate(day);
 		if(zhDate != null) {
@@ -121,7 +125,7 @@ public class HolidayUtil {
 		}else if(date == SolarTerms.getTerm(year, 2*month)) {
 			return solarTerm[2*month-1];
 		}else {
-			String yearMonth = format.substring(5);
+			String yearMonth = format.substring(5), week = null;
 			String remark = solarFestivals.get(yearMonth);//阳历节日
 			if(remark == null) {
 				ZhDate zhDate = ZhDate.fromDate(day);
@@ -129,6 +133,21 @@ public class HolidayUtil {
 					String chinese = zhDate.chinese();
 					yearMonth = chinese.substring(chinese.indexOf('年')+1);
 					remark = lularFestivals.get(yearMonth);//农历节日
+				}
+			}
+			if(remark == null) {
+				yearMonth = format.substring(5);
+				remark = solarFestivals.get(yearMonth);//阳历节日
+			}
+			if(remark == null) {
+				yearMonth = weekFormat.format(day);
+				remark = monthWeeks.get(yearMonth);
+				week = yearMonth.substring(yearMonth.lastIndexOf(".")+1);
+			}
+			if(remark == null && month == 3 && "1".equals(week)) {
+				int length = Month.MARCH.length(Year.of(year).isLeap());
+				if(length - date < 7) {
+					remark = "中小学安全教育日";
 				}
 			}
 			return remark;

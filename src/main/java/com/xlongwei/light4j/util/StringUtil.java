@@ -12,16 +12,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.networknt.utility.CharUtils;
+
 import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.ArrayUtils;
-
-import com.networknt.utility.CharUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -1163,7 +1164,7 @@ public class StringUtil {
 	
 	/** 转换字符串为参数映射 */
 	public static Map<String, String> params(String... param){
-		Map<String, String> params = new HashMap<>(2);
+		Map<String, String> params = new LinkedHashMap<>(2);
 		if(param!=null && param.length>1) {
 			int step = 2;
 			for(int idx = 0, l=param.length-1; idx < l; idx+=step) {

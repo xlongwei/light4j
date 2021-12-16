@@ -1,5 +1,0 @@
----
-# Sepcification type and file name definition
-
-fileName: config/swagger.json
-contentType: application/json

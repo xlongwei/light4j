@@ -6,9 +6,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.time.FastDateFormat;
-
-import com.alibaba.fastjson.JSONObject;
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.DateUtil;
@@ -16,11 +13,11 @@ import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.HolidayUtil;
 import com.xlongwei.light4j.util.HolidayUtil.Holiday;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
-import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.NumberUtil;
-import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.ZhDate;
+
+import org.apache.commons.lang3.time.FastDateFormat;
 
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateRange;
@@ -38,22 +35,6 @@ public class DatetimeHandler extends AbstractHandler {
 	private static long lastSecond = SystemClock.now()/1000;
 	private static Map<String, String> lastSecondMap = Collections.singletonMap("datetime", fastDateFormat.format(lastSecond));
 	
-	public DatetimeHandler() {
-		reload();
-	}
-
-	private void reload() {
-		String holidays = RedisConfig.get("datetime.holidays");
-		if(StringUtil.isBlank(holidays)) {
-			return;
-		}else {
-			JSONObject json = JsonUtil.parseNew(holidays);
-			for(String key : json.keySet()) {
-				HolidayUtil.addPlan(key, json.getString(key));
-			}
-		}
-	}
-
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		String path = exchange.getAttachment(AbstractHandler.PATH);
@@ -201,7 +182,6 @@ public class DatetimeHandler extends AbstractHandler {
 			map.put("count", "countday".equals(type) ? cn.hutool.core.date.DateUtil.betweenDay(start, end, true)
 					: HolidayUtil.betweenworkday(start, end, NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "skipweekend"), false)));
 		}else if("reload".equals(type)){
-			reload();
 			map.put("reload", HolidayUtil.holidays.size());
 		}else if("nongli".equals(type)){
 			convert(exchange, day, map);
