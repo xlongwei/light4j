@@ -1,6 +1,7 @@
 package com.xlongwei.light4j.util;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -226,8 +227,8 @@ public class PinyinUtil {
 		format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
 		format.setVCharType(HanyuPinyinVCharType.WITH_V);
 		
-		try {
-			TextReader reader = new TextReader(ConfigUtil.stream("duoyinzi.txt"), CharEncoding.UTF_8);
+		try(InputStream in = ConfigUtil.stream("duoyinzi.txt")) {
+			TextReader reader = new TextReader(in, CharEncoding.UTF_8);
 			String line = null;
 			while(StringUtils.isNotBlank(line=reader.read())) {
 				String[] split = line.split("#");

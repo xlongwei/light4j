@@ -23,8 +23,7 @@ public class IdCardUtil {
 	public static final Map<String, String> areas = new HashMap<>();
 
 	static {
-		try {
-			InputStream inputStream = ConfigUtil.stream("idcard.txt");
+		try(InputStream inputStream = ConfigUtil.stream("idcard.txt")) {
 			TextReader reader = new TextReader();
 			reader.open(inputStream, CharsetNames.UTF_8);
 			String line = null;

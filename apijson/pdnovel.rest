@@ -1,0 +1,11 @@
+
+@host=http://localhost:8080
+@service={{host}}/service
+### grant all privileges on bbs.* to apijson;
+@pdnovel={{service}}/pdnovel
+###
+{{pdnovel}}/books
+###
+{{pdnovel}}/volumes?novelid=1
+###
+{{pdnovel}}/chapters?novelid=1&volumeid=1

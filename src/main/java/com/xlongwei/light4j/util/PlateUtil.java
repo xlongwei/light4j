@@ -1,6 +1,7 @@
 package com.xlongwei.light4j.util;
 
 import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,8 +60,8 @@ public class PlateUtil {
 	static final int PLATE_PREFIX_LENGTH = 2;
 	static final String YUN_A_V = "云A-?V[0-9A-Z]{0,4}";
 	static {
-		try{
-			ExcelUtil.readBySax(new BufferedInputStream(ConfigUtil.stream("chepaihao.xlsx")), 0, (int i, long j, List<Object> list) -> {
+		try(InputStream in = new BufferedInputStream(ConfigUtil.stream("chepaihao.xlsx"))) {
+			ExcelUtil.readBySax(in, 0, (int i, long j, List<Object> list) -> {
 					if(j > 0) {
 						plates.add(list.toArray(new String[list.size()]));
 					}
