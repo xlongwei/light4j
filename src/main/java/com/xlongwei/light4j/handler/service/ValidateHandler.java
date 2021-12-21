@@ -111,10 +111,10 @@ public class ValidateHandler extends AbstractHandler {
 		boolean valid;
 		valid = StringUtil.isMobile(value);
 		map.put("type", String.valueOf(StringUtil.getMobileType(value)));
-		Map<String, String> searchToMap = MobileHandler.searchToMap(value);
-		if(MapUtil.isNotEmpty(searchToMap)) {
-			map.putAll(searchToMap);
-		}
+		// Map<String, String> searchToMap = MobileHandler.searchToMap(value);
+		// if(MapUtil.isNotEmpty(searchToMap)) {
+		// 	map.putAll(searchToMap);
+		// }
 		return valid;
 	}
 

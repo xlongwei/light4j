@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.shiro.util.StringUtils;
+// import org.apache.shiro.util.StringUtils;
 import org.junit.Test;
 
 import com.xlongwei.light4j.util.EcdictUtil;
@@ -71,8 +71,8 @@ public class EcdictTest {
 		Set<String> added = new HashSet<>();
 		while((line=reader.read())!=null) {
 			lines++;
-//			String[] split = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");//这个正则表达式可以分割csv格式，但是结果长度不准确
-			String[] split = StringUtils.split(line, ',');//shiro的工具类可以准确分割csv格式，默认quote字符是双引号，默认不保留双引号，并处理空白
+			String[] split = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");//这个正则表达式可以分割csv格式，但是结果长度不准确
+			// String[] split = StringUtils.split(line, ',');//shiro的工具类可以准确分割csv格式，默认quote字符是双引号，默认不保留双引号，并处理空白
 			if(split.length != fields) {
 				System.out.println("bad length="+split.length+"："+line);
 				break;

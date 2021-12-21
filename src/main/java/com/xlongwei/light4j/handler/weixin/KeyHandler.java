@@ -6,7 +6,7 @@ import java.util.Map;
 
 import com.alibaba.fastjson.JSONObject;
 import com.xlongwei.light4j.handler.service.IpHandler;
-import com.xlongwei.light4j.handler.service.MobileHandler;
+// import com.xlongwei.light4j.handler.service.MobileHandler;
 import com.xlongwei.light4j.util.JsonUtil;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
@@ -58,11 +58,11 @@ public class KeyHandler extends AbstractTextHandler {
 				if(searchToMap!=null) {
 					return searchToMap.get("region");
 				}
-			}else if(StringUtil.getMobileType(content)>0) {
-				Map<String, String> searchToMap = MobileHandler.searchToMap(content);
-				if(searchToMap!=null) {
-					return StringUtil.firstNotBlank(searchToMap.get("region"), MobileHandler.NUMBER_TYPE[StringUtil.getMobileType(content)]);
-				}
+			// }else if(StringUtil.getMobileType(content)>0) {
+			// 	Map<String, String> searchToMap = MobileHandler.searchToMap(content);
+			// 	if(searchToMap!=null) {
+			// 		return StringUtil.firstNotBlank(searchToMap.get("region"), MobileHandler.NUMBER_TYPE[StringUtil.getMobileType(content)]);
+			// 	}
 			}else {
 				String string = RedisConfig.get("weixin.key."+content);
 				if(!StringUtil.isBlank(string)) {

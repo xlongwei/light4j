@@ -26,7 +26,7 @@ import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.IdWorker.SystemClock;
 import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.RedisConfig;
-import com.xlongwei.light4j.util.ShiroUtil;
+// import com.xlongwei.light4j.util.ShiroUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
 import com.xlongwei.light4j.util.WeixinUtil;
@@ -97,7 +97,7 @@ public class CounterHandler extends AbstractTextHandler {
 			return "debug="+Log.DEBUG;
 		}else if("ipsConfigUpdate".equals(content)) {
 			HandlerUtil.ipsConfigUpdate();
-			ShiroUtil.reload(true);
+			// ShiroUtil.reload(true);
 			return "limits="+HandlerUtil.ipsConfig.getIntValue("limits");
 		}else if(content.startsWith("ipsCounterClear") && WeixinUtil.touserTest.equals(message.get().getToUserName())) {
 			String ip = content.substring("ipsCounterClear".length());

@@ -13,7 +13,7 @@ handlers:
   # - com.networknt.correlation.CorrelationHandler@correlation
   - com.xlongwei.light4j.openapi.extend.MyCorrelationHandler@correlation
   - com.networknt.openapi.JwtVerifyHandler@security  
-  - com.xlongwei.light4j.openapi.extend.MyJwtShiroHandler@shiro  
+  # - com.xlongwei.light4j.openapi.extend.MyJwtShiroHandler@shiro  
   - com.networknt.specification.SpecDisplayHandler@spec
   - com.networknt.specification.SpecSwaggerUIHandler@swaggerui
   - com.xlongwei.light4j.openapi.OpenapiHandler@openapi
@@ -36,7 +36,7 @@ chains:
     - traceability
     - correlation
     - security
-    - shiro
+    # - shiro
     - openapi
   demo:
     - exception
