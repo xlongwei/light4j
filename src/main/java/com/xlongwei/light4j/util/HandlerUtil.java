@@ -18,9 +18,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.http.HttpSession;
 
 import com.alibaba.fastjson.JSONObject;
-import com.networknt.service.SingletonServiceFactory;
-import com.networknt.session.Session;
-import com.networknt.session.SessionManager;
+// import com.networknt.service.SingletonServiceFactory;
+// import com.networknt.session.Session;
+// import com.networknt.session.SessionManager;
 import com.networknt.utility.StringUtils;
 import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.handler.ServiceHandler;
@@ -35,12 +35,12 @@ import io.undertow.server.handlers.form.FormData.FormValue;
 import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.server.handlers.form.FormParserFactory.Builder;
-import io.undertow.server.session.SessionAttachmentHandler;
+// import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.MimeMappings;
-import io.undertow.util.Sessions;
+// import io.undertow.util.Sessions;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -52,11 +52,11 @@ public class HandlerUtil {
 	public static final String MIMETYPE_JSON = MimeMappings.DEFAULT.getMimeType("json"), MIMETYPE_TXT = MimeMappings.DEFAULT.getMimeType("txt");
 	private static final String TEXT = "text", XML = "xml", JSON = "json";
 	private static final String SHOWAPI_USER_NAME = "showapi_userName";
-	private static final SessionManager sessionManager = SingletonServiceFactory.getBean(SessionManager.class);
-	private static final SessionAttachmentHandler sessionAttachmentHandler = sessionManager != null ? null
-			: new SessionAttachmentHandler(
-					SingletonServiceFactory.getBean(io.undertow.server.session.SessionManager.class),
-					SingletonServiceFactory.getBean(io.undertow.server.session.SessionConfig.class));
+	// private static final SessionManager sessionManager = SingletonServiceFactory.getBean(SessionManager.class);
+	// private static final SessionAttachmentHandler sessionAttachmentHandler = sessionManager != null ? null
+	// 		: new SessionAttachmentHandler(
+	// 				SingletonServiceFactory.getBean(io.undertow.server.session.SessionManager.class),
+	// 				SingletonServiceFactory.getBean(io.undertow.server.session.SessionConfig.class));
 	public static JSONObject ipsConfig = new JSONObject();
 	public static Logger ipsConfigLogger = LoggerFactory.getLogger("ipsConfig");
 	public static Map<String, AtomicInteger> ipsCounter = new ConcurrentHashMap<>();
@@ -304,16 +304,17 @@ public class HandlerUtil {
 	
 	/** 获取或创建会话session */
 	public static HttpSession getSession(HttpServerExchange exchange, boolean create) throws Exception {
-		if(sessionManager != null) {
-			Session session = sessionManager.getSession(exchange);
-			if(session == null && create) {
-				session = sessionManager.createSession(exchange);
-			}
-			return new HttpSessionNetworknt(session);
-		}else {
-			sessionAttachmentHandler.handleRequest(exchange);
-			return new HttpSessionUndertow(create ? Sessions.getOrCreateSession(exchange) : Sessions.getSession(exchange), exchange);
-		}
+		return null;
+		// if(sessionManager != null) {
+		// 	Session session = sessionManager.getSession(exchange);
+		// 	if(session == null && create) {
+		// 		session = sessionManager.createSession(exchange);
+		// 	}
+		// 	return new HttpSessionNetworknt(session);
+		// }else {
+		// 	sessionAttachmentHandler.handleRequest(exchange);
+		// 	return new HttpSessionUndertow(create ? Sessions.getOrCreateSession(exchange) : Sessions.getSession(exchange), exchange);
+		// }
 	}
 	
 	/** true处理请求 false提示或拒绝 */

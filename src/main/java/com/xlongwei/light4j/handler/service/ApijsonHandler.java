@@ -48,20 +48,22 @@ public class ApijsonHandler extends AbstractHandler {
 		case "head": json = apijson.head(request, session); break;
 		case "gets": json = apijson.gets(request, session); break;
 		case "heads": json = apijson.heads(request, session); break;
-		case "post": json = apijson.post(request, session); break;
-		case "put": json = apijson.put(request, session); break;
-		case "delete": json = apijson.delete(request, session); break;
-		case "reload": json = apijson.reload(request).toJSONString(); break;
-		case "postVerify": json = apijson.postVerify(request).toJSONString(); break;
-		case "getVerify": json = apijson.getVerify(request).toJSONString(); break;
-		case "headVerify": json = apijson.headVerify(request).toJSONString(); break;
-		case "login": json = apijson.login(request, session).toJSONString(); break;
-		case "logout": json = apijson.logout(session).toJSONString(); break;
-		case "register": json = apijson.register(request).toJSONString(); break;
-		case "putPassword": json = apijson.putPassword(request).toJSONString(); break;
-		case "putBalance": json = apijson.putBalance(request, session).toJSONString(); break;
-		case "method_list": json = apijson.listMethod(request).toJSONString(); break;
-		case "method_invoke": json = apijson.invokeMethod(request).toJSONString(); break;
+		// 不支持session，降低内存
+		// case "post": json = apijson.post(request, session); break;
+		// case "put": json = apijson.put(request, session); break;
+		// case "delete": json = apijson.delete(request, session); break;
+		// case "login": json = apijson.login(request, session).toJSONString(); break;
+		// case "logout": json = apijson.logout(session).toJSONString(); break;
+		// case "register": json = apijson.register(request).toJSONString(); break;
+		// case "putPassword": json = apijson.putPassword(request).toJSONString(); break;
+		// case "putBalance": json = apijson.putBalance(request, session).toJSONString(); break;
+		// 以下方法注释，提高安全
+		// case "reload": json = apijson.reload(request).toJSONString(); break;
+		// case "postVerify": json = apijson.postVerify(request).toJSONString(); break;
+		// case "getVerify": json = apijson.getVerify(request).toJSONString(); break;
+		// case "headVerify": json = apijson.headVerify(request).toJSONString(); break;
+		// case "method_list": json = apijson.listMethod(request).toJSONString(); break;
+		// case "method_invoke": json = apijson.invokeMethod(request).toJSONString(); break;
 		default: 
 			HandlerUtil.setResp(exchange, Collections.singletonMap("error", "apijson/"+path+" not supported"));
 			return;

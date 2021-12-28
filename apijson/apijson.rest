@@ -2,6 +2,11 @@
 @service={{host}}/service
 @apijson={{service}}/apijson
 
+### 五级行政区划 Province City County Town Village
+POST {{apijson}}/get
+
+{"Province[]":{"Province":{}},"sort()":"pinyinSort(Province[],name)"}
+
 ### APIJSONApplication.init初始化时会读取access function request表，并且access表需要有Access Function Reqeust权限配置
 POST {{apijson}}/get
 
@@ -19,14 +24,14 @@ POST {{apijson}}/get
 {"User":{"id":38710},"[]":{"Comment":{"userId@":"User/id"}}}
 
 ### UnitAuto需要登录
-POST {{apijson}}/login
+# POST {{apijson}}/login
 
-{"type":0,"phone":"13000082001","password":"123456","version":1,"remember":true,"format":false}
+# {"type":0,"phone":"13000082001","password":"123456","version":1,"remember":true,"format":false}
 
 ### UnitAuto登录后会读取Method表，apijson.sql留了两条method数据
 POST  {{apijson}}/get
 
-{"format":false,"[]":{"count":50,"page":0,"Method":{"@order":"date-","userId{}":[0,38710],"arguments()":"getMethodArguments(genericMethodArgs)","defination()":"getMethodDefination(method,arguments,type,exceptions,null)","request()":"getMethodRequest()","package$":null,"class$":null,"package*~":null,"class*~":null,"method*~":null,"type*~":null,"detail*~":null,"@combine":null},"TestRecord":{"documentId@":"/Method/id","userId":38710,"testAccountId":null,"randomId":0,"@order":"date-","@column":"id,userId,documentId,duration,minDuration,maxDuration,response","@having":null}},"@role":"LOGIN"}
+{"format":false,"[]":{"count":50,"page":0,"Method":{"@order":"date-","userId{}":[0,38710],"arguments()":"getMethodArguments(genericMethodArgs)","defination()":"getMethodDefination(method,arguments,type,exceptions,null)","request()":"getMethodRequest()","package$":null,"class$":null,"package*~":null,"class*~":null,"method*~":null,"type*~":null,"detail*~":null,"@combine":null},"TestRecord":{"documentId@":"/Method/id","userId":38710,"testAccountId":null,"randomId":0,"@order":"date-","@column":"id,userId,documentId,duration,minDuration,maxDuration,response","@having":null}}}
 
 ### 配置apijson.conf时，转发请求/method/list到{{apijson}}/method_list
 POST {{apijson}}/method_list
