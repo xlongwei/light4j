@@ -1,5 +1,6 @@
 package com.xlongwei.light4j.handler.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,16 +12,20 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.RandomUtils;
-
+import com.alibaba.fastjson.JSONArray;
 import com.networknt.utility.StringUtils;
+import com.xlongwei.light4j.apijson.DemoApplication;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.IdCardUtil;
+import com.xlongwei.light4j.util.JsonUtil;
+import com.xlongwei.light4j.util.JsonUtil.JsonBuilder;
 import com.xlongwei.light4j.util.PinyinUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.ZhDate;
+
+import org.apache.commons.lang3.RandomUtils;
 
 import cn.hutool.core.date.Zodiac;
 import io.undertow.server.HttpServerExchange;
@@ -139,24 +144,68 @@ public class IdcardHandler extends AbstractHandler {
 	/** 获取省市区代码 */
 	public void areas(HttpServerExchange exchange) throws Exception {
 		String area = HandlerUtil.getParam(exchange, "area");
+		Map<String, String> map = null;
 		if(StringUtil.isBlank(area)) {
-			Map<String, String> map = IdCardUtil.areas.entrySet().stream()
-					.filter(e -> e.getKey().endsWith("0000"))
-					.sorted(Map.Entry.comparingByValue(PinyinUtil.ZH_COMPARATOR))
-					.collect(Collectors.toMap(e -> e.getKey().substring(0, 2), Entry::getValue, (v1,v2) -> v1, LinkedHashMap::new));
+			if(DemoApplication.apijsonEnabled){
+				JsonBuilder json = JsonUtil.builder(false);
+				json.putJSON("Idcard[]").putJSON("Idcard").put("@column", "code,name").put("code$", "%0000").put("year", IdCardUtil.year).top().put("sort()", "pinyinSort(Idcard[],name)");
+				String string  = json.top().build().toJSONString();
+				string = DemoApplication.apijson.get(string, null);
+				JSONArray array = JsonUtil.parseNew(string).getJSONArray("Idcard[]");
+				map = new LinkedHashMap<>();
+				for(int i=0,s=array==null ? 0 : array.size();i<s;i++){
+					map.put(array.getJSONObject(i).getString("code").substring(0, 2),array.getJSONObject(i).getString("name"));
+				}
+			}else{
+				map = IdCardUtil.areas.entrySet().stream()
+						.filter(e -> e.getKey().endsWith("0000"))
+						.sorted(Map.Entry.comparingByValue(PinyinUtil.ZH_COMPARATOR))
+						.collect(Collectors.toMap(e -> e.getKey().substring(0, 2), Entry::getValue, (v1,v2) -> v1, LinkedHashMap::new));
+			}
 			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}else if(area.matches("\\d{2}")) {
-			Map<String, String> map = IdCardUtil.areas.entrySet().stream()
-					.filter(e -> e.getKey().startsWith(area) && e.getKey().endsWith("00") && !e.getKey().endsWith("0000"))
-					.sorted(Map.Entry.comparingByValue(PinyinUtil.ZH_COMPARATOR))
-					.collect(Collectors.toMap(e -> e.getKey().substring(0, 4), Entry::getValue, (v1,v2) -> v1, LinkedHashMap::new));
+			if(DemoApplication.apijsonEnabled){
+				JsonBuilder json = JsonUtil.builder(false);
+				json.putJSON("Idcard[]").putJSON("Idcard").put("@column", "code,name").put("code$", area+"%00").put("year", IdCardUtil.year).top().put("sort()", "pinyinSort(Idcard[],name)");
+				String string  = json.top().build().toJSONString();
+				string = DemoApplication.apijson.get(string, null);
+				JSONArray array = JsonUtil.parseNew(string).getJSONArray("Idcard[]");
+				map = new LinkedHashMap<>();
+				for(int i=0,s=array==null ? 0 : array.size();i<s;i++){
+					map.put(array.getJSONObject(i).getString("code").substring(0, 4),array.getJSONObject(i).getString("name"));
+				}
+				if(map.isEmpty()){
+					map.put(area+"00", "北京市");
+				}
+			}else{
+				map = IdCardUtil.areas.entrySet().stream()
+						.filter(e -> e.getKey().startsWith(area) && e.getKey().endsWith("00") && !e.getKey().endsWith("0000"))
+						.sorted(Map.Entry.comparingByValue(PinyinUtil.ZH_COMPARATOR))
+						.collect(Collectors.toMap(e -> e.getKey().substring(0, 4), Entry::getValue, (v1,v2) -> v1, LinkedHashMap::new));
+				if(map.isEmpty()){
+					map.put(area+"00", IdCardUtil.areas.get(area+"0000"));
+				}
+			}
 			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}else if(area.matches("\\d{4}")) {
 			String prefix = area.endsWith("00") ? area.substring(0, 2) : area;
-			Map<String, String> map = IdCardUtil.areas.entrySet().stream()
-					.filter(e -> e.getKey().startsWith(prefix) && !e.getKey().endsWith("00"))
-					.sorted(Map.Entry.comparingByValue(PinyinUtil.ZH_COMPARATOR))
-					.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (v1,v2) -> v1, LinkedHashMap::new));
+			if(DemoApplication.apijsonEnabled){
+				JsonBuilder json = JsonUtil.builder(false);
+				json.putJSON("Idcard[]").putJSON("Idcard").put("@column", "code,name").put("code$", prefix+"%").put("year", IdCardUtil.year).top().put("sort()", "pinyinSort(Idcard[],name)");
+				String string  = json.top().build().toJSONString();
+				string = DemoApplication.apijson.get(string, null);
+				JSONArray array = JsonUtil.parseNew(string).getJSONArray("Idcard[]");
+				map = new LinkedHashMap<>();
+				for(int i=0,s=array==null ? 0 : array.size();i<s;i++){
+					String code = array.getJSONObject(i).getString("code");
+					if(!code.endsWith("00")) map.put(code,array.getJSONObject(i).getString("name"));
+				}
+			}else{
+				map = IdCardUtil.areas.entrySet().stream()
+						.filter(e -> e.getKey().startsWith(prefix) && !e.getKey().endsWith("00"))
+						.sorted(Map.Entry.comparingByValue(PinyinUtil.ZH_COMPARATOR))
+						.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (v1,v2) -> v1, LinkedHashMap::new));
+			}
 			HandlerUtil.setResp(exchange, Collections.singletonMap("areas", map));
 		}else {
 			Set<String> areas = new LinkedHashSet<String>(IdCardUtil.areas(area));
@@ -170,8 +219,24 @@ public class IdcardHandler extends AbstractHandler {
 	public void gen(HttpServerExchange exchange) throws Exception {
 		String area = HandlerUtil.getParam(exchange, "area"), birthday = StringUtil.firstNotBlank(HandlerUtil.getParam(exchange, "birth"), HandlerUtil.getParam(exchange, "birthday")), serial = HandlerUtil.getParam(exchange, "serial"), sex = HandlerUtil.getParam(exchange, "sex");
 		if(StringUtil.isBlank(area) || !StringUtil.isNumbers(area) || area.length()>6 || area.endsWith("00") || IdCardUtil.areas.get(area=StringUtils.rightPad(area, 6, '0'))==null) {
-			String prefix = !StringUtil.isBlank(area)&&IdCardUtil.areas.get(area)!=null ? (area.endsWith("0000") ? area.substring(0, 2) : (area.endsWith("00") ? area.substring(0, 4) : area)) : null;
-			List<String> list = IdCardUtil.areas.entrySet().stream().filter(e -> !e.getKey().endsWith("00") && (prefix==null||e.getKey().startsWith(prefix))).map(Entry::getKey).collect(Collectors.toList());
+			String prefix = !StringUtil.isBlank(area)&&IdCardUtil.valid(area) ? (area.endsWith("0000") ? area.substring(0, 2) : (area.endsWith("00") ? area.substring(0, 4) : area)) : null;
+			List<String> list = null;
+			if(DemoApplication.apijsonEnabled) {
+				JsonBuilder json = JsonUtil.builder(false);
+				json = json.putJSON("Idcard[]").putJSON("Idcard").put("@column", "code");
+				if(prefix!=null) json.put("code$", prefix+"%");
+				else json.put("code!$", "%00");
+				json.put("year", IdCardUtil.year).top().put("sort()", "pinyinSort(Idcard[],name)");
+				String string  = json.top().build().toJSONString();
+				string = DemoApplication.apijson.get(string, null);
+				JSONArray array = JsonUtil.parseNew(string).getJSONArray("Idcard[]");
+				list = new ArrayList<>();
+				for(int i=0,s=array==null ? 0 : array.size();i<s;i++){
+					list.add(array.getJSONObject(i).getString("code"));
+				}
+			} else {
+				list = IdCardUtil.areas.entrySet().stream().filter(e -> !e.getKey().endsWith("00") && (prefix==null||e.getKey().startsWith(prefix))).map(Entry::getKey).collect(Collectors.toList());
+			}
 			area = list.get(RandomUtils.nextInt(0, list.size()));
 		}
 		if(!StringUtil.isBlank(birthday)) {

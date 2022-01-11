@@ -44,6 +44,14 @@ CREATE TABLE `village` (
   PRIMARY KEY (`code`)
 ) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='村';
 
+CREATE TABLE `idcard` (
+  `code` char(6) NOT NULL COMMENT '代码',
+  `name` varchar(30) NOT NULL COMMENT '名称',
+  `year` smallint(6) NOT NULL COMMENT '年',
+  PRIMARY KEY (`code`),
+  KEY `year` (`year`)
+) ENGINE=MyISAM DEFAULT CHARSET=gbk COMMENT='证件号';
+
 CREATE TABLE `sequence` (
   `name` varchar(64) NOT NULL COMMENT '序列名',
   `value` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT '当前值',

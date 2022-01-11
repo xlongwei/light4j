@@ -64,3 +64,17 @@ POST {{host}}/openapi/service
     &day=2022-11-08
 Authorization: Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTg4MjUwNjM1NiwianRpIjoiQTlaUHVjM3RsS1BoWmM0RnpzTlJjQSIsImlhdCI6MTU2NzE0NjM1NiwibmJmIjoxNTY3MTQ2MjM2LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6ImFkbWluIn0.Jb89PTAOY7zDQBUpLS-5L9iDz28__fBUhXgmXqjXByiu6HG1sSemHHs-C0n-ZFUH4Tn3yfVbcHndSjNtVQ__gZMmpKi4PCg7NTiSo7TZZmVYI9uinQEdnDlFT2YA97AL6jBCGJW2Ol6q-odSajpCdoMfOh9KM2yXKQPqr95P5v4Du7L-MNL8dW7evfa0gBpGA2FF4Sr4txerS_SXJg3ED4_px_WbbkqZYpzo6_MupNK9nfJVG7ycP50r21-HMrSnBR7pUN1JvF8mxpfmcQi8j0W4TiYFZV2PKV2AGqsJ9d4IuPu--3YHNpevG3Pv78982o6qK22o_4h4Z8VFzr_NUQ
 
+###
+{{host}}/service/idcard/parse?idNumber=513031
+###
+{{host}}/service/validate?type=idArea&value=513031
+###
+POST {{host}}/service/apijson/get
+Content-Type: application/json
+
+{"Idcard[]":{"Idcard":{"@column":"name","@order":"code","code{}":["510000",513000,513031]}}}
+###
+{{host}}/service/idcard/areas
+    # ?area=5116
+###
+{{host}}/service/idcard/gen
