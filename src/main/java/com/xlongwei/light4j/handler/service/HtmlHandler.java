@@ -55,9 +55,9 @@ import lombok.extern.slf4j.Slf4j;
 @SuppressWarnings({ "unchecked" })
 public class HtmlHandler extends AbstractHandler {
 	private static final ObjectPool<ScriptEngine> POOL = new SimpleObjectPool<ScriptEngine>(
-			NumberUtil.parseInt(RedisConfig.get(""), 6), () -> new NashornScriptEngineFactory().getScriptEngine("-strict", "--no-java", "--no-syntax-extensions"),
+			NumberUtil.parseInt(RedisConfig.get("script.poolSize"), 2), () -> new NashornScriptEngineFactory().getScriptEngine("-strict", "--no-java", "--no-syntax-extensions"),
 			ScriptEngine::getContext, ScriptEngine::getContext);
-	private static final LRUCache<String, CompiledScript> SCRIPTS = new LRUCache<>(1000, -1);
+	private static final LRUCache<String, CompiledScript> SCRIPTS = new LRUCache<>(128, -1);
 
 	public void charset(HttpServerExchange exchange) throws Exception {
 		String charset = null;

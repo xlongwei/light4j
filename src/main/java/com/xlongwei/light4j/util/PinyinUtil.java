@@ -1,19 +1,9 @@
 package com.xlongwei.light4j.util;
 
 import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import org.apache.commons.codec.CharEncoding;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
-
-import com.xlongwei.light4j.util.FileUtil.TextReader;
 
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.pinyin4j.PinyinHelper;
@@ -96,15 +86,12 @@ public class PinyinUtil {
 	 * @param vcharType 0-ü 1-v 2-u: （toneType=0时必须vcharType=0）
 	 */
 	public static String[] getPinyin(char ch, int caseType, int toneType, int vcharType) {
-		int two = 2;
-		if(toneType!=1 && toneType!=two) {
-			vcharType=0;
-		}
-		String[] pinyin = getPinyin(ch, toneType==1?HanyuPinyinToneType.WITHOUT_TONE:(toneType==two?HanyuPinyinToneType.WITH_TONE_NUMBER:HanyuPinyinToneType.WITH_TONE_MARK), vcharType==1?HanyuPinyinVCharType.WITH_V:(vcharType==two?HanyuPinyinVCharType.WITH_U_AND_COLON:HanyuPinyinVCharType.WITH_U_UNICODE));
-		if(caseType==1 || caseType==two) {
+		if(toneType!=1 && toneType!=2) vcharType=0;
+		String[] pinyin = getPinyin(ch, toneType==1?HanyuPinyinToneType.WITHOUT_TONE:(toneType==2?HanyuPinyinToneType.WITH_TONE_NUMBER:HanyuPinyinToneType.WITH_TONE_MARK), vcharType==1?HanyuPinyinVCharType.WITH_V:(vcharType==2?HanyuPinyinVCharType.WITH_U_AND_COLON:HanyuPinyinVCharType.WITH_U_UNICODE));
+		if(caseType==1 || caseType==2) {
 			for(int i=0; i<pinyin.length; i++) {
 				if(caseType==1) {
-					//pinyin[i] = pinyin[i];
+					pinyin[i] = StringUtil.capitalize(pinyin[i]);
 				} else {
 					pinyin[i] = pinyin[i].toUpperCase();
 				}
@@ -114,33 +101,33 @@ public class PinyinUtil {
 	}
 	
 	/** 处理多音字，根据上下文选择正确的拼音 */
-	public static String getPinyin(String sentence, int index, HanyuPinyinToneType toneType, HanyuPinyinVCharType vcharType) {
-		String[] pinyin = getPinyin(sentence.charAt(index), toneType, vcharType);
-		//多音字处理
-		if(pinyin.length>1) {
-			boolean b = ((toneType==null||toneType==HanyuPinyinToneType.WITHOUT_TONE)&&(vcharType==null||vcharType==HanyuPinyinVCharType.WITH_V));
-			String[] pinyins = b ? pinyin : getPinyin(sentence.charAt(index), HanyuPinyinToneType.WITHOUT_TONE, HanyuPinyinVCharType.WITH_V);
-			List<String> words = new ArrayList<>();
-			int left = Math.max(index - duoyinziMax + 1, 0), len = sentence.length();
-			for(int i=left; i<=index; i++) {
-				for(int j=Math.max(index, i+1); j<Math.min(i+duoyinziMax,len); j++) {
-					words.add(sentence.substring(i, j+1));
-				}
-			}
-			//更改默认读音
-			words.add(sentence.substring(index, index+1));
-			for(String word : words) {
-				String py = duoyinzi.get(word);
-				if(py!=null) {
-					int i = ArrayUtils.indexOf(pinyins, py);
-					if(i>-1) {
-						return pinyin[i];
-					}
-				}
-			}
-		}
-		return pinyin[0];
-	}
+	// public static String getPinyin(String sentence, int index, HanyuPinyinToneType toneType, HanyuPinyinVCharType vcharType) {
+	// 	String[] pinyin = getPinyin(sentence.charAt(index), toneType, vcharType);
+	// 	//多音字处理
+	// 	if(pinyin.length>1) {
+	// 		boolean b = ((toneType==null||toneType==HanyuPinyinToneType.WITHOUT_TONE)&&(vcharType==null||vcharType==HanyuPinyinVCharType.WITH_V));
+	// 		String[] pinyins = b ? pinyin : getPinyin(sentence.charAt(index), HanyuPinyinToneType.WITHOUT_TONE, HanyuPinyinVCharType.WITH_V);
+	// 		List<String> words = new ArrayList<>();
+	// 		int left = Math.max(index - duoyinziMax + 1, 0), len = sentence.length();
+	// 		for(int i=left; i<=index; i++) {
+	// 			for(int j=Math.max(index, i+1); j<Math.min(i+duoyinziMax,len); j++) {
+	// 				words.add(sentence.substring(i, j+1));
+	// 			}
+	// 		}
+	// 		//更改默认读音
+	// 		words.add(sentence.substring(index, index+1));
+	// 		for(String word : words) {
+	// 			String py = duoyinzi.get(word);
+	// 			if(py!=null) {
+	// 				int i = ArrayUtils.indexOf(pinyins, py);
+	// 				if(i>-1) {
+	// 					return pinyin[i];
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	return pinyin[0];
+	// }
 	
 	/**
 	 * 处理句子
@@ -149,25 +136,38 @@ public class PinyinUtil {
 	 * @param vcharType 0-ü 1-v 2-u: （toneType=0时必须vcharType=0）
 	 */
 	public static String[] getPinyin(String sentence, int caseType, int toneType, int vcharType) {
-		int two = 2;
-		if(toneType!=1 && toneType!=two)
-		 {
-			//avoid BadHanyuPinyinOutputFormatCombination
-			vcharType=0; 
-		}
-		String[] pinyin = new String[sentence.length()];
-		for(int i=0,len=pinyin.length; i<len; i++) {
-			String py = getPinyin(sentence, i, toneType==1?HanyuPinyinToneType.WITHOUT_TONE:(toneType==two?HanyuPinyinToneType.WITH_TONE_NUMBER:HanyuPinyinToneType.WITH_TONE_MARK)
-					, vcharType==1?HanyuPinyinVCharType.WITH_V:(vcharType==two?HanyuPinyinVCharType.WITH_U_AND_COLON:HanyuPinyinVCharType.WITH_U_UNICODE));
-			if(caseType==1) {
-				pinyin[i] = StringUtil.capitalize(py);
-			} else if(caseType==two) {
-				pinyin[i] = py.toUpperCase();
-			} else {
-				pinyin[i] = py;
+		if(toneType!=1 && toneType!=2) vcharType=0; //avoid BadHanyuPinyinOutputFormatCombination
+		try{
+			HanyuPinyinOutputFormat outputFormat = new HanyuPinyinOutputFormat();
+			outputFormat.setToneType(toneType==1?HanyuPinyinToneType.WITHOUT_TONE:(toneType==2?HanyuPinyinToneType.WITH_TONE_NUMBER:HanyuPinyinToneType.WITH_TONE_MARK));
+			outputFormat.setVCharType(vcharType==1?HanyuPinyinVCharType.WITH_V:(vcharType==2?HanyuPinyinVCharType.WITH_U_AND_COLON:HanyuPinyinVCharType.WITH_U_UNICODE));
+			String[] split = PinyinHelper.toHanYuPinyinString(sentence, outputFormat);
+			if(caseType==1 || caseType==2) {
+				for(int i=0,len=split.length;i<len;i++){
+					if(caseType==1) {
+						split[i] = split[i].toUpperCase();
+					} else if(caseType==2) {
+						split[i] = StringUtil.capitalize(split[i]);
+					}
+				}
 			}
+			return split;
+		}catch(Exception e) {
+			return sentence.split("");
 		}
-		return pinyin;
+		// String[] pinyin = new String[sentence.length()];
+		// for(int i=0,len=pinyin.length; i<len; i++) {
+		// 	String py = getPinyin(sentence, i, toneType==1?HanyuPinyinToneType.WITHOUT_TONE:(toneType==two?HanyuPinyinToneType.WITH_TONE_NUMBER:HanyuPinyinToneType.WITH_TONE_MARK)
+		// 			, vcharType==1?HanyuPinyinVCharType.WITH_V:(vcharType==two?HanyuPinyinVCharType.WITH_U_AND_COLON:HanyuPinyinVCharType.WITH_U_UNICODE));
+		// 	if(caseType==1) {
+		// 		pinyin[i] = StringUtil.capitalize(py);
+		// 	} else if(caseType==two) {
+		// 		pinyin[i] = py.toUpperCase();
+		// 	} else {
+		// 		pinyin[i] = py;
+		// 	}
+		// }
+		// return pinyin;
 	}
 
 	/**
@@ -220,30 +220,30 @@ public class PinyinUtil {
 	}
 	
 	private static HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
-	private static Map<String, String> duoyinzi = new HashMap<>();
-	private static int duoyinziMax = 1;
+	// private static Map<String, String> duoyinzi = new HashMap<>();
+	// private static int duoyinziMax = 1;
 	static {
 		format.setCaseType(HanyuPinyinCaseType.LOWERCASE);
 		format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
 		format.setVCharType(HanyuPinyinVCharType.WITH_V);
 		
-		try(InputStream in = ConfigUtil.stream("duoyinzi.txt")) {
-			TextReader reader = new TextReader(in, CharEncoding.UTF_8);
-			String line = null;
-			while(StringUtils.isNotBlank(line=reader.read())) {
-				String[] split = line.split("#");
-				String[] words = split[1].split("\\s+");
-				for(String word:words) {
-					duoyinzi.put(word, split[0]);
-					if(word.length()>duoyinziMax) {
-						duoyinziMax = word.length();
-					}
-				}
-			}
-			reader.close();
-			log.info("duoyinzi words: "+duoyinzi.size()+", max length: "+duoyinziMax);
-		} catch (Exception e) {
-			log.warn("fail to load duoyinzi.txt: "+e.getMessage());
-		}
+		// try(InputStream in = ConfigUtil.stream("duoyinzi.txt")) {
+		// 	TextReader reader = new TextReader(in, CharEncoding.UTF_8);
+		// 	String line = null;
+		// 	while(StringUtils.isNotBlank(line=reader.read())) {
+		// 		String[] split = line.split("#");
+		// 		String[] words = split[1].split("\\s+");
+		// 		for(String word:words) {
+		// 			duoyinzi.put(word, split[0]);
+		// 			if(word.length()>duoyinziMax) {
+		// 				duoyinziMax = word.length();
+		// 			}
+		// 		}
+		// 	}
+		// 	reader.close();
+		// 	log.info("duoyinzi words: "+duoyinzi.size()+", max length: "+duoyinziMax);
+		// } catch (Exception e) {
+		// 	log.warn("fail to load duoyinzi.txt: "+e.getMessage());
+		// }
 	}
 }

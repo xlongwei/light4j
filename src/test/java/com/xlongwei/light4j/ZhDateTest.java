@@ -3,12 +3,12 @@ package com.xlongwei.light4j;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.StringTokenizer;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.xlongwei.light4j.util.DateUtil;
+import com.xlongwei.light4j.util.PinyinUtil;
 import com.xlongwei.light4j.util.ZhDate;
 
 /**
@@ -20,10 +20,26 @@ public class ZhDateTest {
 	public static boolean True = true, False = false;
 
 	@Test public void validate() {
-		StringTokenizer st = new StringTokenizer("i like you, and you like me. is it right?");
-		while(st.hasMoreTokens()) {
-			System.out.println(st.nextToken());
+		Assert.assertTrue(ZhDate.validate(1900, 11, 1, False));
+		Assert.assertTrue(ZhDate.validate(1900, 11, 29, False));
+		Assert.assertTrue(ZhDate.validate(1900, 12, 30, False));
+		Assert.assertTrue(ZhDate.validate(2001, 12, 29, False));
+		Assert.assertTrue(ZhDate.validate(1909, 2, 29, True));
+		Assert.assertTrue(ZhDate.validate(1933, 5, 30, False));
+		Assert.assertFalse(ZhDate.validate(1909, 1, 29, True));
+		Assert.assertFalse(ZhDate.validate(1909, 2, 30, True));
+		Assert.assertFalse(ZhDate.validate(2100, 12, 29, True));
+		Assert.assertTrue(ZhDate.validate(2100, 12, 29, False));
+		Assert.assertFalse(ZhDate.validate(2100, 12, 30, True));
+	}
+
+	@Test public void pinyin() throws Exception {
+		String[] strs={"重庆很重要","音乐很快乐","重要的事情优先做","不重要"};
+		for(String str:strs){
+			System.out.println(Arrays.toString(PinyinUtil.getPinyin(str,0,0,0)));
 		}
+		System.out.println(Arrays.toString("abc中英文".split("")));
+		System.out.println(Arrays.toString(PinyinUtil.getPinyin('重', 2, 0, 0)));
 	}
 	
 	@Test public void decode() {
