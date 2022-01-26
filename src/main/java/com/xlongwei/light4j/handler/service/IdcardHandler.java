@@ -20,6 +20,7 @@ import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
 import com.xlongwei.light4j.util.IdCardUtil;
 import com.xlongwei.light4j.util.JsonUtil;
+import com.xlongwei.light4j.util.NumberUtil;
 import com.xlongwei.light4j.util.JsonUtil.JsonBuilder;
 import com.xlongwei.light4j.util.PinyinUtil;
 import com.xlongwei.light4j.util.StringUtil;
@@ -134,10 +135,15 @@ public class IdcardHandler extends AbstractHandler {
 	}
 	
 	public void area(HttpServerExchange exchange) throws Exception {
-		String area = HandlerUtil.getParam(exchange, "area");
-		Set<String> areas = new LinkedHashSet<String>(IdCardUtil.areas(area));
-		if(areas.size() > 0) {
-			HandlerUtil.setResp(exchange, StringUtil.params("area", StringUtil.join(areas, null, null, null)));
+		boolean children = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "children"), false);
+		if(children){
+			areas(exchange);
+		}else{
+			String area = HandlerUtil.getParam(exchange, "area");
+			Set<String> areas = new LinkedHashSet<String>(IdCardUtil.areas(area));
+			if(areas.size() > 0) {
+				HandlerUtil.setResp(exchange, StringUtil.params("area", StringUtil.join(areas, null, null, null)));
+			}
 		}
 	}
 	
@@ -172,10 +178,8 @@ public class IdcardHandler extends AbstractHandler {
 				JSONArray array = JsonUtil.parseNew(string).getJSONArray("Idcard[]");
 				map = new LinkedHashMap<>();
 				for(int i=0,s=array==null ? 0 : array.size();i<s;i++){
-					map.put(array.getJSONObject(i).getString("code").substring(0, 4),array.getJSONObject(i).getString("name"));
-				}
-				if(map.isEmpty()){
-					map.put(area+"00", "北京市");
+					String code = array.getJSONObject(i).getString("code");
+					if(!code.endsWith("0000") || s==1) map.put(code.substring(0, 4),array.getJSONObject(i).getString("name"));
 				}
 			}else{
 				map = IdCardUtil.areas.entrySet().stream()
