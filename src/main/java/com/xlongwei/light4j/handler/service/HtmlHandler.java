@@ -10,6 +10,7 @@ import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
 import org.apache.commons.codec.binary.Base64;
@@ -39,7 +40,6 @@ import io.undertow.server.handlers.cache.LRUCache;
 import io.undertow.util.ObjectPool;
 import io.undertow.util.PooledObject;
 import io.undertow.util.SimpleObjectPool;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -54,8 +54,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @SuppressWarnings({ "unchecked" })
 public class HtmlHandler extends AbstractHandler {
+	static {
+		System.setProperty("nashorn.args", "-strict --no-java --no-syntax-extensions");
+	}
 	private static final ObjectPool<ScriptEngine> POOL = new SimpleObjectPool<ScriptEngine>(
-			NumberUtil.parseInt(RedisConfig.get("script.poolSize"), 2), () -> new NashornScriptEngineFactory().getScriptEngine("-strict", "--no-java", "--no-syntax-extensions"),
+			NumberUtil.parseInt(RedisConfig.get("script.poolSize"), 2), () -> new ScriptEngineManager().getEngineByName("nashorn"),
 			ScriptEngine::getContext, ScriptEngine::getContext);
 	private static final LRUCache<String, CompiledScript> SCRIPTS = new LRUCache<>(128, -1);
 

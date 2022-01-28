@@ -324,12 +324,12 @@ public class HandlerUtil {
 			if(!StringUtil.splitContains(ipsConfig.getString("whites"), ip)) {
 				if(!StringUtil.splitContains(ipsConfig.getString("frees"), name)) {
 					AtomicInteger counter = ipsCounter.get(ip);
+					int count = counter==null ? 1 : counter.incrementAndGet();
+					ipsConfigLogger.debug("ip={} count={}", ip, count);
 					if(counter==null) {
 						ipsCounter.put(ip, new AtomicInteger(1));
 					}else {
-						int count = counter.getAndIncrement();
 						int limits = ipsConfig.getIntValue("limits");
-						ipsConfigLogger.debug("ip={} count={}", ip, count);
 						if(limits>0 && count>=limits) {
 							if(count%100 == 0) {
 								log.info("ipsConfig ban ip={} count={}", ip, count);
@@ -337,7 +337,11 @@ public class HandlerUtil {
 							return false;
 						}
 					}
+				}else {
+					ipsConfigLogger.debug("{} get frees", ip);
 				}
+			}else {
+				ipsConfigLogger.debug("{} in whites", ip);
 			}
 		}
 		return true;

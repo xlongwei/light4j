@@ -78,3 +78,5 @@ Content-Type: application/json
     # ?area=5116
 ###
 {{host}}/service/idcard/gen
+### 1+1
+{{host}}/service/html/jsEval?data={}&js=1%2B1

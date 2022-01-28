@@ -7,6 +7,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.PinyinHelper2;
 import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
 import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
 import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
@@ -141,7 +142,7 @@ public class PinyinUtil {
 			HanyuPinyinOutputFormat outputFormat = new HanyuPinyinOutputFormat();
 			outputFormat.setToneType(toneType==1?HanyuPinyinToneType.WITHOUT_TONE:(toneType==2?HanyuPinyinToneType.WITH_TONE_NUMBER:HanyuPinyinToneType.WITH_TONE_MARK));
 			outputFormat.setVCharType(vcharType==1?HanyuPinyinVCharType.WITH_V:(vcharType==2?HanyuPinyinVCharType.WITH_U_AND_COLON:HanyuPinyinVCharType.WITH_U_UNICODE));
-			String[] split = PinyinHelper.toHanYuPinyinString(sentence, outputFormat);
+			String[] split = PinyinHelper2.toHanYuPinyinString(sentence, outputFormat);
 			if(caseType==1 || caseType==2) {
 				for(int i=0,len=split.length;i<len;i++){
 					if(caseType==1) {
