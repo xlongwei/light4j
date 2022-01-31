@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.time.DateUtils;
 
 /**
  * 农历日期转换
@@ -24,6 +25,7 @@ public class ZhDate {
 	 */
 	public static ZhDate fromDate(Date dt) {
 		try {
+			dt = DateUtils.truncate(dt, Calendar.DATE);
 			Calendar c = Calendar.getInstance();
 			c.setTime(dt);
 			int lunarYear = c.get(Calendar.YEAR);
