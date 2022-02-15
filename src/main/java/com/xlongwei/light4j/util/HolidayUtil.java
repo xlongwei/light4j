@@ -10,6 +10,8 @@ import java.util.Map;
 
 import com.networknt.config.Config;
 
+import org.apache.commons.lang3.time.DateUtils;
+
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateRange;
 import cn.hutool.core.date.DateTime;
@@ -119,6 +121,9 @@ public class HolidayUtil {
 			yearMonth = chinese.substring(chinese.indexOf('月')-1);
 			remark = lularFestivals.get(yearMonth);//农历节日
 			if (remark != null) return remark;
+			if ("腊月二十九".equals(yearMonth) && Holiday.春节 == guessHoliday(DateUtils.addDays(day, 1))) {
+				return "除夕";// 2022-01-31，通常除夕已经法定放假了，datetime/info不会走到这
+			}
 			String term = SolarTerms.getTerm(day); //24节气
 			if (term != null && term.length() > 0) return term;
 		}

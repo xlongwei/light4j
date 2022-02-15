@@ -65,6 +65,7 @@ public class HolidayUtilTest {
 		assertEquals("中小学安全教育日", HolidayUtil.guessRemark(DateUtil.parse("2021-03-29")));
 		assertEquals("七夕节", HolidayUtil.guessRemark(DateUtil.parse("1968-08-30")));
 		assertEquals("七夕节", HolidayUtil.guessRemark(DateUtil.parse("1968-07-31")));
+		assertEquals("除夕", HolidayUtil.guessRemark(DateUtil.parse("2022-01-31")));
 	}
 
 	@Test public void test() throws Exception {
