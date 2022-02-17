@@ -44,5 +44,10 @@ public class DesHandler extends AbstractHandler {
 			HandlerUtil.setResp(exchange, map);
 		}
 	}
+	
+	public void pwcheck(HttpServerExchange exchange) throws Exception {
+		String password = HandlerUtil.getParam(exchange, "password");
+		HandlerUtil.setResp(exchange, DesUtil.pwcheck(password));
+	}
 
 }

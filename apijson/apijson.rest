@@ -80,3 +80,5 @@ Content-Type: application/json
 {{host}}/service/idcard/gen
 ### 1+1
 {{host}}/service/html/jsEval?data={}&js=1%2B1
+### pwcheck
+{{host}}/service/des/pwcheck?password=admin
