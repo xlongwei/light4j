@@ -33,6 +33,7 @@ public class SqlInsert {
 	private List<Type> types = new LinkedList<>();
 	private String table;
 	private int batchSize = 100;//批量insert，数据太多时生成多条sql
+	private Boolean ignoreReplace = null;//true=ignore false=replace
 	private List<String> sqls = new LinkedList<>();
 	public static SqlInsert of(String table, String ... columns) { return new SqlInsert(table).addColumns(columns); }
 	public SqlInsert(String table) { this.table = table; }
@@ -64,7 +65,11 @@ public class SqlInsert {
 		if(columns.size()==0 || (values.size()==0 && values2.size()==0)) {
 			return null;
 		}
-		StringBuilder sqlInsert = new StringBuilder("insert into "+table);
+		StringBuilder sqlInsert = new StringBuilder();
+		if(ignoreReplace==null) sqlInsert.append("insert into ");
+		else if(ignoreReplace) sqlInsert.append("insert ignore ");
+		else sqlInsert.append("replace into ");
+		sqlInsert.append(table);
 		sqlInsert.append("(");
 		sqlInsert.append(StringUtil.join(columns, null, null, ","));
 		sqlInsert.append(") values ");
@@ -97,12 +102,22 @@ public class SqlInsert {
 	public int size() {
 		return values.isEmpty() ? values2.size() : 1;
 	}
-	public void clear() {
+	public SqlInsert clear() {
 		values.clear();
 		values2.clear();
+		return this;
 	}
-	public void batch(int batchSize) {
+	public SqlInsert batch(int batchSize) {
 		this.batchSize = batchSize<1 ? 1 : batchSize;
+		return this;
+	}
+	public SqlInsert ignore(boolean ignore) {
+		ignoreReplace = ignore ? Boolean.TRUE : null;
+		return this;
+	}
+	public SqlInsert replace(boolean replace) {
+		ignoreReplace = replace ? Boolean.FALSE : null;
+		return this;
 	}
 	public List<String> sqls(){
 		if(!values2.isEmpty()) {

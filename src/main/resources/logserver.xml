@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="false" scanPeriod="5 seconds" debug="false">
+    <contextName>${contextName:-light4j}</contextName>
+    <property name="logLevel" value="${logLevel:-INFO}" />
+
+    <appender name="SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
+        <RemoteHost>logserver</RemoteHost>
+        <Port>6000</Port>
+        <QueueSize>1024</QueueSize>
+        <ReconnectionDelay>10000</ReconnectionDelay>
+        <IncludeCallerData>false</IncludeCallerData>
+    </appender>
+    <appender name="ASYNC_SOCKET" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="SOCKET" />
+        <IncludeCallerData>${includeCallerData:-true}</IncludeCallerData>
+    </appender>
+
+    <logger name="jdbc.sqlonly" level="${log4jdbc.sqlonly:-off}" />
+    <logger name="jdbc.sqltiming" level="${log4jdbc.sqltiming:-error}" />
+    <logger name="jdbc.audit" level="${log4jdbc.audit:-off}" />
+    <logger name="jdbc.resultset" level="${log4jdbc.resultset:-off}" />
+    <logger name="jdbc.connection" level="${log4jdbc.connection:-off}" />
+
+    <root level="${logLevel}">
+        <appender-ref ref="ASYNC_SOCKET" />
+    </root>
+</configuration>
