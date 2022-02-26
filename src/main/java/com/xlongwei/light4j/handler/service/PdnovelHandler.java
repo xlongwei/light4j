@@ -36,14 +36,15 @@ public class PdnovelHandler extends AbstractHandler {
 	public void books(HttpServerExchange exchange) throws Exception {
 		Map<String, Object> map = new HashMap<>(4);
 		JSONArray books = new JSONArray();
+		String type = HandlerUtil.getParam(exchange, "type");
+		if("merge".equals(type)) {
+			int novelid = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "novelid"), 0);
+			int volumeid = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "volumeid"), 0);
+			PdnovelUtil.merge(novelid, volumeid);
+		}
 		if(loadFromFile){
-			String type = HandlerUtil.getParam(exchange, "type");
-			if("reload".equals(type)) {
+			if("reload".equals(type) || PdnovelUtil.books.isEmpty()) {
 				PdnovelUtil.reload();
-			}else if("merge".equals(type)) {
-				int novelid = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "novelid"), 0);
-				int volumeid = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "volumeid"), 0);
-				PdnovelUtil.merge(novelid, volumeid);
 			}
 			for(Entry<Integer, Book> entry : PdnovelUtil.books.entrySet()) {
 				Integer novelid = entry.getKey();

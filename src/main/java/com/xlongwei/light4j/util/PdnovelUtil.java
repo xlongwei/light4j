@@ -25,10 +25,6 @@ public class PdnovelUtil {
 	public static final Map<Integer, Book> books = new LinkedHashMap<>();
 	private static final Pattern chapterNamePattern = Pattern.compile("[^']+'([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)','([^',]*)'\\);");
 
-	static {
-		reload();
-	}
-
 	public static void reload() {
 		String pdnovel = UploadUtil.SAVE + "pdnovel";
 		log.info("pdnovel dir: {}", pdnovel);
