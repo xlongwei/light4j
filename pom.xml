@@ -99,11 +99,11 @@
             <artifactId>specification</artifactId>
             <version>${version.light-4j}</version>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>redis-manager</artifactId>
             <version>${version.light-4j}</version>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -175,7 +175,7 @@
 		  <artifactId>jodconverter</artifactId>
 		  <version>${version.jodconverter}</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 		   <groupId>net.sf.jodreports</groupId>
 		   <artifactId>jodreports</artifactId>
 		   <version>${version.jodreports}</version>
@@ -184,7 +184,7 @@
 		  <groupId>xom</groupId>
 		  <artifactId>xom</artifactId>
 		  <version>${version.xom}</version>
-		</dependency>		
+		</dependency>		 -->
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
