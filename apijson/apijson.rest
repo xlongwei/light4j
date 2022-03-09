@@ -82,3 +82,10 @@ Content-Type: application/json
 {{host}}/service/html/jsEval?data={}&js=1%2B1
 ### pwcheck
 {{host}}/service/des/pwcheck?password=admin
+### sequence YmdHMS %在url中需转码为%25，格式化参数为next,new Date()
+POST {{host}}/service/sequence/next?name=test&format=%252$tY%252$tm%252$td%2506d
+### sequence post时json值不必转码，name可以根据日期变动，达到每天都从1开始的目的；也可以调update接口置零
+POST {{host}}/service/sequence/next?name=20220309
+Content-Type: application/json
+
+{"format":"QZ%2$tY%2$tm%2$td%06d"}

@@ -1,6 +1,7 @@
 package com.xlongwei.light4j.handler.service;
 
 import java.util.Collections;
+import java.util.Date;
 
 import com.networknt.utility.StringUtils;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
@@ -23,6 +24,16 @@ public class SequenceHandler extends AbstractHandler {
 			HandlerUtil.setResp(exchange, Collections.singletonMap("next", next));
 		}
 		long next = mysql ? MySqlUtil.Sequence.next(sequence) : RedisConfig.Sequence.next(sequence);
+		String format = HandlerUtil.getParam(exchange, "format");
+		if (StringUtils.isNotBlank(format)) {
+			try {
+				HandlerUtil.setResp(exchange,
+						Collections.singletonMap("next", String.format(format, next, new Date())));
+				return;
+			} catch (Exception e) {
+				// ignore
+			}
+		}
 		HandlerUtil.setResp(exchange, Collections.singletonMap("next", next));
 	}
 	
