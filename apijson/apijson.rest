@@ -69,6 +69,8 @@ Authorization: Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tO
 ###
 {{host}}/service/validate?type=idArea&value=513031
 ###
+{{host}}/service/bankCard?bankCardNumber=451811549678
+###
 POST {{host}}/service/apijson/get
 Content-Type: application/json
 

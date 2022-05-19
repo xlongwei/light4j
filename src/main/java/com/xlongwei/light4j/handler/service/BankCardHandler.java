@@ -20,6 +20,7 @@ import com.xlongwei.light4j.util.MySqlUtil;
 import com.xlongwei.light4j.util.StringUtil;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.beetl.sql.core.SQLReady;
 
 import io.undertow.server.HttpServerExchange;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BankCardHandler extends AbstractHandler {
 	static boolean loadFromFile = !DemoApplication.apijsonEnabled;//停用apijson时不从数据库加载数据
 	static Cache<String, CardInfo> cache = null;
+	static boolean cardBin = BooleanUtils.toBoolean(System.getenv("bank.cardBin"));
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		String bankCardNumber = HandlerUtil.getParam(exchange, "bankCardNumber");
@@ -60,22 +62,26 @@ public class BankCardHandler extends AbstractHandler {
 			return null;
 		}else if(loadFromFile) {
 			return BankUtil.cardInfo(bankCardNumber);
-		}else {
+		}else if(cardBin) {
 			String cardBin = BankUtil.cardBin(bankCardNumber);
 			return StringUtils.isBlank(cardBin) ? null : cache.get(cardBin, (bin) -> MySqlUtil.SQLMANAGER.executeQueryOne(new SQLReady("select cardBin,issuerCode as bankId,issuerName as bankName,cardName,cardDigits,cardType,bankCode,bankName as bankName2 from bank_card where cardBin=?", bin), CardInfo.class));
+		}else {
+			return MySqlUtil.SQLMANAGER.executeQueryOne(new SQLReady("select cardBin,issuerCode as bankId,issuerName as bankName,cardName,cardDigits,cardType,bankCode,bankName as bankName2 from bank_card where cardBin=?", bankCardNumber), CardInfo.class);
 		}
 	}
 
 	static {
 		if(loadFromFile == false) {
-			MySqlUtil.SQLMANAGER.execute(new SQLReady("select cardBin from bank_card"), CardInfo.class).forEach(cardInfo -> {
-				BankUtil.addBin(cardInfo.getCardBin());
-			});
-			cache =  Caffeine.newBuilder()
-				.expireAfterAccess(5, TimeUnit.MINUTES)
-				.maximumSize(256)
-				.build();
-			log.info("bank_card loaded");
+			if(cardBin){
+				MySqlUtil.SQLMANAGER.execute(new SQLReady("select cardBin from bank_card"), CardInfo.class).forEach(cardInfo -> {
+					BankUtil.addBin(cardInfo.getCardBin());
+				});
+				cache =  Caffeine.newBuilder()
+					.expireAfterAccess(5, TimeUnit.MINUTES)
+					.maximumSize(256)
+					.build();
+			}
+			log.info("bank_card loaded cardBin={}", cardBin);
 		}else {
 			try(InputStream inputStream = new BufferedInputStream(ConfigUtil.stream("cardBin.txt"))) {
 				IOUtils.lineIterator(inputStream, StandardCharsets.UTF_8).forEachRemaining(line -> BankUtil.addData(new CardInfo().rowIn(line)));
