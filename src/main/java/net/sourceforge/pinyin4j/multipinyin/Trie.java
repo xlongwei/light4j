@@ -1,8 +1,8 @@
 package net.sourceforge.pinyin4j.multipinyin;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by 刘一波 on 16/3/4.
@@ -15,6 +15,14 @@ public class Trie {
   private String pinyin;//本节点的拼音
 
   private Trie nextTire;//下一个节点,也就是匹配下一个字符
+
+  static int news,puts,maps=1;//new和put计数
+
+  public Trie(){
+      if(news++==0){
+          values=new HashMap<>(20904);//根节点减少扩容次数
+      }
+  }
 
   public String getPinyin() {
     return pinyin;
@@ -52,6 +60,8 @@ public class Trie {
         trie.pinyin = keyAndValue[1];
         put(keyAndValue[0], trie);
       }
+      //load pinyin news=20904,maps=1,puts=20903
+      System.out.println("load pinyin news="+news+",maps="+maps+",puts="+puts);
     } finally {
       if (inputStreamReader != null) inputStreamReader.close();
       if (bufferedReader != null) bufferedReader.close();
@@ -108,6 +118,8 @@ public class Trie {
 
         }
       }
+      //load multi pinyin news=71081,maps=20543,puts=50537
+      System.out.println("load multi pinyin news="+news+",maps="+maps+",puts="+puts);
     } finally {
       if (inputStreamReader != null) inputStreamReader.close();
       if (bufferedReader != null) bufferedReader.close();
@@ -133,7 +145,8 @@ public class Trie {
   }
 
   public void put(String s, Trie trie) {
-      if(values==null) values=new ConcurrentHashMap<>();
+      if(values==null) { values=new HashMap<>(4); maps++; }
     values.put(s, trie);
+    puts++;
   }
 }
