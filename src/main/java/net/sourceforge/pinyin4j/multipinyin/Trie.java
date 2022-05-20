@@ -3,6 +3,7 @@ package net.sourceforge.pinyin4j.multipinyin;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * Created by 刘一波 on 16/3/4.
@@ -12,7 +13,7 @@ public class Trie {
 
   private Map<String, Trie> values = null;//本节点包含的值
 
-  private String pinyin;//本节点的拼音
+  private String[] array;
 
   private Trie nextTire;//下一个节点,也就是匹配下一个字符
 
@@ -25,11 +26,18 @@ public class Trie {
   }
 
   public String getPinyin() {
-    return pinyin;
+    StringJoiner joiner = new StringJoiner(",", "(", ")");
+    for(int i=0;i<array.length;i+=2) joiner.add(array[i]+array[i+1]);
+    return joiner.toString();
   }
 
   public void setPinyin(String pinyin) {
-    this.pinyin = pinyin;
+    String[] split=pinyin.substring(1, pinyin.length()-1).split(",");
+    array=new String[split.length*2];
+    for(int i=0;i<split.length;i++){
+      array[2*i]=split[i].substring(0, split[i].length()-1).intern();//拼音总数只有几百个
+      array[2*i+1]=split[i].substring(split[i].length()-1).intern();//声调数字只有几个
+    }
   }
 
   public Trie getNextTire() {
@@ -57,7 +65,7 @@ public class Trie {
         String[] keyAndValue = s.split(" ");
         if (keyAndValue.length != 2) continue;
         Trie trie = new Trie();
-        trie.pinyin = keyAndValue[1];
+        trie.setPinyin(keyAndValue[1]);
         put(keyAndValue[0], trie);
       }
       //load pinyin news=20904,maps=1,puts=20903
@@ -100,7 +108,7 @@ public class Trie {
           Trie trie = trieParent.getNextTire();//获取此对象的下一个
 
           if (keys.length - 1 == i) {//最后一个字了,需要把拼音写进去
-            trieParent.pinyin = value;
+            trieParent.setPinyin(value);
             break;//此行其实并没有意义
           }
 
