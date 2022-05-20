@@ -41,28 +41,13 @@ public class PinyinUtil {
 		String zhChStr = Character.toString(zhCh);
 		if (StringUtil.isChinese(zhCh)) {
 			try {
-				return PinyinHelper.toHanyuPinyinStringArray(zhCh, format)[0];
+				return PinyinHelper2.toHanYuPinyinString(zhChStr, format)[0];
 			} catch (Exception e) {
 			}
 		}
 		return zhChStr;
 	}
 
-	/**
-	 * return pinyin header of zhStr, eg: zg for 中国
-	 */
-	public static String getPinyinHeader(String zhStr) {
-		StringBuilder pinyin = new StringBuilder();
-		char[] zhCharArray = zhStr.toCharArray();
-		for (char zhChar : zhCharArray) {
-			String str = getPinyin(zhChar);
-			if (str.length() > 0) {
-				pinyin.append(str.charAt(0));
-			}
-		}
-		return pinyin.toString();
-	}
-	
 	/** 处理单子拼音，多音字有多个 */
 	public static String[] getPinyin(char ch, HanyuPinyinToneType toneType, HanyuPinyinVCharType vcharType) {
 		try {
@@ -71,7 +56,7 @@ public class PinyinUtil {
 				HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
 				format.setToneType(toneType!=null ? toneType : HanyuPinyinToneType.WITHOUT_TONE);
 				format.setVCharType(vcharType!=null ? vcharType : HanyuPinyinVCharType.WITH_V);
-				String[] pinyin = PinyinHelper.toHanyuPinyinStringArray(ch, format);
+				String[] pinyin = PinyinHelper2.toHanyuPinyinStringArray(ch, format);
 				if(pinyin!=null && pinyin.length>0) {
 					return pinyin;
 				}

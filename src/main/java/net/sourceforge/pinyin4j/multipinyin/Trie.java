@@ -27,16 +27,19 @@ public class Trie {
 
   public String getPinyin() {
     StringJoiner joiner = new StringJoiner(",", "(", ")");
-    for(int i=0;i<array.length;i+=2) joiner.add(array[i]+array[i+1]);
-    return joiner.toString();
+    for(int i=0;i<array.length;i++) joiner.add(array[i]);
+    return joiner.toString();//这里可选抛异常，从而禁用PinyinHelper，只使用PinyinHelper2就够了
+  }
+
+  public String[] getPinyinArray() {
+    return array;//省掉joiner和parsePinyinString
   }
 
   public void setPinyin(String pinyin) {
     String[] split=pinyin.substring(1, pinyin.length()-1).split(",");
-    array=new String[split.length*2];
+    array=new String[split.length];
     for(int i=0;i<split.length;i++){
-      array[2*i]=split[i].substring(0, split[i].length()-1).intern();//拼音总数只有几百个
-      array[2*i+1]=split[i].substring(split[i].length()-1).intern();//声调数字只有几个
+      array[i]=split[i].intern();//拼音总数只有几百个，再组合5种声调约两千个
     }
   }
 
