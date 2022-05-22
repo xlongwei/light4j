@@ -400,6 +400,13 @@ public final class FileUtil {
 		}
 		return lines;
 	}
+
+	public static void handleLines(InputStream inputStream, String charsetName, LineHandler lineHandler) {
+		TextReader reader = new TextReader();
+		reader.open(inputStream, charsetName==null?defaultCharsetName:charsetName);
+		reader.handleLines(lineHandler);
+		reader.close();
+	}
 	
 	/** 读取二进制文件到对象 */
 	public static Object[] readObject(File file) {
