@@ -6,6 +6,8 @@ import com.xlongwei.light4j.util.PinyinUtil;
 import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.WeixinUtil.AbstractMessageHandler.AbstractTextHandler;
 
+import net.sourceforge.pinyin4j.PinyinHelper2;
+
 /**
  * 获取拼音
  * @author xlongwei
@@ -16,9 +18,9 @@ public class PinyinHandler extends AbstractTextHandler {
 
 	@Override
 	public String handle(String content) {
-		if(content.length()==1 && StringUtil.isChinese(StringUtil.toDBC(content).charAt(0))) {
+		if(PinyinHelper2.hasPinyin(content)) {
 			StringBuilder answer = new StringBuilder();
-			String[] py = PinyinUtil.getPinyin(content.charAt(0), 0, 0, 0);
+			String[] py = PinyinUtil.getPinyin(content, 0, 0, 0);
 			answer.append(content+"  ");
 			answer.append(StringUtil.join(Arrays.asList(py), null, null, ", "));
 			return answer.toString();

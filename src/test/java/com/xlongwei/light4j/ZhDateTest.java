@@ -39,7 +39,7 @@ public class ZhDateTest {
 			System.out.println(Arrays.toString(PinyinUtil.getPinyin(str,0,0,0)));
 		}
 		System.out.println(Arrays.toString("abc中英文".split("")));
-		System.out.println(Arrays.toString(PinyinUtil.getPinyin('重', 2, 0, 0)));
+		System.out.println(Arrays.toString(PinyinUtil.getPinyin("重", 2, 0, 0)));
 	}
 	
 	@Test public void decode() {
