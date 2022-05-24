@@ -47,7 +47,7 @@ public class PinyinHandler extends AbstractHandler {
 				List<String[]> symbols = new LinkedList<>();
 				for(String sentence : EcdictUtil.sentences(text)) {
 					if(StringUtil.isHasChinese(sentence)) {
-						List<Tuple<String, String>> list = PinyinHelper2.list(sentence);
+						List<Tuple<String, Integer>> list = PinyinHelper2.list(sentence);
 						pinyin = PinyinUtil.getPinyin(sentence, caseType, toneType, vcharType);
 						for(int i=0,j=pinyin.length;i<j;i++) {
 							symbols.add(new String[] {list.get(i).first, pinyin[i]});

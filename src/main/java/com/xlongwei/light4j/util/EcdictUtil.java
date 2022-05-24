@@ -26,11 +26,11 @@ public class EcdictUtil {
 		List<String> sentences = new ArrayList<>();
 		int cur = 0, len = sentence.length();
 		next: for(;cur < len;) {
-			char c = sentence.charAt(cur);
-			boolean zh = StringUtil.isChinese(c), en = CharUtil.isLetter(c);
-			for(int pos = cur+1; pos < len; pos++) {
-				c = sentence.charAt(pos);
-				boolean z = StringUtil.isChinese(c), e = CharUtil.isLetter(c);
+			int codePoint = sentence.codePointAt(cur);
+			boolean zh = StringUtil.isChinese(codePoint), en = Character.isBmpCodePoint(codePoint)&&CharUtil.isLetter((char)codePoint);
+			for(int pos = sentence.offsetByCodePoints(cur, 1); pos < len; pos++) {
+				codePoint = sentence.codePointAt(pos);
+				boolean z = StringUtil.isChinese(codePoint), e = Character.isBmpCodePoint(codePoint)&&CharUtil.isLetter((char)codePoint);
 				boolean change = (!zh && !en && (z || e)) //非中非英=》中或英
 						|| (zh != z && en != e);//中或英=》英或中
 				if(change) {

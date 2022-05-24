@@ -18,8 +18,8 @@ import com.github.houbb.pinyin.support.style.PinyinToneStyles;
 import com.github.houbb.pinyin.support.tone.PinyinTones;
 import com.github.houbb.pinyin.util.PinyinHelper;
 import com.networknt.utility.Tuple;
+import com.xlongwei.light4j.util.EcdictUtil;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 import cn.hutool.core.io.FileUtil;
@@ -68,7 +68,7 @@ public class PinyinTest {
                 writer.println(String.format("miss %s: %s=%s %s <> null %s", miss, str, hex,
                         pinyinStr, blockStr));
                 missBlocks.get(block).first.incrementAndGet();
-                hex = StringUtils.defaultIfBlank(PinyinHelper2.tsMap.get(str), hex);
+                // hex = StringUtils.defaultIfBlank(PinyinHelper2.tsMap.get(str), hex);
                 charTxt.println(hex + " (" + PinyinToneStyles.numLast().style(list.get(0)) + ")");
             } else {
                 if (array.length != list.size()) {
@@ -105,8 +105,7 @@ public class PinyinTest {
         charTxt.close();
         fans.entrySet().stream().filter(entry -> entry.getValue().get() > 1).forEach(entry -> {
             String ch = entry.getKey();
-            String hex = StringUtils.defaultIfBlank(PinyinHelper2.tsMap.get(ch),
-                    Integer.toHexString(ch.codePointAt(0)).toUpperCase());
+            String hex = Integer.toHexString(PinyinHelper2.tsMap.getOrDefault(ch, ch.codePointAt(0))).toUpperCase();
             log.info("fan={} count={}", hex, entry.getValue());
         });
         // miss=21163 diff=9426 fan=4057 => miss=0 diff=15130 fan=4057
@@ -170,11 +169,11 @@ public class PinyinTest {
     @Test
     public void codepoint() throws Exception {
         String str = "𠀛𠀝重慶𠐊〇";//𠐊=2040A=2B74B
-        List<Tuple<String, String>> list = PinyinHelper2.list(str);
-        for (Tuple<String, String> tuple : list) {
+        List<Tuple<String, Integer>> list = PinyinHelper2.list(str);
+        for (Tuple<String, Integer> tuple : list) {
             System.out.println(tuple.first + "=" + tuple.second+" hasPinyin="+PinyinHelper2.hasPinyin(tuple.first));
         }
         System.out.println(String.join(StringUtil.BLANK, PinyinHelper2.toHanYuPinyinString(str, null)));
-        System.out.println(PinyinHelper2.tsMap.get("𠐊"));
+        System.out.println(EcdictUtil.sentences("abc"+str+"def"));
     }
 }

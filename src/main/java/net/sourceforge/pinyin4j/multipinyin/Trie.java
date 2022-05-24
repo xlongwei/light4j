@@ -11,7 +11,7 @@ import java.util.StringJoiner;
  */
 public class Trie {
 
-  private Map<String, Trie> values = null;//本节点包含的值
+  private Map<Integer, Trie> values = null;//本节点包含的值
 
   private String[] array;
 
@@ -61,7 +61,7 @@ public class Trie {
     BufferedReader bufferedReader = null;
     InputStreamReader inputStreamReader = null;
     try {
-      inputStreamReader = new InputStreamReader(inStream);
+      inputStreamReader = new InputStreamReader(inStream, "UTF-8");
       bufferedReader = new BufferedReader(inputStreamReader);
       String s;
       while ((s = bufferedReader.readLine()) != null) {
@@ -69,7 +69,7 @@ public class Trie {
         if (keyAndValue.length != 2) continue;
         Trie trie = new Trie();
         trie.setPinyin(keyAndValue[1]);
-        put(keyAndValue[0], trie);
+        put(Integer.parseInt(keyAndValue[0],16), trie);
       }
       //load pinyin news=20904,maps=1,puts=20903
       System.out.println("load pinyin news="+news+",maps="+maps+",puts="+puts);
@@ -88,7 +88,7 @@ public class Trie {
     BufferedReader bufferedReader = null;
     InputStreamReader inputStreamReader = null;
     try {
-      inputStreamReader = new InputStreamReader(inStream);
+      inputStreamReader = new InputStreamReader(inStream, "UTF-8");
       bufferedReader = new BufferedReader(inputStreamReader);
       String s;
       while ((s = bufferedReader.readLine()) != null) {
@@ -101,12 +101,12 @@ public class Trie {
 
         Trie currentTrie = this;
         for (int i = 0; i < keys.length; i++) {
-          String hexString = Integer.toHexString(keys[i]).toUpperCase();
+          int codePoint = keys[i];
 
-          Trie trieParent = currentTrie.get(hexString);
+          Trie trieParent = currentTrie.get(codePoint);
           if (trieParent == null) {//如果没有此值,直接put进去一个空对象
-            currentTrie.put(hexString, new Trie());
-            trieParent = currentTrie.get(hexString);
+            currentTrie.put(codePoint, new Trie());
+            trieParent = currentTrie.get(codePoint);
           }
           Trie trie = trieParent.getNextTire();//获取此对象的下一个
 
@@ -120,7 +120,8 @@ public class Trie {
               //不是最后一个字,写入这个字的nextTrie,并匹配下一个
               Trie subTrie = new Trie();
               trieParent.setNextTire(subTrie);
-              subTrie.put(Integer.toHexString(keys[i + 1]).toUpperCase(), new Trie());
+              codePoint = keys[i+1];
+              subTrie.put(codePoint, new Trie());
               currentTrie = subTrie;
             }
           } else {
@@ -150,14 +151,18 @@ public class Trie {
     }
   }
 
-  public Trie get(String hexString) {
+  public Trie get(Integer codePoint) {
       if(values==null) return null;
-    return values.get(hexString);
+    return values.get(codePoint);
   }
 
-  public void put(String s, Trie trie) {
+  public Trie get(String hexString) {//兼容PinyinHelper
+    return get(Integer.parseInt(hexString, 16));
+  }
+
+  public void put(Integer codePoint, Trie trie) {
       if(values==null) { values=new HashMap<>(4); maps++; }
-    values.put(s, trie);
+    values.put(codePoint, trie);
     puts++;
   }
 }
