@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.usermodel.Range;
@@ -61,6 +62,8 @@ public class WordUtil {
 				}
 			}
 			if(docx != null) {
+				DocxUtil.replaceMap(docx, replaces.entrySet().stream()
+						.collect(Collectors.toMap(entry -> "{" + entry.getKey() + "}", entry -> entry.getValue())));
 				replacex(docx, replaces);
 				tablesx(docx, replaces);
 				tablesx(docx, tables);

@@ -91,3 +91,7 @@ POST {{host}}/service/sequence/next?name=20220309
 Content-Type: application/json
 
 {"format":"QZ%2$tY%2$tm%2$td%06d"}
+### 使用http://s.xlongwei.com/uploads/已有的模板时，可以减少下载模板次数从而提高doc2fill的性能
+POST {{host}}/service/doc/test
+
+url=http://s.xlongwei.com/uploads/docs/doc2fill.docx

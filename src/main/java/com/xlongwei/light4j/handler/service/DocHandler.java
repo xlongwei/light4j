@@ -135,7 +135,10 @@ public class DocHandler extends AbstractHandler {
 		File target = new File(UploadUtil.SAVE_TEMP, UploadUtil.path("word", IdWorker.getId()+".doc"));
 		String url = HandlerUtil.getParam(exchange, "url");
 		if(StringUtil.isUrl(url) && ArrayUtils.contains(exts, FileUtil.getFileExt(url))) {
-			FileUtil.down(url, target);
+			if(url.startsWith(UploadUtil.URL)) {
+				target = new File(UploadUtil.SAVE, url.substring(UploadUtil.URL.length()));
+			}
+			if(!target.exists()) FileUtil.down(url, target);
 		}
 		if(!target.exists()) {
 			FormValue doc = HandlerUtil.getFile(exchange, "doc");
