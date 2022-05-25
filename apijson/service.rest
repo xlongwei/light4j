@@ -1,0 +1,46 @@
+@host=http://localhost:8080
+@doc={{host}}/service/doc
+@url=http://s.xlongwei.com/uploads/docs/doc2fill.docx
+### form提交
+POST {{doc}}/toFill?url={{url}}
+Content-Type: application/x-www-form-urlencoded
+
+replaces={"realName":"姓名"}
+&pictures={"picture1":"http://s.xlongwei.com/uploads/img/avatar/x-64.png"}
+&tables=[[{"realName":"姓名1","userName":"用户名"},{"realName":"姓名2"}]]
+### json提交
+POST {{doc}}/toFill?url={{url}}
+Content-Type: application/json
+
+{"replaces":{"realName":"姓名"}
+,"pictures":{"picture1":"http://s.xlongwei.com/uploads/img/avatar/x-64.png"}
+,"tables":[[{"realName":"姓名","userName":"用户名"},{"realName":"姓名"}]]
+}
+### file上传（不传url）
+POST {{doc}}/toFill
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="doc"; filename="doc2fill.docx"
+Content-Type: image/png
+
+< ./doc2fill.docx
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="replaces"
+
+{"realName":"姓名"}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="pictures"
+
+{"picture1":"http://s.xlongwei.com/uploads/img/avatar/x-64.png"}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="tables"
+
+[[{"realName":"姓名","userName":"用户名"},{"realName":"姓名"}]]
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+### 转换文档时需切换host
+# @host=https://api.xlongwei.com
+### doc2pdf
+{{doc}}/toPdf?url={{url}}
+### doc2html
+{{doc}}/toHtml?url={{url}}

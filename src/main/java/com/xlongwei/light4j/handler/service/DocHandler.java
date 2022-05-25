@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.ArrayUtils;
 
+import com.alibaba.fastjson.JSON;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
 import com.xlongwei.light4j.util.FileUtil;
 import com.xlongwei.light4j.util.HandlerUtil;
@@ -105,9 +106,9 @@ public class DocHandler extends AbstractHandler {
 
 	@SuppressWarnings("unchecked")
 	private void toFill(HttpServerExchange exchange, File doc, File toFile) {
-		Map<String, String> replaces = JsonUtil.parse(HandlerUtil.getParam(exchange, "replaces"), Map.class);
-		List<List<Map<String, String>>> tables = JsonUtil.parse(HandlerUtil.getParam(exchange, "tables"), List.class);
-		Map<String, String> pictures = JsonUtil.parse(HandlerUtil.getParam(exchange, "pictures"), Map.class);
+		Map<String, String> replaces = JsonUtil.parse(getParam(exchange, "replaces"), Map.class);
+		List<List<Map<String, String>>> tables = JsonUtil.parse(getParam(exchange, "tables"), List.class);
+		Map<String, String> pictures = JsonUtil.parse(getParam(exchange, "pictures"), Map.class);
 		if(pictures!=null && pictures.size()>0) {
 			if(replaces == null) {
 				replaces = new HashMap<>(2);
@@ -131,10 +132,18 @@ public class DocHandler extends AbstractHandler {
 		WordUtil.doc2fill(doc, toFile, replaces, tables);
 	}
 
+	private String getParam(HttpServerExchange exchange, String name) {
+		Object obj = HandlerUtil.getObject(exchange, name, Object.class);
+		if(obj !=null ) {//支持json参数{"replaces":{"var":"value"}}
+			return obj instanceof String ? (String) obj : JSON.toJSONString(obj);
+		}
+		return null;
+	}
+
 	private File getDoc(HttpServerExchange exchange) throws IOException {
-		File target = new File(UploadUtil.SAVE_TEMP, UploadUtil.path("word", IdWorker.getId()+".doc"));
+		File target = new File(UploadUtil.SAVE_TEMP, UploadUtil.path("word", IdWorker.getId()+".docx"));
 		String url = HandlerUtil.getParam(exchange, "url");
-		if(StringUtil.isUrl(url) && ArrayUtils.contains(exts, FileUtil.getFileExt(url))) {
+		if(StringUtil.isUrl(url)) {
 			if(url.startsWith(UploadUtil.URL)) {
 				target = new File(UploadUtil.SAVE, url.substring(UploadUtil.URL.length()));
 			}

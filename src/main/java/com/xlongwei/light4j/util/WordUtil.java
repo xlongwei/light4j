@@ -62,11 +62,9 @@ public class WordUtil {
 				}
 			}
 			if(docx != null) {
-				DocxUtil.replaceMap(docx, replaces.entrySet().stream()
-						.collect(Collectors.toMap(entry -> "{" + entry.getKey() + "}", entry -> entry.getValue())));
+				tablesx(docx, tables);
 				replacex(docx, replaces);
 				tablesx(docx, replaces);
-				tablesx(docx, tables);
 				writex(docx, target);
 			}else if (doc != null) {
 				replace(doc, replaces);
@@ -85,7 +83,7 @@ public class WordUtil {
 			HWPFDocument document = new HWPFDocument(is);
 			log.info("read doc file: " + doc);
 			return document;
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.warn("fail to read doc file: " + doc.getAbsolutePath(), e);
 			return null;
 		}
@@ -95,7 +93,7 @@ public class WordUtil {
 			XWPFDocument document = new XWPFDocument(is);
 			log.info("read docx file: " + docx);
 			return document;
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.warn("fail to read docx file: " + docx.getAbsolutePath(), e);
 			return null;
 		}
@@ -146,6 +144,8 @@ public class WordUtil {
 	}
 	public static boolean replacex(XWPFDocument docx, Map<String, String> replaces) {
 		if (replaces != null && replaces.size() > 0) {
+			DocxUtil.replaceMap(docx, replaces.entrySet().stream().filter(entry -> !ImageUtil.isBase64(entry.getValue()))
+					.collect(Collectors.toMap(entry -> "{" + entry.getKey() + "}", entry -> entry.getValue())));
 			List<XWPFParagraph> paragraphs = docx.getParagraphs();
 			replace(paragraphs, replaces);
 			log.info("replace docx file ok");

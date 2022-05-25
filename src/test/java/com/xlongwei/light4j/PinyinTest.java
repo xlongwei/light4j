@@ -68,7 +68,8 @@ public class PinyinTest {
                 writer.println(String.format("miss %s: %s=%s %s <> null %s", miss, str, hex,
                         pinyinStr, blockStr));
                 missBlocks.get(block).first.incrementAndGet();
-                // hex = StringUtils.defaultIfBlank(PinyinHelper2.tsMap.get(str), hex);
+                Integer simpleCodePoint = PinyinHelper2.tsMap.get(str);
+                hex = simpleCodePoint==null ? hex : Integer.toHexString(simpleCodePoint).toUpperCase();
                 charTxt.println(hex + " (" + PinyinToneStyles.numLast().style(list.get(0)) + ")");
             } else {
                 if (array.length != list.size()) {
