@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
@@ -87,6 +88,10 @@ public class DocHandler extends AbstractHandler {
 			toFile = new File(UploadUtil.SAVE_TEMP, path = UploadUtil.path("fill", IdWorker.getId() + "." + FileUtil.getFileExt(doc)));
 			toFill(exchange, doc, toFile);
 			break;
+		case "base64":
+			toFile = new File(UploadUtil.SAVE_TEMP, path = UploadUtil.path("file", doc.getName()));
+			if(!toFile.exists()) FileUtil.copyFile(doc, toFile);
+			break;
 		default:
 			break;
 		}
@@ -97,7 +102,7 @@ public class DocHandler extends AbstractHandler {
 			map.put(UploadUtil.PATH, path);
 			boolean base64File = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "base64File"), false);
 			if(base64File) {
-				map.put("base64", Base64.encodeBase64String(FileUtil.readStream(toFile).toByteArray()));
+				map.put("base64", Base64.encodeBase64URLSafeString(FileUtil.readStream(toFile).toByteArray()));
 			}
 			HandlerUtil.setResp(exchange, map);
 		}
@@ -146,12 +151,21 @@ public class DocHandler extends AbstractHandler {
 		if(StringUtil.isUrl(url)) {
 			if(url.startsWith(UploadUtil.URL)) {
 				target = new File(UploadUtil.SAVE, url.substring(UploadUtil.URL.length()));
+			}else {
+				String ext = FileUtil.getFileExt(StringUtils.defaultIfBlank(HandlerUtil.getParam(exchange, "fileName"), url));
+				if(ArrayUtils.contains(exts, ext) && !FileUtil.getFileExt(target).equalsIgnoreCase(ext)) {
+					target = new File(target.getParent(), FileUtil.getFileName(target) + "." + ext);
+				}
 			}
 			if(!target.exists()) FileUtil.down(url, target);
 		}
 		if(!target.exists()) {
 			FormValue doc = HandlerUtil.getFile(exchange, "doc");
 			if(doc!=null && doc.isFileItem() && ArrayUtils.contains(exts, FileUtil.getFileExt(doc.getFileName()))) {
+				String ext = FileUtil.getFileExt(doc.getFileName());
+				if(ArrayUtils.contains(exts, ext) && !FileUtil.getFileExt(target).equalsIgnoreCase(ext)) {
+					target = new File(target.getParent(), FileUtil.getFileName(target) + "." + ext);
+				}
 				UploadUtil.save(doc.getFileItem().getInputStream(), target);
 			}
 		}
@@ -160,6 +174,11 @@ public class DocHandler extends AbstractHandler {
 			base64 = StringUtil.isBlank(base64) ? null : ImageUtil.prefixRemove(base64);
 			if(!StringUtil.isBlank(base64)) {
 				byte[] bs = Base64.decodeBase64(base64);
+				String fileName = HandlerUtil.getParam(exchange, "fileName");
+				String ext = StringUtil.isBlank(fileName) ? null : FileUtil.getFileExt(fileName);
+				if(!StringUtil.isBlank(ext) && !FileUtil.getFileExt(target).equalsIgnoreCase(ext)) {
+					target = new File(target.getParent(), FileUtil.getFileName(target) + "." + ext);
+				}
 				UploadUtil.save(new ByteArrayInputStream(bs), target);
 			}
 		}
