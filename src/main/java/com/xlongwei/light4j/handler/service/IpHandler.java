@@ -33,7 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 public class IpHandler extends AbstractHandler {
 	static DbSearcher dbSearcher = null;
 	static ThrowingFunction<String, DataBlock> dbSearch = null;
-	static boolean memorySearch = NumberUtil.parseBoolean(RedisConfig.get("ip.memorySearch"), false);
+	static boolean memorySearch = NumberUtil.parseBoolean(RedisConfig.get("ip.memorySearch"),
+			"true".equals(System.getenv("ip.memorySearch")));
 
 	public void region(HttpServerExchange exchange) throws Exception {
 		String ip = HandlerUtil.getParam(exchange, "ip");

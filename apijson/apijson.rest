@@ -101,3 +101,7 @@ POST {{host}}/service/pinyin
 text=𠀛𠀝重慶𠐊〇
 ###
 {{host}}/service/ip/region?ip=121.12.21.23
+### mobile
+{{host}}/service/mobile?mobile=1879889
+### mobile reload
+{{host}}/service/mobile?mobile=reload&memory=false
