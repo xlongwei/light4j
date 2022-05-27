@@ -17,7 +17,7 @@ import net.sourceforge.pinyin4j.multipinyin.Trie;
 
 public class PinyinHelper2 {
   static public HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
-  static public Map<String,Integer> tsMap = new HashMap<>(4189);//繁体=>简体codePoint
+  static public Map<Integer,Integer> tsMap = new HashMap<>(4189);//繁体=>简体codePoint
   static public Trie root = ChineseToPinyinResource.getInstance().getUnicodeToHanyuPinyinTable();
   static {
     defaultFormat.setToneType(HanyuPinyinToneType.WITH_TONE_MARK);
@@ -30,10 +30,11 @@ public class PinyinHelper2 {
       FileUtil.handleLines(PinyinHelper2.class.getResourceAsStream("/houbb/ts.txt"), CharsetNames.UTF_8, line->{
         String[] split = line.split(" ");
         if (split.length >= 2) {
-            tsMap.put(split[0], split[1].codePointAt(0));
+            tsMap.put(split[0].codePointAt(0), split[1].codePointAt(0));
         }
       });
-      System.out.println("慶="+tsMap.get("慶"));
+      System.out.println("慶="+tsMap.get("慶".codePointAt(0)));
+      root.loadMultiPinyin(PinyinHelper2.class.getResourceAsStream("/houbb/phrase.txt"));
     }catch(Exception e){
       e.printStackTrace();
     }
@@ -43,7 +44,7 @@ public class PinyinHelper2 {
         ChineseToPinyinResource resource = ChineseToPinyinResource.getInstance();
         List<Tuple<String, Integer>> list = list(str);
         if(list.size()==1){
-          Integer codePoint = tsMap.getOrDefault(str, list.get(0).second);
+          Integer codePoint = tsMap.getOrDefault(str.codePointAt(0), list.get(0).second);
           Trie trie = root.get(codePoint);
           String[] pinyinStrArray = trie == null ? null : trie.getPinyinArray();
           if (null != pinyinStrArray && null != outputFormat) {
@@ -64,7 +65,7 @@ public class PinyinHelper2 {
           int success = i;
           int current = i;
           do {
-            Integer codePoint = tsMap.getOrDefault(tuple.first, tuple.second);
+            Integer codePoint = tsMap.getOrDefault(tuple.first.codePointAt(0), tuple.second);
             currentTrie = currentTrie.get(codePoint);
             if (currentTrie != null) {
               if (currentTrie.getPinyinArray() != null) {

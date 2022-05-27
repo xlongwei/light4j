@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.lang.Character.UnicodeBlock;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,8 @@ import com.github.houbb.pinyin.support.tone.PinyinTones;
 import com.github.houbb.pinyin.util.PinyinHelper;
 import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.util.EcdictUtil;
+import com.xlongwei.light4j.util.FileUtil.CharsetNames;
+import com.xlongwei.light4j.util.FileUtil.TextReader;
 
 import org.junit.Test;
 
@@ -35,6 +38,63 @@ public class PinyinTest {
     int[] blockStarts;
     UnicodeBlock[] blocks;
     Map<Character, Character> TS_CHAR_MAP;
+
+    @Test
+    public void phrase() throws Exception {
+        Map<String, String> pyMap = new HashMap<>(), bbMap = new HashMap<>();
+        TextReader reader = new TextReader();
+        reader.open(getClass().getResourceAsStream("/pinyindb/multi_pinyin.txt"), CharsetNames.UTF_8);
+        reader.handleLines(line -> {
+            String[] split = line.split(" ");
+            pyMap.put(split[0], split[1].substring(1, split[1].length() - 1));
+        });
+        reader.open(getClass().getResourceAsStream("/pinyin_dict_phrase.txt"), CharsetNames.UTF_8);
+        reader.handleLines(line -> {
+            String[] split = line.split(":");
+            String phrase = split[0];
+            split = split[1].split(" ");
+            StringBuilder pinyin = new StringBuilder();
+            for (String py : split) {
+                pinyin.append(PinyinToneStyles.numLast().style(py)).append(",");
+            }
+            bbMap.put(phrase, pinyin.substring(0, pinyin.length() - 1));
+        });
+        reader.close();
+        String[] array = { "重庆", "不重要" };
+        for (String phrase : array) {
+            System.out.println(phrase + " py=" + pyMap.get(phrase) + ", bb=" + bbMap.get(phrase) + ", equals="
+                    + pyMap.get(phrase).equals(bbMap.get(phrase)));
+        }
+        int miss = 0, diff = 0;// 缺少，差异
+        PrintWriter writer = FileUtil.getPrintWriter(new File("target/diff2.txt"), StandardCharsets.UTF_8, false);
+        PrintWriter charTxt = FileUtil.getPrintWriter(new File("target/phrase.txt"),
+                StandardCharsets.UTF_8, false);
+        for (Entry<String, String> entry : bbMap.entrySet()) {
+            String phrase = entry.getKey();
+            String bb = entry.getValue().replace("ü", "v");
+            String py = pyMap.get(phrase);
+            if (py == null) {
+                py = String.join(",", PinyinHelper2.toHanYuPinyinString(phrase, null));
+                if (!py.matches("[a-z,:1-5]+")) {
+                    log.info("miss phrase={} py={}", phrase, py);
+                    py = null;
+                }
+            }
+            if (py == null) {
+                miss++;
+                writer.println(String.format("miss %s: %s=%s <> null", miss, phrase, bb));
+                charTxt.println(String.format("%s (%s)", phrase, bb));
+            } else if (!py.equals(bb)) {
+                diff++;
+                writer.println(String.format("diff %s: %s=%s <> %s", diff, phrase, bb, py));
+                charTxt.println(String.format("%s (%s)", phrase, bb));
+            }
+        }
+        writer.close();
+        charTxt.close();
+        // miss=0 diff=3601
+        log.info("miss={} diff={}", miss, diff);
+    }
 
     @Test
     public void test() throws Exception {
@@ -59,7 +119,7 @@ public class PinyinTest {
             String pinyinStr = String.join(StringUtil.BLANK, list) + "(" + PinyinToneStyles.numLast().style(list.get(0))
                     + ")";
             String[] array = PinyinHelper2.toHanYuPinyinString(str, null);
-            if (PinyinHelper2.tsMap.containsKey(str)) {
+            if (PinyinHelper2.tsMap.containsKey(str.codePointAt(0))) {
                 fan++;
                 fans.get(str).getAndDecrement();
             }
@@ -68,8 +128,8 @@ public class PinyinTest {
                 writer.println(String.format("miss %s: %s=%s %s <> null %s", miss, str, hex,
                         pinyinStr, blockStr));
                 missBlocks.get(block).first.incrementAndGet();
-                Integer simpleCodePoint = PinyinHelper2.tsMap.get(str);
-                hex = simpleCodePoint==null ? hex : Integer.toHexString(simpleCodePoint).toUpperCase();
+                Integer simpleCodePoint = PinyinHelper2.tsMap.get(str.codePointAt(0));
+                hex = simpleCodePoint == null ? hex : Integer.toHexString(simpleCodePoint).toUpperCase();
                 charTxt.println(hex + " (" + PinyinToneStyles.numLast().style(list.get(0)) + ")");
             } else {
                 if (array.length != list.size()) {
@@ -106,7 +166,8 @@ public class PinyinTest {
         charTxt.close();
         fans.entrySet().stream().filter(entry -> entry.getValue().get() > 1).forEach(entry -> {
             String ch = entry.getKey();
-            String hex = Integer.toHexString(PinyinHelper2.tsMap.getOrDefault(ch, ch.codePointAt(0))).toUpperCase();
+            String hex = Integer.toHexString(PinyinHelper2.tsMap.getOrDefault(ch.codePointAt(0), ch.codePointAt(0)))
+                    .toUpperCase();
             log.info("fan={} count={}", hex, entry.getValue());
         });
         // miss=21163 diff=9426 fan=4057 => miss=0 diff=15130 fan=4057
@@ -169,12 +230,20 @@ public class PinyinTest {
 
     @Test
     public void codepoint() throws Exception {
-        String str = "𠀛𠀝重慶𠐊〇";//𠐊=2040A=2B74B
+        String str = "𠀛𠀝重慶𠐊〇";// 𠐊=2040A=2B74B
         List<Tuple<String, Integer>> list = PinyinHelper2.list(str);
         for (Tuple<String, Integer> tuple : list) {
-            System.out.println(tuple.first + "=" + tuple.second+" hasPinyin="+PinyinHelper2.hasPinyin(tuple.first));
+            System.out.println(tuple.first + "=" + tuple.second + " hasPinyin=" + PinyinHelper2.hasPinyin(tuple.first));
         }
         System.out.println(String.join(StringUtil.BLANK, PinyinHelper2.toHanYuPinyinString(str, null)));
-        System.out.println(EcdictUtil.sentences("abc"+str+"def"));
+        System.out.println(EcdictUtil.sentences("abc" + str + "def"));
+    }
+
+    @Test
+    public void bbPhrase() throws Exception {
+        String[] array = { "一网打尽", "回笼" };
+        for (String str : array) {
+            System.out.println(Arrays.toString(PinyinHelper2.toHanYuPinyinString(str, null)));
+        }
     }
 }
