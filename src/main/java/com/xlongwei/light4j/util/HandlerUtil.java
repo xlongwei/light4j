@@ -24,6 +24,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.networknt.utility.StringUtils;
 import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.handler.ServiceHandler;
+import com.xlongwei.light4j.handler.service.WeixinHandler;
 
 import org.apache.commons.codec.CharEncoding;
 import org.slf4j.Logger;
@@ -333,6 +334,8 @@ public class HandlerUtil {
 						if(limits>0 && count>=limits) {
 							if(count%100 == 0) {
 								log.info("ipsConfig ban ip={} count={}", ip, count);
+							}else if(count%10000 == 0) {
+								WeixinHandler.notify("oNlp_wiCfSmCEnpYqHoroD8t07t4", ip+"="+count, null);
 							}
 							return false;
 						}

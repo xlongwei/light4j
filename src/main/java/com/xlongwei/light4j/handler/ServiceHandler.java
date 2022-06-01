@@ -101,10 +101,12 @@ public class ServiceHandler implements LightHttpHandler {
 				if("name".equals(method.getName())) {
 					continue;
 				}
-				if(Modifier.isPublic(method.getModifiers())) {
-					// 暂未检查returnType和parameterTypes
-					methods.put(method.getName(), method);
-					log.info("{}/{} => {}", name, method.getName(), method);
+				if(Modifier.isPublic(method.getModifiers()) && Void.TYPE==method.getReturnType()) {
+					Class<?>[] parameterTypes = method.getParameterTypes();
+					if(parameterTypes.length==1 && parameterTypes[0]==HttpServerExchange.class) {
+						methods.put(method.getName(), method);
+						log.info("{}/{} => {}", name, method.getName(), method);
+					}
 				}
 			}
 		}
