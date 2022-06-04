@@ -99,6 +99,10 @@ url=http://s.xlongwei.com/uploads/docs/doc2fill.docx
 POST {{host}}/service/pinyin
 
 text=𠀛𠀝重慶𠐊〇
+### pinyin/sort
+POST {{host}}/service/pinyin/sort?toneType=2&pinyin=true
+
+["重慶","背景","北京","杯子"]
 ###
 {{host}}/service/ip/region?ip=121.12.21.23
 ### mobile
