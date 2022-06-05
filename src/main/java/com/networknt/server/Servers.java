@@ -86,6 +86,10 @@ public class Servers {
     static final String STATUS_HOST_IP = "STATUS_HOST_IP";
 
     static final String SID = "sId";
+    // the bound port for the server. For metrics and other queries.
+    public static int currentPort;
+    // the bound ip for the server. For metrics and other queries
+    public static String currentAddress;
 
     public static final ServerConfig config = getServerConfig();
 
@@ -125,7 +129,7 @@ public class Servers {
         } catch (RuntimeException e) {
             // Handle any exception encountered during server start-up
             logger.error("Server is not operational! Failed with exception", e);
-
+            System.out.println("Failed to start server:" + e.getMessage());
             // send a graceful system shutdown
             System.exit(1);
         }
@@ -295,6 +299,8 @@ public class Servers {
 				logger.info("Https port disabled.");
 			}
         }
+        // at this moment, the port number is bound. save it for later queries
+        currentPort = port;
         return true;
     }
 
@@ -461,7 +467,7 @@ public class Servers {
                 ipAddress = inetAddress.getHostAddress();
                 logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
             }
-
+            currentAddress = ipAddress;
             ServerConfig serverConfig = getServerConfig();
             Map parameters = new HashMap<>(4);
             if (serverConfig.getEnvironment() != null) {
