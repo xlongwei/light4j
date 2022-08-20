@@ -14,6 +14,7 @@ import com.wf.captcha.ChineseCaptcha;
 import com.wf.captcha.ChineseGifCaptcha;
 import com.wf.captcha.GifCaptcha;
 import com.wf.captcha.SpecCaptcha;
+import com.wf.captcha.base.ArithmeticCaptchaAbstract;
 import com.wf.captcha.base.Captcha;
 import com.wf.captcha.base.ChineseCaptchaAbstract;
 import com.xlongwei.light4j.handler.ServiceHandler.AbstractHandler;
@@ -27,6 +28,7 @@ import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import io.undertow.server.HttpServerExchange;
 import lombok.extern.slf4j.Slf4j;
@@ -42,15 +44,25 @@ public class CheckcodeHandler extends AbstractHandler {
 
 	public void image(HttpServerExchange exchange) throws Exception {
 		String checkcode = HandlerUtil.getParam(exchange, "checkcode");
+		int type = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "type"), -2);
 		if (StringUtil.hasLength(checkcode)) {
-			String image = ImageUtil.encode(ImageUtil.bytes(ImageUtil.create(checkcode)), null);
-			HandlerUtil.setResp(exchange, StringUtil.params("image", image));
+			OutputStream outputStream = exchange.getOutputStream();
+			if (type == -3) {
+				Captcha captcha = captcha(HandlerUtil.getParam(exchange, "style"));
+				while (captcha instanceof ArithmeticCaptchaAbstract) {
+					captcha = captcha(HandlerUtil.getParam(exchange, "style"));
+				}
+				ReflectUtil.setFieldValue(captcha, "chars", checkcode);
+				captcha.out(outputStream);
+			} else {
+				outputStream.write(ImageUtil.bytes(ImageUtil.create(checkcode)));
+			}
+			outputStream.close();
 		} else {
 			String sid = HandlerUtil.getParam(exchange, "sid");
 			if (sid != null && (sid = sid.trim()).length() > 13) {
 				int length = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "length"), 4);
 				boolean specials = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "specials"), false);
-				int type = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "type"), -2);
 				String[] special = type < -1 ? null : ImageUtil.special(type);
 				String code = special != null && special.length > 0 ? special[0] : null;
 				String check = null;
@@ -58,13 +70,15 @@ public class CheckcodeHandler extends AbstractHandler {
 				if (code == null) {
 					if (type == -3) {
 						captcha = captcha(HandlerUtil.getParam(exchange, "style"));
-						captcha.setLen(length);
+						if (!(captcha instanceof ArithmeticCaptchaAbstract)) {
+							captcha.setLen(length);
+						}
 						if (!(captcha instanceof ChineseCaptchaAbstract)) {
 							int font = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "font"), 0);
 							font = 0 <= font && font <= 9 ? font : (font == -1 ? RandomUtil.randomInt(0, 10) : 0);
 							captcha.setFont(font);
 						}
-						check = code = captcha.text().toLowerCase();
+						check = code = captcha.text();
 					} else {
 						check = code = ImageUtil.random(length, specials);
 					}
@@ -109,7 +123,9 @@ public class CheckcodeHandler extends AbstractHandler {
 		int type = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "type"), -2);
 		Captcha captcha = type == -3 ? captcha(HandlerUtil.getParam(exchange, "style")) : null;
 		if (captcha != null) {
-			captcha.setLen(length);
+			if (!(captcha instanceof ArithmeticCaptchaAbstract)) {
+				captcha.setLen(length);
+			}
 			if (!(captcha instanceof ChineseCaptchaAbstract)) {
 				int font = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "font"), 0);
 				font = 0 <= font && font <= 9 ? font : (font == -1 ? RandomUtil.randomInt(0, 10) : 0);
@@ -134,7 +150,7 @@ public class CheckcodeHandler extends AbstractHandler {
 	}
 
 	private Triple<String, String, String> create(Captcha captcha) {
-		String check = captcha.text().toLowerCase();
+		String check = captcha.text();
 		String sid = String.valueOf(IdWorker.getId());
 		RedisCache.set(ImageUtil.attr, sid, check);
 		log.info("sid:{}, check:{}, code:{}", sid, check, check);

@@ -1,0 +1,10 @@
+@host=http://localhost:8080
+@checkcode={{host}}/service/checkcode
+### type=-2字母数字
+{{checkcode}}/code?secure=false
+### type=-1随机取0汉字 1算术 2拆字
+{{checkcode}}/code?secure=false&type=-1
+### type=-3三方easy-captcha style支持spec gif chinese arithmetic chinesegif
+{{checkcode}}/code?secure=false&type=-3&style=random
+### image
+{{checkcode}}/image?checkcode=1234&type=

@@ -7,6 +7,9 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -14,6 +17,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.RandomUtils;
 
 import com.networknt.utility.Tuple;
+import com.xlongwei.light4j.util.FileUtil.CharsetNames;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,9 +31,19 @@ public class ImageUtil {
 	public static final String attr = "imgCode";
 	private static char[] normalChars = "ABCDEFGHJKLMNPRSTUWX3456789".toCharArray();
 	private static char[] specialChars = "@#$%&3456789ABCDEFGHJKMNPQRSTUWX@#$%&3456789".toCharArray();
-//	private static char[] chineseChars = DictUtil.frequent().toCharArray();
-//	private static char[] simpleChars = DictUtil.simple().toCharArray();
+	private static char[] chineseChars = null;//DictUtil.frequent().toCharArray();
+	private static char[] simpleChars = null;//DictUtil.simple().toCharArray();
+	private static char[] parts1 = null, parts2 = null;
 	private static char[] operatorChars = "+-*".toCharArray();
+	static {
+		Map<String, String> map = FileUtil
+				.readLines(new File(ConfigUtil.DIRECTORY + "checkcode.txt"), CharsetNames.UTF_8).stream()
+				.map(line -> line.split("[=]")).collect(Collectors.toMap(split -> split[0], split -> split[1]));
+		chineseChars = map.get("frequent").toCharArray();
+		simpleChars = map.get("simple").toCharArray();
+		parts1 = map.get("parts1").toCharArray();
+		parts2 = map.get("parts2").toCharArray();
+	}
 	
 	/** 生成字母数字随机串 */
 	public static String random(int length, boolean specials) {
@@ -53,12 +67,12 @@ public class ImageUtil {
 			type = RandomUtils.nextInt(0, 3);
 		}
 		switch(type) {
-//		case 0: 
-//			StringBuilder random = new StringBuilder();
-//			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
-//			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
-//			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
-//			return new String[]{random.toString()};
+		case 0: 
+			StringBuilder random = new StringBuilder();
+			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
+			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
+			random.append(chineseChars[RandomUtils.nextInt(0, chineseChars.length)]);
+			return new String[]{random.toString()};
 		case 1:
 			int op1 = RandomUtils.nextInt(0, 10), op2 = RandomUtils.nextInt(0, 10);
 			char op = operatorChars[RandomUtils.nextInt(0, operatorChars.length)];
@@ -77,16 +91,16 @@ public class ImageUtil {
 				return new String[] {op1+String.valueOf(op)+"?"+"="+result, String.valueOf(op2)};
 			}
 			return new String[] {op1+String.valueOf(op)+op2+"=?", String.valueOf(result)};
-//		case 2:
-//			String word = String.valueOf(simpleChars[RandomUtils.nextInt(0, simpleChars.length)]);
-//			String[] parts = DictUtil.parts(word);
-//			if(RandomUtils.nextBoolean()) {
-//				return new String[] {"?+"+parts[1]+"="+word, parts[0]};
-//			}
-//			if(RandomUtils.nextBoolean()) {
-//				return new String[] {parts[0]+"+?="+word, parts[1]};
-//			}
-//			return new String[] {parts[0]+"+"+parts[1]+"=?", word};
+		case 2:
+			int nextInt = RandomUtils.nextInt(0, simpleChars.length);
+			String word = String.valueOf(simpleChars[nextInt]);
+			if(RandomUtils.nextBoolean()) {
+				return new String[] {"?+"+parts2[nextInt]+"="+word, String.valueOf(parts1[nextInt])};
+			}
+			if(RandomUtils.nextBoolean()) {
+				return new String[] {parts1[nextInt]+"+?="+word, String.valueOf(parts2[nextInt])};
+			}
+			return new String[] {parts1[nextInt]+"+"+parts2[nextInt]+"=?", word};
 		default: return null;
 		}
 	}
