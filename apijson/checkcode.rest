@@ -6,5 +6,13 @@
 {{checkcode}}/code?secure=false&type=-1
 ### type=-3三方easy-captcha style支持spec gif chinese arithmetic chinesegif
 {{checkcode}}/code?secure=false&type=-3&style=random
-### image
-{{checkcode}}/image?checkcode=1234&type=
+### image 获取验证码图片 type支持-3|-4|空
+{{checkcode}}/image?checkcode=1234&type=&ajax=true
+### image 直接拿图片，需提供sid
+{{checkcode}}/image?sid=12345678901234&type=
+### type=-4三方hutool style=circle gif shear line
+{{checkcode}}/code?secure=false&type=-4&style=random
+### type=-5三方tianai style=ROTATE CONCAT WORD_IMAGE_CLICK
+{{checkcode}}/code?secure=false&type=-5&style=RANDOM
+### check行为验证码
+{{checkcode}}/check?checkcode=0.3169491&sid=1560884810192494594

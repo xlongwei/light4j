@@ -7,8 +7,6 @@ import java.util.Date;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.sourceforge.pinyin4j.PinyinHelper;
-
 import com.xlongwei.light4j.util.DateUtil;
 import com.xlongwei.light4j.util.PinyinUtil;
 import com.xlongwei.light4j.util.ZhDate;

@@ -3,6 +3,7 @@ package com.xlongwei.light4j.handler.service;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.text.MessageFormat;
 import java.util.Map;
 
@@ -27,6 +28,20 @@ import com.xlongwei.light4j.util.RedisCache;
 import com.xlongwei.light4j.util.RedisConfig;
 import com.xlongwei.light4j.util.StringUtil;
 
+import cloud.tianai.captcha.generator.ImageCaptchaGenerator;
+import cloud.tianai.captcha.generator.common.model.dto.ImageCaptchaInfo;
+import cloud.tianai.captcha.generator.impl.MultiImageCaptchaGenerator;
+import cloud.tianai.captcha.resource.ImageCaptchaResourceManager;
+import cloud.tianai.captcha.resource.impl.DefaultImageCaptchaResourceManager;
+import cloud.tianai.captcha.validator.ImageCaptchaValidator;
+import cloud.tianai.captcha.validator.impl.BasicCaptchaTrackValidator;
+import cn.hutool.captcha.AbstractCaptcha;
+import cn.hutool.captcha.CaptchaUtil;
+import cn.hutool.captcha.ICaptcha;
+import cn.hutool.captcha.generator.AbstractGenerator;
+import cn.hutool.captcha.generator.MathGenerator;
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.math.Calculator;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -42,22 +57,68 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CheckcodeHandler extends AbstractHandler {
 
+	int width = 130, height = 48;
+    Field generatorField = null;
+    Field codeField = null;
+    Field lengthField = null;
+	ImageCaptchaGenerator imageCaptchaGenerator;
+    ImageCaptchaValidator imageCaptchaValidator;
+	
+	public CheckcodeHandler() {
+		generatorField = ReflectUtil.getField(AbstractCaptcha.class, "generator");
+		codeField = ReflectUtil.getField(AbstractCaptcha.class, "code");
+		lengthField = ReflectUtil.getField(AbstractGenerator.class, "length");
+		ImageCaptchaResourceManager imageCaptchaResourceManager = new DefaultImageCaptchaResourceManager();
+        imageCaptchaGenerator = new MultiImageCaptchaGenerator(imageCaptchaResourceManager).init(true);
+        imageCaptchaValidator = new BasicCaptchaTrackValidator();
+	}
+
 	public void image(HttpServerExchange exchange) throws Exception {
 		String checkcode = HandlerUtil.getParam(exchange, "checkcode");
 		int type = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "type"), -2);
+		String style = HandlerUtil.getParam(exchange, "style");
 		if (StringUtil.hasLength(checkcode)) {
-			OutputStream outputStream = exchange.getOutputStream();
+			boolean ajax = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "ajax"), true);
+			String image = null;
+			OutputStream outputStream = ajax ? null : exchange.getOutputStream();
 			if (type == -3) {
-				Captcha captcha = captcha(HandlerUtil.getParam(exchange, "style"));
+				Captcha captcha = captcha(style);
 				while (captcha instanceof ArithmeticCaptchaAbstract) {
-					captcha = captcha(HandlerUtil.getParam(exchange, "style"));
+					captcha = captcha(style);
 				}
 				ReflectUtil.setFieldValue(captcha, "chars", checkcode);
-				captcha.out(outputStream);
+				if (ajax) {
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					captcha.out(baos);
+					image = ImageUtil.encode(baos.toByteArray(), null);
+				} else {
+					captcha.out(outputStream);
+				}
+			} else if (type == -4) {
+				if ("random".equals(style)) {
+					style = iStyles[RandomUtil.randomInt(0, iStyles.length)];
+				}
+				ICaptcha iCaptcha = iCaptcha(style, width, height);
+				ReflectUtil.setFieldValue(iCaptcha, codeField, checkcode);
+				if (ajax) {
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					iCaptcha.write(baos);
+					image = ImageUtil.encode(baos.toByteArray(), null);
+				} else {
+					iCaptcha.write(outputStream);
+				}
 			} else {
-				outputStream.write(ImageUtil.bytes(ImageUtil.create(checkcode)));
+				if (ajax) {
+					image = ImageUtil.encode(ImageUtil.bytes(ImageUtil.create(checkcode)), null);
+				} else {
+					outputStream.write(ImageUtil.bytes(ImageUtil.create(checkcode)));
+				}
 			}
-			outputStream.close();
+			if (ajax) {
+				HandlerUtil.setResp(exchange, StringUtil.params("image", image));
+			} else {
+				outputStream.close();
+			}
 		} else {
 			String sid = HandlerUtil.getParam(exchange, "sid");
 			if (sid != null && (sid = sid.trim()).length() > 13) {
@@ -67,9 +128,10 @@ public class CheckcodeHandler extends AbstractHandler {
 				String code = special != null && special.length > 0 ? special[0] : null;
 				String check = null;
 				Captcha captcha = null;
+				ICaptcha iCaptcha = null;
 				if (code == null) {
 					if (type == -3) {
-						captcha = captcha(HandlerUtil.getParam(exchange, "style"));
+						captcha = captcha(style);
 						if (!(captcha instanceof ArithmeticCaptchaAbstract)) {
 							captcha.setLen(length);
 						}
@@ -79,6 +141,23 @@ public class CheckcodeHandler extends AbstractHandler {
 							captcha.setFont(font);
 						}
 						check = code = captcha.text();
+					} else if (type == -4) {
+						if ("random".equals(style)) {
+							style = iStyles[RandomUtil.randomInt(0, iStyles.length)];
+						}
+						iCaptcha = iCaptcha(style, width, height);
+						String generator = HandlerUtil.getParam(exchange, "generator");
+						if ("math".equals(generator) || ("random".equals(generator) && RandomUtil.randomBoolean())) {
+							ReflectUtil.setFieldValue(iCaptcha, generatorField, new MathGenerator());
+							code = iCaptcha.getCode();
+							check = "" + (int) Calculator.conversion(iCaptcha.getCode());
+						} else {
+							if (length != 5) {
+								Object obj = ReflectUtil.getFieldValue(iCaptcha, generatorField);
+								ReflectUtil.setFieldValue(obj, lengthField, length);
+							}
+							check = code = iCaptcha.getCode();
+						}
 					} else {
 						check = code = ImageUtil.random(length, specials);
 					}
@@ -88,15 +167,32 @@ public class CheckcodeHandler extends AbstractHandler {
 				log.info("captcha code: {}, check: {}, sid: {}", code, check, sid);
 				RedisCache.set(ImageUtil.attr, sid, check);
 				OutputStream outputStream = exchange.getOutputStream();
-				if (captcha == null) {
-					outputStream.write(ImageUtil.bytes(ImageUtil.create(code)));
-				} else {
+				if (captcha != null) {
 					captcha.out(outputStream);
+				} else if (iCaptcha != null) {
+					iCaptcha.write(outputStream);
+				} else {
+					outputStream.write(ImageUtil.bytes(ImageUtil.create(code)));
 				}
 				outputStream.close();
 			}
 		}
 	}
+
+	private String[] iStyles = { "circle", "gif", "shear", "line" };
+
+    private ICaptcha iCaptcha(String style, int width, int height) {
+        switch (StrUtil.trimToEmpty(style)) {
+            case "circle":
+                return CaptchaUtil.createCircleCaptcha(width, height);
+            case "gif":
+                return CaptchaUtil.createGifCaptcha(width, height);
+            case "shear":
+                return CaptchaUtil.createShearCaptcha(width, height);
+            default:
+                return CaptchaUtil.createLineCaptcha(width, height);
+        }
+    }
 
 	private String[] styles = { "gif", "chinese", "arithmetic", "chinesegif", "spec" };
 
@@ -121,7 +217,11 @@ public class CheckcodeHandler extends AbstractHandler {
 		int length = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "length"), 4);
 		boolean specials = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "specials"), false);
 		int type = NumberUtil.parseInt(HandlerUtil.getParam(exchange, "type"), -2);
+		String style = HandlerUtil.getParam(exchange, "style");
 		Captcha captcha = type == -3 ? captcha(HandlerUtil.getParam(exchange, "style")) : null;
+		ICaptcha iCaptcha = null;
+		ImageCaptchaInfo imageCaptchaInfo = null;
+		Triple<String, String, String> triple = null; // check, sid, image
 		if (captcha != null) {
 			if (!(captcha instanceof ArithmeticCaptchaAbstract)) {
 				captcha.setLen(length);
@@ -131,8 +231,20 @@ public class CheckcodeHandler extends AbstractHandler {
 				font = 0 <= font && font <= 9 ? font : (font == -1 ? RandomUtil.randomInt(0, 10) : 0);
 				captcha.setFont(font);
 			}
+			triple = create(captcha);
+		} else if (type == -4) {
+			if ("random".equals(style)) {
+				style = iStyles[RandomUtil.randomInt(0, iStyles.length)];
+			}
+			iCaptcha = iCaptcha(style, width, height);
+			triple = create(iCaptcha, HandlerUtil.getParam(exchange, "generator"), length);
+		} else if (type == -5) {
+			imageCaptchaInfo = imageCaptchaGenerator.generateCaptchaImage(style(style));
+			Map<String, Object> map = imageCaptchaValidator.generateImageCaptchaValidData(imageCaptchaInfo);
+			String check = map.get("percentage").toString();
+			triple = Triple.of(check, String.valueOf(IdWorker.getId()), imageCaptchaInfo.getBackgroundImage());
+			RedisCache.set(ImageUtil.attr, triple.getMiddle(), check);
 		}
-		Triple<String, String, String> triple = captcha != null ? create(captcha) : null;
 		Tuple<String, String> codecheck = triple != null
 				? new Tuple<>(triple.getLeft(), triple.getLeft())
 				: ImageUtil.create(length, specials, type);
@@ -146,8 +258,25 @@ public class CheckcodeHandler extends AbstractHandler {
 				params.put("check", codecheck.second);
 			}
 		}
+		if (imageCaptchaInfo != null) {
+			params.put("slider", imageCaptchaInfo.getSliderImage());
+		}
 		HandlerUtil.setResp(exchange, params);
 	}
+
+	private String style(String style) {
+        switch (StrUtil.trimToEmpty(style)) {
+            case "ROTATE":
+            case "CONCAT":
+            case "WORD_IMAGE_CLICK":
+                return style;
+            case "RANDOM":
+                int random = RandomUtil.randomInt(0, 3);
+                return random == 0 ? "SLIDER" : (random == 1 ? "ROTATE" : "CONCAT");
+            default:
+                return "SLIDER";
+        }
+    }
 
 	private Triple<String, String, String> create(Captcha captcha) {
 		String check = captcha.text();
@@ -160,14 +289,48 @@ public class CheckcodeHandler extends AbstractHandler {
 		return Triple.of(check, sid, image);
 	}
 
+	private Triple<String, String, String> create(ICaptcha iCaptcha, String generator, int length) {
+		if (length != 5) {
+			Object obj = ReflectUtil.getFieldValue(iCaptcha, generatorField);
+			ReflectUtil.setFieldValue(obj, lengthField, length);
+		}
+		String check = null;
+		if ("math".equals(generator) || ("random".equals(generator) && RandomUtil.randomBoolean())) {
+			ReflectUtil.setFieldValue(iCaptcha, generatorField, new MathGenerator());
+			check = "" + (int) Calculator.conversion(iCaptcha.getCode());
+		} else {
+			check = iCaptcha.getCode();
+		}
+		String sid = String.valueOf(IdWorker.getId());
+		RedisCache.set(ImageUtil.attr, sid, check);
+		log.info("sid:{}, check:{}, code:{}", sid, check, check);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		iCaptcha.write(baos);
+		String image = ImageUtil.encode(baos.toByteArray(), null);
+		return Triple.of(check, sid, image);
+	}
+
 	public void check(HttpServerExchange exchange) throws Exception {
 		String sid = HandlerUtil.getParam(exchange, "sid");
 		String checkcode = HandlerUtil.getParam(exchange, "checkcode");
 		if (StringUtil.hasLength(sid) && StringUtil.hasLength(checkcode)) {
 			String check = RedisCache.get(ImageUtil.attr, sid);
-			String valid = String.valueOf(checkcode.equalsIgnoreCase(check));
+			boolean valid = checkcode.equalsIgnoreCase(check);
+			if (!valid && check != null && checkcode.matches("[0-9\\.,;]+")) {
+				String[] arr1 = check.split("[,;]");
+				String[] arr2 = checkcode.split("[,;]");
+				if (arr1.length == arr2.length) {
+					for (int i = 0; i < arr1.length; i++) {
+						valid = imageCaptchaValidator.checkPercentage(Convert.toFloat(arr2[i]),
+								Convert.toFloat(arr1[i]));
+						if (valid == false) {
+							break;
+						}
+					}
+				}
+			}
 			log.info("sid:{}, expect:{}, checkcode:{}, valid:{}", sid, check, checkcode, valid);
-			HandlerUtil.setResp(exchange, StringUtil.params("valid", valid));
+			HandlerUtil.setResp(exchange, StringUtil.params("valid", String.valueOf(valid)));
 		}
 	}
 
