@@ -324,21 +324,25 @@ public class HandlerUtil {
 			String ip = getIp(exchange);
 			if(!StringUtil.splitContains(ipsConfig.getString("whites"), ip)) {
 				if(!StringUtil.splitContains(ipsConfig.getString("frees"), name)) {
-					AtomicInteger counter = ipsCounter.get(ip);
-					int count = counter==null ? 1 : counter.incrementAndGet();
-					ipsConfigLogger.debug("ip={} count={}", ip, count);
-					if(counter==null) {
-						ipsCounter.put(ip, new AtomicInteger(1));
-					}else {
-						int limits = ipsConfig.getIntValue("limits");
-						if(limits>0 && count>=limits) {
-							if(count%100 == 0) {
-								log.info("ipsConfig ban ip={} count={}", ip, count);
-							}else if(count%10000 == 0) {
-								WeixinHandler.notify("oNlp_wiCfSmCEnpYqHoroD8t07t4", ip+"="+count, null);
+					if (!StringUtil.splitContains(ipsConfig.getString(ip), name)) {
+						AtomicInteger counter = ipsCounter.get(ip);
+						int count = counter==null ? 1 : counter.incrementAndGet();
+						ipsConfigLogger.debug("ip={} count={}", ip, count);
+						if(counter==null) {
+							ipsCounter.put(ip, new AtomicInteger(1));
+						}else {
+							int limits = ipsConfig.getIntValue("limits");
+							if(limits>0 && count>limits) {
+								if(count%100 == 0) {
+									log.info("ipsConfig ban ip={} count={}", ip, count);
+								}else if(count%10000 == 0) {
+									WeixinHandler.notify("oNlp_wiCfSmCEnpYqHoroD8t07t4", ip+"="+count, null);
+								}
+								return false;
 							}
-							return false;
 						}
+					} else {
+						ipsConfigLogger.debug("{} has scope", ip);
 					}
 				}else {
 					ipsConfigLogger.debug("{} get frees", ip);

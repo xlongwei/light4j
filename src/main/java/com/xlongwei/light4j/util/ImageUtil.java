@@ -19,6 +19,7 @@ import org.apache.commons.lang3.RandomUtils;
 import com.networknt.utility.Tuple;
 import com.xlongwei.light4j.util.FileUtil.CharsetNames;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -39,10 +40,10 @@ public class ImageUtil {
 		Map<String, String> map = FileUtil
 				.readLines(new File(ConfigUtil.DIRECTORY + "checkcode.txt"), CharsetNames.UTF_8).stream()
 				.map(line -> line.split("[=]")).collect(Collectors.toMap(split -> split[0], split -> split[1]));
-		chineseChars = map.get("frequent").toCharArray();
-		simpleChars = map.get("simple").toCharArray();
-		parts1 = map.get("parts1").toCharArray();
-		parts2 = map.get("parts2").toCharArray();
+		chineseChars = StrUtil.blankToDefault(map.get("frequent"), "的我他这到时地你说就她过对么都好起如把还").toCharArray();
+		simpleChars = StrUtil.blankToDefault(map.get("simple"), "的时地着就和要她出里会可对多好起发只如样").toCharArray();
+		parts1 = StrUtil.blankToDefault(map.get("parts1"), "白日土羊京禾西女山田人丁又夕女走八口女木").toCharArray();
+		parts2 = StrUtil.blankToDefault(map.get("parts2"), "勺寸也目尤口女也山土云口寸夕子己友八口羊").toCharArray();
 	}
 	
 	/** 生成字母数字随机串 */
