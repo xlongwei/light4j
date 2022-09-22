@@ -100,7 +100,9 @@ public class DocHandler extends AbstractHandler {
 		if(toFile!=null && toFile.exists()) {
 			map.put(UploadUtil.DOMAIN, UploadUtil.URL_TEMP);
 			map.put(UploadUtil.PATH, path);
-			boolean base64File = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "base64File"), false);
+			boolean base64File = "base64".equals(exchange.getAttachment(AbstractHandler.PATH))
+					? StringUtil.isBlank(HandlerUtil.getParam(exchange, "base64"))
+					: NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "base64File"), false);
 			if(base64File) {
 				map.put("base64", Base64.encodeBase64URLSafeString(FileUtil.readStream(toFile).toByteArray()));
 			}

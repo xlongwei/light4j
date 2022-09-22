@@ -38,7 +38,7 @@ Content-Disposition: form-data; name="tables"
 
 [[{"realName":"姓名","userName":"用户名"},{"realName":"姓名"}]]
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
-### 转换文档时需切换host，有接口需求时可联系我或网上订购：https://www.showapi.com/api/lookPoint/770
+### 转换文档时需切换host，有接口需求时可联系我订购
 # @host=https://api.xlongwei.com
 ### doc2pdf，fileName提供文件扩展名（默认是docx）
 {{doc}}/toPdf?url={{url}}&fileName=test.html
@@ -46,7 +46,7 @@ Content-Disposition: form-data; name="tables"
 {{doc}}/toHtml?url={{url}}&fileName=test.xlsx
 ### 文档模板参数优先级为url > doc上传 > base64，某些场景下使用base64会更方便
 ### java使用org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(byte[])生成
-{{doc}}/base64?base64File=true&url={{url}}
+{{doc}}/base64?url={{url}}
 ### 提交base64比multipart/form-data上传doc更简单一些，也不需要文档模板有外网url可访问
 POST {{doc}}/base64
 Content-Type: application/x-www-form-urlencoded
