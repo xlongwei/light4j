@@ -9,3 +9,6 @@
 {{pdnovel}}/volumes?novelid=1
 ###
 {{pdnovel}}/chapters?novelid=1&volumeid=1
+###
+@delay={{service}}/delay
+{{delay}}?delay=3&unit=SECONDS&url=https://api.xlongwei.com/service/datetime
