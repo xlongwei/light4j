@@ -38,6 +38,20 @@ Content-Disposition: form-data; name="tables"
 
 [[{"realName":"姓名","userName":"用户名"},{"realName":"姓名"}]]
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+### 分块上传 base64.exe doc2fill.docx > doc2fill.txt，split -l 135 doc2fill.txt
+POST {{doc}}/base64?fileName=doc2fill.txt2&append=true
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="doc"; filename="doc2fill.docx"
+Content-Type: image/png
+
+< ./xab
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+### 解析文件
+POST {{doc}}/base64?fileName=doc2fill.docx2&append=true
+
+url=http://s.xlongwei.com/uploads/temp/word/doc2fill.txt2
 ### 转换文档时需切换host，有接口需求时可联系我订购
 # @host=https://api.xlongwei.com
 ### doc2pdf，fileName提供文件扩展名（默认是docx）

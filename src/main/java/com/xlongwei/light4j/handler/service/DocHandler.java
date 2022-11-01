@@ -26,6 +26,8 @@ import com.xlongwei.light4j.util.StringUtil;
 import com.xlongwei.light4j.util.TaskUtil;
 import com.xlongwei.light4j.util.UploadUtil;
 import com.xlongwei.light4j.util.WordUtil;
+import com.xlongwei.light4j.util.FileUtil.CharsetNames;
+import com.xlongwei.light4j.util.FileUtil.TextWriter;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData.FormValue;
@@ -89,8 +91,8 @@ public class DocHandler extends AbstractHandler {
 			toFill(exchange, doc, toFile);
 			break;
 		case "base64":
-			toFile = new File(UploadUtil.SAVE_TEMP, path = UploadUtil.path("file", doc.getName()));
-			if(!toFile.exists()) FileUtil.copyFile(doc, toFile);
+			toFile = doc;
+			path = "word/" + doc.getName();
 			break;
 		default:
 			break;
@@ -101,7 +103,7 @@ public class DocHandler extends AbstractHandler {
 			map.put(UploadUtil.DOMAIN, UploadUtil.URL_TEMP);
 			map.put(UploadUtil.PATH, path);
 			boolean base64File = "base64".equals(exchange.getAttachment(AbstractHandler.PATH))
-					? StringUtil.isBlank(HandlerUtil.getParam(exchange, "base64"))
+					? StringUtil.isBlank(HandlerUtil.getParam(exchange, "base64")) && !NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "append"), false)
 					: NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "base64File"), false);
 			if(base64File) {
 				map.put("base64", Base64.encodeBase64URLSafeString(FileUtil.readStream(toFile).toByteArray()));
@@ -150,9 +152,18 @@ public class DocHandler extends AbstractHandler {
 	private File getDoc(HttpServerExchange exchange) throws IOException {
 		File target = new File(UploadUtil.SAVE_TEMP, UploadUtil.path("word", IdWorker.getId()+".docx"));
 		String url = HandlerUtil.getParam(exchange, "url");
+		boolean append = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "append"), false);
+		String fileName = HandlerUtil.getParam(exchange, "fileName");
 		if(StringUtil.isUrl(url)) {
 			if(url.startsWith(UploadUtil.URL)) {
 				target = new File(UploadUtil.SAVE, url.substring(UploadUtil.URL.length()));
+				if(append && StringUtils.isNotBlank(fileName)) {
+					File decode = new File(target.getParent(), fileName);
+					String base64 = FileUtil.readString(target, CharsetNames.UTF_8);
+					byte[] bs = Base64.decodeBase64(base64);
+					FileUtil.writeBytes(decode, bs);
+					target = decode;
+				}
 			}else {
 				String ext = FileUtil.getFileExt(StringUtils.defaultIfBlank(HandlerUtil.getParam(exchange, "fileName"), url));
 				if(ArrayUtils.contains(exts, ext) && !FileUtil.getFileExt(target).equalsIgnoreCase(ext)) {
@@ -169,19 +180,34 @@ public class DocHandler extends AbstractHandler {
 					target = new File(target.getParent(), FileUtil.getFileName(target) + "." + ext);
 				}
 				UploadUtil.save(doc.getFileItem().getInputStream(), target);
+				if(append && StringUtils.isNotBlank(fileName)){
+					File decode = new File(target.getParent(), fileName);
+					TextWriter writer = new TextWriter(decode, CharsetNames.UTF_8, true);
+					writer.write(FileUtil.readString(target, CharsetNames.UTF_8));
+					writer.close();
+					target = decode;
+				}
 			}
 		}
 		if(!target.exists()) {
-			String base64 = HandlerUtil.getParam(exchange, "base64");
+			String base64 = HandlerUtil.getParamOrBody(exchange, "base64");
 			base64 = StringUtil.isBlank(base64) ? null : ImageUtil.prefixRemove(base64);
 			if(!StringUtil.isBlank(base64)) {
 				byte[] bs = Base64.decodeBase64(base64);
-				String fileName = HandlerUtil.getParam(exchange, "fileName");
 				String ext = StringUtil.isBlank(fileName) ? null : FileUtil.getFileExt(fileName);
 				if(!StringUtil.isBlank(ext) && !FileUtil.getFileExt(target).equalsIgnoreCase(ext)) {
 					target = new File(target.getParent(), FileUtil.getFileName(target) + "." + ext);
 				}
-				UploadUtil.save(new ByteArrayInputStream(bs), target);
+				if(append && StringUtils.isNotBlank(fileName)){
+					if (target.getParentFile().exists() == false) {
+						target.getParentFile().mkdirs();
+					}
+					TextWriter writer = new TextWriter(target, CharsetNames.UTF_8, true);
+					writer.writeln(base64);
+					writer.close();
+				}else{
+					UploadUtil.save(new ByteArrayInputStream(bs), target);
+				}
 			}
 		}
 		return target;
