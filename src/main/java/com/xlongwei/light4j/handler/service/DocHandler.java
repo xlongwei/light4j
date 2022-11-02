@@ -102,11 +102,21 @@ public class DocHandler extends AbstractHandler {
 		if(toFile!=null && toFile.exists()) {
 			map.put(UploadUtil.DOMAIN, UploadUtil.URL_TEMP);
 			map.put(UploadUtil.PATH, path);
-			boolean base64File = "base64".equals(exchange.getAttachment(AbstractHandler.PATH))
-					? StringUtil.isBlank(HandlerUtil.getParam(exchange, "base64")) && !NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "append"), false)
-					: NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "base64File"), false);
+			boolean base64File = false;
+			boolean md5File = false;
+			if("base64".equals(exchange.getAttachment(AbstractHandler.PATH))) {
+				boolean append = NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "append"), false);
+				String fileName = HandlerUtil.getParam(exchange, "fileName");
+				base64File = StringUtil.isBlank(HandlerUtil.getParam(exchange, "base64")) && !append;
+				md5File = append && StringUtils.isNoneBlank(fileName, HandlerUtil.getParam(exchange, "url"));
+			}else{
+				NumberUtil.parseBoolean(HandlerUtil.getParam(exchange, "base64File"), false);
+			}
 			if(base64File) {
 				map.put("base64", Base64.encodeBase64URLSafeString(FileUtil.readStream(toFile).toByteArray()));
+			}
+			if(md5File) {
+				map.put("md5", FileUtil.digest(toFile, "MD5"));
 			}
 			HandlerUtil.setResp(exchange, map);
 		}
@@ -193,19 +203,18 @@ public class DocHandler extends AbstractHandler {
 			String base64 = HandlerUtil.getParamOrBody(exchange, "base64");
 			base64 = StringUtil.isBlank(base64) ? null : ImageUtil.prefixRemove(base64);
 			if(!StringUtil.isBlank(base64)) {
-				byte[] bs = Base64.decodeBase64(base64);
 				String ext = StringUtil.isBlank(fileName) ? null : FileUtil.getFileExt(fileName);
 				if(!StringUtil.isBlank(ext) && !FileUtil.getFileExt(target).equalsIgnoreCase(ext)) {
 					target = new File(target.getParent(), FileUtil.getFileName(target) + "." + ext);
 				}
 				if(append && StringUtils.isNotBlank(fileName)){
-					if (target.getParentFile().exists() == false) {
-						target.getParentFile().mkdirs();
-					}
-					TextWriter writer = new TextWriter(target, CharsetNames.UTF_8, true);
-					writer.writeln(base64);
+					File decode = new File(target.getParent(), fileName);
+					TextWriter writer = new TextWriter(decode, CharsetNames.UTF_8, true);
+					writer.write(base64);
 					writer.close();
+					target = decode;
 				}else{
+					byte[] bs = Base64.decodeBase64(base64);
 					UploadUtil.save(new ByteArrayInputStream(bs), target);
 				}
 			}

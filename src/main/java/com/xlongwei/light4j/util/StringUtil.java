@@ -1341,7 +1341,7 @@ public class StringUtil {
 	private static char[] AMP_ENCODE = "&amp;".toCharArray();
 	private static char[] LT_ENCODE = "&lt;".toCharArray();
 	private static char[] GT_ENCODE = "&gt;".toCharArray();
-	private static String urlPatternString = "^([hH][tT][tT][pP]([sS]?)|[fF][tT][pP]|[fF][iI][lL][eE]):\\/\\/(\\S+\\.)+\\S{2,}$";
+	private static String urlPatternString = "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 	private static String emailPatternString = "\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*";
 	private static String mobilePatternString = "^1(3[0-9]|4[5-9]|5[0-35-9]|6[2567]|7[0-9]|8[0-9]|9[1389])[0-9]{8}$";
 	private static Pattern tagPattern = Pattern.compile("\\{(\\w+)\\}");
