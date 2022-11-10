@@ -66,6 +66,16 @@ public class ServiceHandler implements LightHttpHandler {
 		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
 		String service = queryParameters.remove("*").getFirst();
 		if(log.isInfoEnabled()) log.info("{} {}", exchange.getRequestMethod(), exchange.getRequestURI());
+		if (StringUtil.isBlank(service)) {
+			Deque<String> d = queryParameters.get("handler");
+			if (d != null) {
+				service = d.getFirst();
+				d = queryParameters.get("path");
+				if (d != null) {
+					service += "/" + d.getFirst();
+				}
+			}
+		}
 		int dot = service.indexOf('.');
 		String[] split = StringUtils.split(dot>0 ? service.substring(0, dot) : service, "/");
 		if(split.length > 0) {
@@ -79,7 +89,8 @@ public class ServiceHandler implements LightHttpHandler {
 				if(ipsConfig) {
 					handler.handleRequest(exchange);
 				}else {
-					HandlerUtil.setResp(exchange, Collections.singletonMap("error", "access is limited"));
+					HandlerUtil.setResp(exchange, Collections.singletonMap("error",
+							StringUtil.firstNotBlank(HandlerUtil.ipsConfig.getString("error"), "access is limited")));
 				}
 				serviceCount(name);
 			}

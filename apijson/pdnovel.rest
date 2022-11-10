@@ -12,3 +12,5 @@
 ###
 @delay={{service}}/delay
 {{delay}}?delay=3&unit=SECONDS&url=https://api.xlongwei.com/service/datetime
+###
+{{service}}/?handler=datetime&path=isworkday
