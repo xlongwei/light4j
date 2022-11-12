@@ -3,14 +3,18 @@
 @service={{host}}/service
 ### grant all privileges on bbs.* to apijson;
 @pdnovel={{service}}/pdnovel
-###
+### 书
 {{pdnovel}}/books
-###
+### 卷
 {{pdnovel}}/volumes?novelid=1
-###
+### 章
 {{pdnovel}}/chapters?novelid=1&volumeid=1
-###
+### 延迟队列
 @delay={{service}}/delay
 {{delay}}?delay=3&unit=SECONDS&url=https://api.xlongwei.com/service/datetime
-###
+### X-Traceability-Id: 用于跟踪日志
 {{service}}/?handler=datetime&path=isworkday
+X-Traceability-Id: {{$guid}}
+### X-Handler-Path指定handler/path，与/service/handler/path的概念一致
+{{service}}/
+X-Handler-Path: datetime/isworkday

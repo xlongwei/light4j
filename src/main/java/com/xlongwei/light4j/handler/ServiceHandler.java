@@ -33,6 +33,7 @@ import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.ReflectUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
+import io.undertow.util.HttpString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -42,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ServiceHandler implements LightHttpHandler {
+	public static final HttpString HANDLER_PATH = new HttpString("X-Handler-Path"); 
 	public static final String BAD_REQUEST = "{\"error\":\"bad request\"}";
 	public static final String BAD_REQUEST_SHOWAPI = "{\"error\":\"bad request\",\"ret_code\":\"0\"}";
 	public static final Map<String, AbstractHandler> handlers = new HashMap<>();
@@ -65,16 +67,21 @@ public class ServiceHandler implements LightHttpHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
 		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
 		String service = queryParameters.remove("*").getFirst();
-		if(log.isInfoEnabled()) log.info("{} {}", exchange.getRequestMethod(), exchange.getRequestURI());
-		if (StringUtil.isBlank(service)) {
-			Deque<String> d = queryParameters.get("handler");
-			if (d != null) {
-				service = d.getFirst();
-				d = queryParameters.get("path");
+		if(StringUtil.hasLength(service)){
+			if(log.isInfoEnabled()) log.info("{} {}", exchange.getRequestMethod(), exchange.getRequestURI());
+		}else{
+			service = exchange.getRequestHeaders().getFirst(HANDLER_PATH);
+			if (!StringUtil.hasLength(service)) {
+				Deque<String> d = queryParameters.get("handler");
 				if (d != null) {
-					service += "/" + d.getFirst();
+					service = d.getFirst();
+					d = queryParameters.get("path");
+					if (d != null) {
+						service += "/" + d.getFirst();
+					}
 				}
 			}
+			if(log.isInfoEnabled()) log.info("{} {}", exchange.getRequestMethod(), exchange.getRequestURI() + service);
 		}
 		int dot = service.indexOf('.');
 		String[] split = StringUtils.split(dot>0 ? service.substring(0, dot) : service, "/");
